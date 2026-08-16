@@ -104,10 +104,12 @@ main{max-width:1180px;margin:0 auto;
 /* band ladder */
 .ladder{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;margin:8px 0;}
 .lane{border:1px solid var(--line);min-height:112px;padding:4px;background:var(--panel2);}
-.lane.short{border-color:var(--green);background:#1c0d0f;}
+.lane.short{border-color:rgba(216,31,42,.55);background:var(--panel2);}
+.lanetag{display:inline-block;margin-top:4px;font-size:8px;letter-spacing:.12em;
+  color:var(--green);border:1px solid rgba(216,31,42,.45);padding:1px 5px;border-radius:2px;}
 .lane .lbl{font-size:9px;letter-spacing:.1em;color:var(--dim);text-transform:uppercase;
   text-align:center;margin-bottom:5px;line-height:1.2;}
-.lane.short .lbl{color:var(--green);}
+.lane.short .lbl{color:var(--dim);}
 .chip.msl{border-color:var(--hot);background:#1c1310;}
 .chip.sel{box-shadow:0 0 0 2px var(--green);}
 .info{border:1px solid var(--green);background:var(--panel2);padding:12px;margin:6px 0 10px;}
@@ -921,61 +923,86 @@ const DEFECTS=[["Keel microfractures","Reduced hull points"],["Manoeuvre drive",
 
 /* ==================== NAMES — 2 x D66 per species ==================== */
 const NAMEDATA={
- Human:{
-  first:["Adaeze","Bellamy","Corin","Dov","Esme","Fenwick",
-         "Gita","Halvard","Ilse","Jorun","Katarzyna","Lucien",
-         "Maret","Nikolai","Ondine","Perrin","Quilla","Rasmus",
-         "Sabine","Tobias","Ulla","Vashti","Wendel","Xiomara",
-         "Yusuf","Zerlina","Ambrose","Beatriz","Caius","Dagny",
-         "Emeric","Fiadh","Goran","Hesper","Ivo","Juno"],
-  last:["Achall","Brennig","Corvane","Duhalde","Erskine","Falzon",
-        "Gallardo","Halloway","Ibori","Jarnvid","Kessel","Lindqvist",
-        "Marchetti","Ndiaye","Okonkwo","Pellerin","Quintero","Rooker",
-        "Sandoval","Tarrant","Ulvaeus","Vasquez","Winterbourne","Xanthos",
-        "Yarrow","Zangari","Abelard","Bosch","Caraway","Delacroix",
-        "Ephraim","Fontaine","Grisham","Holloway","Ivanenko","Jessop"],
-  note:"Imperial, Sindalian and Reach-born alike"},
+ Vilani:{
+  m:["Aashun","Bakhish","Dhikaan","Ekhmul","Girdaash","Hiiran","Ishmuu","Kaashna","Lubaash","Mikhaan",
+     "Nagiir","Ourish","Puurdi","Ragaash","Shimaal","Tuurin","Ushaan","Vaadis","Ziirku","Ammaan",
+     "Bhurdi","Danshu","Eshkaal","Gimnaar","Haasru","Imdiir","Kurnaash","Laashim","Muurdan","Nikhaan",
+     "Ordaash","Pikhuu","Ruumdi","Sagaan","Tashkur","Uumaal"],
+  f:["Ashimga","Belaani","Ciirdi","Dhaguu","Erdiima","Gashkii","Hiirala","Ikhmadu","Kaanshi","Ludaash",
+     "Mikhaana","Nashkii","Ordiima","Pikhuru","Rashiimu","Shaandi","Tuuriish","Ukhmaad","Vaadiish","Ziirkulu",
+     "Amdaasha","Bhurgii","Dansumi","Eshkaadu","Gimnaash","Haasrudu","Imdiiral","Kurnaash","Laashimi","Muurdana",
+     "Nikhaanu","Ordaashi","Pikhuuda","Ruumdiga","Sagaansh","Tashkuri"],
+  s:["Adakhii","Gashkiiran","Ludaashir","Nashkiilu","Ordiimaan","Pikhuruun","Rashiimun","Shaandiigu","Tuuriishan","Ukhmaadu",
+     "Vaadiishur","Ziirkuluu","Amdaashun","Bhurgiiral","Dansumaan","Eshkaadur","Gimnaashi","Haasrudun","Imdiiralu","Kurnaashun",
+     "Laashimdu","Muurdanish","Nikhaanru","Ordaashiil","Pikhuudan","Ruumdiigal","Sagaanshu","Tashkuriin","Belaanur","Ciirikhi",
+     "Dhagaashu","Erdiimun","Hiiralun","Ikhmadur","Kaanshiga","Mikhaanur"]},
+ Solomani:{
+  m:["Aldo","Bram","Corin","Dov","Emeric","Fenwick","Goran","Halvard","Ivo","Jorun",
+     "Kaspar","Lucien","Marek","Nikolai","Osric","Perrin","Quillon","Rasmus","Sander","Tobias",
+     "Ulric","Vashad","Wendel","Xavier","Yusuf","Zeno","Ambrose","Caius","Dorian","Emil",
+     "Fabian","Gideon","Hollis","Ilya","Jarek","Kwame"],
+  f:["Adaeze","Beatriz","Cassia","Dagny","Esme","Fiadh","Gita","Hesper","Ilse","Juno",
+     "Katarzyna","Lisbet","Maret","Nerys","Ondine","Priya","Quilla","Rosalind","Sabine","Thea",
+     "Ulla","Vashti","Wren","Xiomara","Yara","Zerlina","Amara","Bettany","Clea","Delia",
+     "Elspeth","Freya","Greta","Imogen","Jocasta","Kira"],
+  s:["Achall","Brennig","Corvane","Duhalde","Erskine","Falzon","Gallardo","Halloway","Ibori","Jarnvid",
+     "Kessel","Lindqvist","Mbeki","Ndiaye","Okonkwo","Pashenko","Quintero","Rooker","Sandoval","Tey",
+     "Ulloa","Vance","Wexley","Yarrow","Ziegler","Ashcombe","Bexley","Cardew","Drummond","Everard",
+     "Fitzhugh","Grantham","Hollis","Iveson","Jerrold","Kaywood"]},
+ Zhodani:{
+  m:["Adjlep","Brieplan","Chodjaz","Dlanjep","Efrienz","Fabliez","Iabrez","Jdanzhe","Klienzhr","Lanjebr",
+     "Mriazhen","Nabliedr","Obliezh","Prazhien","Qanjebr","Rienzhal","Shanjez","Tliebraz","Ubrienz","Vlanjez",
+     "Zhanbriep","Adrezhan","Blienzhep","Chriazlan","Dzanbriel","Efrablez","Gnaziepl","Iebranzh","Jliadrep","Kanzhiepl",
+     "Lriabzhen","Mnazhiepr","Nriezhbla","Ozhanbrie","Priezhlan","Rzabliech"],
+  f:["Adjliena","Briezhala","Chodjena","Dlanjiepla","Efriezha","Fabliena","Iabreza","Jdanzhepla","Klienzha","Lanjebria",
+     "Mriazhena","Nabliedra","Obliezha","Prazhiena","Qanjebria","Rienzhala","Shanjeza","Tliebraza","Ubrienza","Vlanjeza",
+     "Zhanbriepa","Adrezhana","Blienzhepa","Chriazlana","Dzanbriela","Efrableza","Gnaziepla","Iebranzha","Jliadrepa","Kanzhiepla",
+     "Lriabzhena","Mnazhiepra","Nriezhbla","Ozhanbriea","Priezhlana","Rzabliecha"],
+  s:["Adjlepbriep","Chodjazlan","Dlanjepriez","Efrienzhal","Fabliezhan","Iabrezhlan","Jdanzheprie","Klienzhrabl","Lanjebriezh","Mriazhenbla",
+     "Nabliedrazh","Obliezhanpr","Prazhienbla","Qanjebrizha","Rienzhalabr","Shanjezhbri","Tliebrazhan","Ubrienzhapl","Vlanjezhabr","Zhanbrieplan",
+     "Adrezhanbri","Blienzhepla","Chriazlanbr","Dzanbrielaz","Efrablezhan","Gnazieplabr","Iebranzhapl","Jliadrepzha","Kanzhieplab","Lriabzhenpr",
+     "Mnazhieprab","Nriezhblanz","Ozhanbriepl","Priezhlanab","Rzabliechan","Tsanbriezhl"]},
  Aslan:{
-  first:["Aeuwao","Ftahaowao","Hkaakhaia","Iyriyeh","Khtiylei","Luawaikh",
-         "Miykhoal","Ohuiyah","Riyseakh","Sahoiyfe","Tiykhrao","Uawiyre",
-         "Weahroi","Yaokhaiw","Ahtoiwe","Fteiylao","Hriykhau","Ikhtaraw",
-         "Kealraoh","Lyeahfti","Moaikhre","Ohtaeyu","Reihkoaw","Saeftly",
-         "Tahroiye","Uikhalao","Weyftaor","Yliahkae","Aokhrewi","Ftyauleh",
-         "Hoikhaya","Ireahwao","Khoalytei","Lauhriyk","Miyahtre","Oyftakhe"],
-  last:["Yerlyaruiwo","Khaukhilo","Hlyueawi","Syoisuis","Tralyeaeawi","Uikhilaa",
-        "Aokhalte","Eakhtiyr","Ftahalikh","Hrakoiwea","Iyfteahlu","Khiylahtre",
-        "Lyeakhriy","Moirtayah","Naoykhile","Oiwreahta","Rahtiykho","Seakhwiyl",
-        "Tyaoheikh","Uahriklea","Weahtolry","Yrikhaowe","Ahleaskoi","Ekhtoyria",
-        "Ftrialweo","Hoykhearl","Ilyawtehk","Khreaotyi","Loiwahkre","Miykhaotl",
-        "Nyahroeki","Oakhtelry","Riawohkei","Syeloakhi","Taykhreio","Waohliyke"],
-  note:"Clan name second, and it matters more than the first"},
+  m:["Ahroay","Ekhalei","Fteirle","Hkarui","Iyeahyao","Kteiroa","Lyukhoi","Meakhta","Nyaowao","Oiwyao",
+     "Rearlyao","Sahwea","Teakoiw","Uihkhau","Weakhoi","Yerlikh","Aiwyor","Ehteirl","Faowao","Hlyukho",
+     "Iykhtei","Khaowao","Lrearlu","Myeakhi","Ngyaoto","Oyekhau","Rihkyao","Syeahwa","Tlaiwyo","Ureakho",
+     "Wyaotei","Yaokhro","Ahtoiwr","Eiykhau","Ftaowei","Hkyeaol"],
+  f:["Aiheakh","Eiyealr","Fteiraul","Hkealui","Iyaowei","Kteahlo","Lyuweak","Meahril","Nyaoteir","Oiweahl",
+     "Rihkeal","Sayeakh","Teiwrea","Uikhoal","Weahtei","Yealrikh","Aowealr","Ehkyeal","Faoteir","Hluweah",
+     "Iykheal","Khaowei","Lreahwo","Myealti","Ngyeahl","Oykheal","Rihweal","Syeahli","Tlaiweah","Urekhal",
+     "Wyealti","Yaowealr","Ahkyeal","Eiwreah","Ftaolri","Hkyealw"],
+  s:["Ahroay'if","Eakhtoiwrl","Ftahealr","Hkelaokhu","Iykhaowei","Khtaeryao","Lyukhoirl","Meakhtaowe","Nyaowaokhu","Oiwyaorlu",
+     "Rearlyaokh","Sahweatoi","Teakoiwrle","Uihkhaurlo","Weakhoirla","Yerlikhau","Aiwyorleak","Ehteirlaow","Faowaoteir","Hlyukhoirl",
+     "Iykhteiwao","Khaowaorle","Lrearluikh","Myeakhirla","Ngyaotoirl","Oyekhaurle","Rihkyaowei","Syeahwaotl","Tlaiwyorle","Ureakhoiwr",
+     "Wyaoteirla","Yaokhrolei","Ahtoiwrlea","Eiykhaurlo","Ftaoweirla","Hkyeaolrei"]},
  Vargr:{
-  first:["Aegzuegh","Dzarrgh","Ekhaell","Fangvueth","Gvoudzon","Hraeksang",
-         "Irrgekh","Ksangdze","Llaenzugh","Naerrgho","Oughvekh","Rrangsel",
-         "Souekhan","Thaengvu","Ukhaersz","Vaegzoll","Zaengrukh","Aerrgvoll",
-         "Dzuenkhae","Enghsarra","Fhaergvoz","Grroudzel","Hsangkhoe","Illaengz",
-         "Kaevrougz","Lloezanth","Muezgharr","Nghaerrsu","Ourzgvael","Rhaesungz",
-         "Szoerrikh","Thuenzagh","Uersanggh","Vhoellaez","Zueghrran","Aekhsollu"],
-  last:["of Gzaengsvo","of Rrudzoegh","of Khaellan","of Ngvaerroth","of Suezgvel","of Thaerrukh",
-        "Uenzagh","Vraekholl","Zangvurra","Aerrikhso","Dzoellaeng","Ekhvaurro",
-        "Fhaengzoll","Gharruezan","Hsollaevgz","Ikhraengvo","Kvaellzoen","Llaesungvo",
-        "Murzaenggh","Nghoellars","Oezvarrukh","Rraengsollu","Sungvaerroz","Thoellaenz",
-        "Uarrgvoekh","Vaengzhoell","Zoerrakhun","Aengsvurrol","Dzhaellorr","Ekhungvaez",
-        "Fhorrsaeng","Gzuellaenv","Hraevzollun","Ilaengzurro","Khaesvorrun","Lloengvaerz"],
-  note:"Charisma is everything; the name changes with the pack"}};
-const SPECIES=["Human","Aslan","Vargr"];
+  m:["Aeng","Dzar","Ekue","Ffes","Gnaez","Gvou","Kagz","Khed","Ksae","Llagh",
+     "Naerr","Ngar","Oeng","Rrue","Sagh","Thoez","Uegz","Vaerr","Vloek","Wrae",
+     "Zaeng","Ael","Dhue","Eghz","Fzagh","Gaerr","Grnae","Kuez","Lhaeg","Nghae",
+     "Orra","Rhaez","Skae","Tzagh","Uenz","Zhaeg"],
+  f:["Aengza","Dzarra","Ekuen","Ffesza","Gnaeza","Gvoura","Kagzue","Khedra","Ksaeza","Llaghn",
+     "Naerra","Ngarza","Oengue","Rruena","Saghza","Thoeza","Uegzra","Vaerza","Vloeka","Wraena",
+     "Zaenga","Aelza","Dhuera","Eghzna","Fzagha","Gaerza","Grnaeza","Kuezra","Lhaegn","Nghaeza",
+     "Orraze","Rhaeza","Skaera","Tzagha","Uenzra","Zhaega"],
+  s:["Aengkhas","Dzarrukh","Ekuedzeng","Ffesnagzh","Gnaezoell","Gvourrakh","Kagzuethl","Khedvorra","Ksaengarr","Llaghuezd",
+     "Naerrkoez","Ngarvuekh","Oengthaez","Rruegzakh","Saghnuell","Thoezvarr","Uegzkhaes","Vaerrnuoz","Vloekgarr","Wraedzueh",
+     "Zaengkhoe","Aelvorrag","Dhuezakhn","Eghzurrae","Fzaghnoel","Gaerrukhz","Grnaevoez","Kuezdhagn","Lhaegvorr","Nghaeksue",
+     "Orrathaez","Rhaezgnuk","Skaevorrn","Tzaghuedz","Uenzkhaer","Zhaegnurr"]}};
+const SPECIES=Object.keys(NAMEDATA);
 function d66pick(arr){ return arr[(d(6)-1)*6+(d(6)-1)]; }
-function makeName(sp){
-  const s=NAMEDATA[sp]||NAMEDATA.Human;
-  const f=d66pick(s.first), l=d66pick(s.last);
-  return (sp==='Vargr' && l.startsWith('of ')) ? f+' '+l : f+' '+l;
+function makeName(sp,g){
+  const s=NAMEDATA[sp]||NAMEDATA.Solomani;
+  const gg = g || (d(6)<=3?'m':'f');
+  return d66pick(s[gg])+' '+d66pick(s.s);
 }
 function speciesFor(shipName){
   if(/aslan/i.test(shipName)) return 'Aslan';
   const r=d(6)+d(6);
   if(r<=3) return 'Vargr';
-  if(r<=4) return 'Aslan';
-  return 'Human';
+  if(r===4) return 'Aslan';
+  if(r===5) return 'Zhodani';
+  if(r<=8) return 'Vilani';
+  return 'Solomani';
 }
 
 /* ==================== RULES ==================== */
@@ -1367,7 +1394,9 @@ function renderTable(){
 }
 function renderTableBtns(){
   document.getElementById('tableBtns').innerHTML =
-    TABLES.map((t,i)=>`<button class="mini ${S.tblSel&&S.tblSel.k==='b'&&S.tblSel.i===i?'on2':''}"
+    `<button class="mini" style="border-color:var(--green);color:var(--green)"
+        onclick="rollAnyName()">✦ One-off NPC name</button>`
+    + TABLES.map((t,i)=>`<button class="mini ${S.tblSel&&S.tblSel.k==='b'&&S.tblSel.i===i?'on2':''}"
         onclick="showTable('b',${i})">${t.n}</button>`).join('')
     + (S.custom||[]).map(t=>`<button class="mini ${S.tblSel&&S.tblSel.k==='c'&&S.tblSel.i===t.id?'on2':''}"
         style="${S.tblSel&&S.tblSel.k==='c'&&S.tblSel.i===t.id?'':'border-color:var(--gold);color:var(--gold)'}"
@@ -1375,6 +1404,26 @@ function renderTableBtns(){
 }
 function renderRolls(){
   document.getElementById('rollLog').innerHTML=(S.rolls||[]).map(r=>`<div>${r}</div>`).join('')||'<div>Nothing yet.</div>';
+}
+SPECIES.forEach(sp=>{
+  TABLES.push({n:`${sp} ♂ first`,  mode:'d66', items:NAMEDATA[sp].m});
+  TABLES.push({n:`${sp} ♀ first`,  mode:'d66', items:NAMEDATA[sp].f});
+  TABLES.push({n:`${sp} surname`,  mode:'d66', items:NAMEDATA[sp].s});
+});
+function rollAnyName(){
+  const sp=SPECIES[Math.floor(Math.random()*SPECIES.length)];
+  const g=d(6)<=3?'m':'f';
+  const nm=makeName(sp,g);
+  document.getElementById('tblName').innerHTML='One-off NPC name';
+  document.getElementById('tblDice').textContent=sp+' · '+(g==='m'?'male':'female');
+  document.getElementById('tblBody').innerHTML=
+    `<div style="font-size:22px;font-weight:700;padding:10px 0" class="greenc">${nm}</div>`+
+    `<div class="hint">Roll again for another, or open that species' tables above to pick by hand.</div>`;
+  document.getElementById('respRow').style.display='none';
+  S.tblSel=null; S.rolls=S.rolls||[];
+  S.rolls.unshift(`<b>NPC name</b> ${sp} — ${nm}`);
+  if(S.rolls.length>40) S.rolls.length=40;
+  renderRolls(); renderTableBtns(); queueSave();
 }
 let pendingResp=null;
 function sendResp(){
@@ -1453,6 +1502,12 @@ const HELP=[
   "effective DM and flags SHAKEN, so a group that is winning stays dangerous and a group that is losing falls apart. "+
   "The <b>Shaken</b> button overrides it by hand &mdash; which is how you handle a single foe, since one body has no "+
   "casualty ratio to read.<br><br>"+
+  "<b>Every combatant has an <b>Edit</b> button</b> &mdash; name, armour, skill DM, bodies, hits each, break number, "+
+  "PSI pool and weapons, all editable in place, with a <b>Roll a new name</b> button beside it. That is your "+
+  "machinery for one-off NPCs: generate something close, edit it into what you want, then <b>Save</b> it to the "+
+  "roster so it comes back next session with its stats intact.<br><br>"+
+  "<b>Single foes are born named.</b> The generator rolls a name from the species tables rather than calling them "+
+  "'Elite assassin' &mdash; the archetype becomes their description instead.<br><br>"+
   "<b>Psions</b> carry a shared PSI pool &mdash; the group's total, with a cap on any single use equal to one "+
   "member's share. A squad of five trained psions has 25 points and can throw at most 5 at you in one go. "+
   "Spend with the buttons on their row; the arrow gives points back if you miscount.<br><br>"+
@@ -1548,6 +1603,9 @@ const HELP=[
   "<b>Rules</b> has three panes: Traveller core mechanics, the Drinax campaign subsystems, and "+
   "<b>Where to look</b> &mdash; a page index for all four books, so you can turn straight to anything "+
   "this console only summarises. Page cites also sit in the corner of each rules card.<br><br>"+
+  "<b>Name tables</b> sit at the front of the Tables tab: first names by gender and surnames, as separate D66 "+
+  "tables for Vilani, Solomani, Zhodani, Aslan and Vargr. The gold <b>✦ One-off NPC name</b> button rolls species, "+
+  "gender and both halves in one go when you just need somebody called something, now.<br><br>"+
   "<b>Tables</b> lays each table out in full when you tap it, so you can roll your own dice and read it off. "+
   "Type what you rolled into the box and press Find to highlight the row, or hit <b>Roll it for me</b> "+
   "and the console highlights it instead. Everything rolled is logged beside it.<br><br>"+
@@ -2087,6 +2145,65 @@ function addCond(id){
 }
 function delCond(id,i){ const c=S.combat.list.find(x=>x.id===id);
   c.cond.splice(i,1); renderCombat(); queueSave(); }
+function editCbt(id){ S.combat.edit=(S.combat.edit===id?null:id); renderCombat(); }
+function saveCbt(id){
+  const c=S.combat.list.find(x=>x.id===id); if(!c) return;
+  const g=k=>document.getElementById('ce-'+k+'-'+id);
+  const nm=g('n')&&g('n').value.trim(); if(nm) c.n=nm;
+  if(g('note')) c.note=g('note').value.trim();
+  if(g('arm'))  c.arm=Math.max(0,+g('arm').value||0);
+  if(c.t==='mob'){
+    if(g('dm'))   c.dm=+g('dm').value||0;
+    if(g('bod')){ const b=Math.max(1,+g('bod').value||1);
+      c.pipsMax=b; c.pips=Math.min(c.pips===undefined?b:c.pips,b); }
+    if(g('hits')) c.hitsEach=Math.max(1,+g('hits').value||1);
+    if(g('brk'))  c.brk=Math.max(0,+g('brk').value||0);
+    if(g('psi')){ c.psiMax=Math.max(0,+g('psi').value||0);
+      if(c.psiSpent>c.psiMax) c.psiSpent=c.psiMax; }
+    if(g('psie')) c.psiEach=Math.max(0,+g('psie').value||0);
+    if(g('weps')) c.weps=g('weps').value.split(',').map(s=>s.trim()).filter(Boolean);
+  } else {
+    if(g('end')){ c.endMax=Math.max(0,+g('end').value||0); if(c.end>c.endMax) c.end=c.endMax; }
+  }
+  if(c.pcId){ const p=S.party.find(x=>x.id===c.pcId); if(p&&nm) p.n=nm; }
+  S.combat.edit=null; renderCombat(); renderParty(); queueSave();
+}
+function cbtEditPane(c){
+  if(S.combat.edit!==c.id) return '';
+  const f=(k,lbl,val,w)=>`<label class="hint" style="display:flex;flex-direction:column;gap:3px">${lbl}
+    <input id="ce-${k}-${c.id}" value="${(val===undefined||val===null?'':(''+val)).replace(/"/g,'&quot;')}"
+      style="width:${w||90}px"></label>`;
+  const mob=c.t==='mob';
+  return `<div class="card" style="background:var(--panel2);margin:8px 0 4px">
+    <div class="row">
+      <label class="hint grow" style="display:flex;flex-direction:column;gap:3px;min-width:160px">Name
+        <input id="ce-n-${c.id}" value="${c.n.replace(/"/g,'&quot;')}"></label>
+      ${f('arm','Armour',c.arm,80)}
+      ${mob?f('dm','Skill DM',c.dm,80):f('end','END max',c.endMax,90)}
+    </div>
+    ${mob?`<div class="row" style="margin-top:6px">
+      ${f('bod','Bodies',c.pipsMax,80)}${f('hits','Hits each',c.hitsEach,90)}
+      ${f('brk','Breaks at',c.brk,90)}${f('psi','PSI pool',c.psiMax||0,90)}${f('psie','PSI per use',c.psiEach||0,100)}
+    </div>
+    <div class="row" style="margin-top:6px">
+      <label class="hint grow" style="display:flex;flex-direction:column;gap:3px">Weapons, comma separated
+        <input id="ce-weps-${c.id}" value="${(c.weps||[]).join(', ').replace(/"/g,'&quot;')}"></label>
+    </div>`:''}
+    <div class="row" style="margin-top:6px">
+      <label class="hint grow" style="display:flex;flex-direction:column;gap:3px">Note
+        <input id="ce-note-${c.id}" value="${(c.note||'').replace(/"/g,'&quot;')}"></label>
+    </div>
+    <div class="row" style="margin-top:9px">
+      <button onclick="saveCbt('${c.id}')">Save</button>
+      <button class="mini" onclick="editCbt('${c.id}')">Cancel</button>
+      <button class="mini" onclick="renameRoll('${c.id}')">Roll a new name</button>
+    </div>
+  </div>`;
+}
+function renameRoll(id){
+  const el=document.getElementById('ce-n-'+id); if(!el) return;
+  el.value=makeName(SPECIES[Math.floor(Math.random()*SPECIES.length)]);
+}
 function saveNPC(id){
   const c=S.combat.list.find(x=>x.id===id); if(!c||c.pcId) return;
   S.npcs=S.npcs||[];
@@ -2170,6 +2287,7 @@ function renderCombat(){
         <span class="hint">blank rounds = until you remove it</span>
       </div>`:''}
       ${ammoStrip(c)}${c.t==='mob'?psiStrip(c):''}
+      ${cbtEditPane(c)}
       <div class="row" style="margin-top:5px">
         ${body}
         <div class="grow"></div>
@@ -2182,6 +2300,7 @@ function renderCombat(){
              <button class="mini" onclick="dmg('${c.id}',3)">+3</button>
              <button class="mini" onclick="toggleBreach('${c.id}')">Suit</button>`}
         <button class="mini" onclick="condPanel('${c.id}')" title="Add a condition">+C</button>
+        <button class="mini" onclick="editCbt('${c.id}')" title="Edit this combatant">Edit</button>
         ${!c.pcId?`<button class="mini" onclick="saveNPC('${c.id}')" title="Keep for later">Save</button>`:''}
         <button class="mini x" onclick="delC('${c.id}')">&times;</button>
       </div></div>`;
@@ -2215,16 +2334,25 @@ function genMob(){
   const single=(z===0);
   const psiEach = (a.psi && !helpless) ? a.psi[t] : 0;
   const tname = helpless ? DEFENCELESS : TIERN[t];
-  lastMob={n: single ? `${tname} ${a.n.replace(/s$/,'').toLowerCase()}` : `${tname} ${a.n.toLowerCase()}`,
+  let foeName=null;
+  if(single){
+    const sp = /aslan/i.test(a.n) ? 'Aslan'
+             : /vespexer/i.test(a.n) ? 'Solomani'
+             : speciesFor('');
+    foeName = makeName(sp);
+  }
+  lastMob={n: single ? foeName : `${tname} ${a.n.toLowerCase()}`,
+    role: single ? `${tname} ${a.n.replace(/s$/,'').toLowerCase()}` : null,
     pips,dm,arm:(helpless?0:a.arm[t]),weps,trait:a.t[d(3)-1],brk,hitsEach,single,helpless,
     psiEach, psiMax:psiEach*pips};
   document.getElementById('mobOut').innerHTML=
-    `<b class="greenc" style="font-size:15px">${lastMob.n}</b> &mdash; ${SIZEN[z]}<br>
+    `<b class="greenc" style="font-size:15px">${lastMob.n}</b> &mdash; ${lastMob.role||SIZEN[z]}<br>
      ${single ? `<b class="goldc num">1</b> foe &nbsp;·&nbsp; <b>1</b> attack a round`
               : `<b class="goldc num">${pips}</b> bodies &nbsp;·&nbsp; <b>${Math.floor(pips/3)}</b> attacks a round`}
      &nbsp;·&nbsp; skill <b>DM${sgn(dm)}</b> &nbsp;·&nbsp; armour <b>${lastMob.arm}</b><br>
      <b>${hitsEach}</b> hits${single?'':' each'} &mdash; mark damage on the token, remove them here when they drop.<br>
      Armed with <b>${weps.join('</b> and <b>')}</b>.<br>
+     ${single?`<span class="hint">Reroll the name from the Tables tab if you want a different one.</span><br>`:''}
      ${psiEach?`<b class="hotc">PSI pool ${psiEach*pips}</b> &mdash; at most <b>${psiEach}</b> points in any single use.<br>`:''}
      ${brk?`Breaks at <b class="hotc">${brk}</b> bodies.`:(single?'A lone foe does not break &mdash; it fights or it runs.':'<b class="redc">Does not break.</b>')}<br>
      ${single?'Set its shaken penalty by hand as it takes damage.'
@@ -2239,7 +2367,7 @@ function addGenMob(){
     arm:lastMob.arm,dm:lastMob.dm,pips:lastMob.pips,pipsMax:lastMob.pips,brk:lastMob.brk,
     hitsEach:lastMob.hitsEach,dmg:0,weps:lastMob.weps,single:lastMob.single,
     psiEach:lastMob.psiEach||0, psiMax:lastMob.psiMax||0, psiSpent:0,
-    note:lastMob.weps.join(' · ')+' — '+lastMob.trait,
+    note:(lastMob.role?lastMob.role+' · ':'')+lastMob.weps.join(' · ')+' — '+lastMob.trait,
     zone:(ZONES[S.combat.mode||'ground'])[0],breach:false});
   renderCombat(); queueSave();
 }
@@ -2275,8 +2403,23 @@ function genShip(){
        <b class="goldc">Cr${cargo.toLocaleString()}</b> before fencing.<br>
        <span class="hint">${lastShip.cargoNote}.</span><br>`:'<br>'}
      ${t===3?'<b class="hotc">Escorted &mdash; roll a second contact and put it at Long.</b><br>':''}
-     <i>${s.note}.</i><br>Complication: <b>${lastShip.comp}</b>.`;
+     <i>${s.note}.</i><br>Complication: <b>${lastShip.comp}</b>
+     <button class="mini" style="margin-left:6px" onclick="rerollComp()" title="Roll a different complication">&#8635;</button>`;
   document.getElementById('shipAddRow').style.display='';
+}
+function rerollComp(id){
+  if(id){
+    const c=S.space.contacts.find(x=>x.id===id); if(!c) return;
+    let n=c.comp, guard=0;
+    while(n===c.comp && guard++<12) n=SCOMP[d(6)-1];
+    c.comp=n; renderSpace(); queueSave(); return;
+  }
+  if(!lastShip) return;
+  let n=lastShip.comp, guard=0;
+  while(n===lastShip.comp && guard++<12) n=SCOMP[d(6)-1];
+  lastShip.comp=n;
+  const el=document.getElementById('shipOut');
+  el.innerHTML=el.innerHTML.replace(/Complication: <b>[^<]*<\/b>/, 'Complication: <b>'+n+'</b>');
 }
 function addGenShip(){
   if(!lastShip) return;
@@ -2391,7 +2534,8 @@ function infoPane(c){
     ${c.cargo?`<div style="margin-top:5px"><span class="hotc">Cargo:</span> ${c.cargoType||'general'},
       ~<b class="goldc">Cr${c.cargo.toLocaleString()}</b><br><span class="hint">${c.cargoNote||''}</span></div>`:''}
     ${c.note?`<div class="hint" style="margin-top:6px"><i>${c.note}.</i></div>`:''}
-    ${c.comp?`<div class="hint">Complication: <b>${c.comp}</b></div>`:''}
+    ${c.comp?`<div class="hint">Complication: <b>${c.comp}</b>
+      <button class="mini" style="margin-left:6px" onclick="rerollComp('${c.id}')" title="Roll a different complication">&#8635;</button></div>`:''}
   </div>`;
 }
 function cDmg(id,v){ const c=S.space.contacts.find(x=>x.id===id);
@@ -2444,7 +2588,7 @@ function renderSpace(){
           <button onclick="moveM('${m.id}',1)">&rsaquo;</button>
           <button onclick="delM('${m.id}')">&times;</button>
         </div></div>`).join('');
-    return `<div class="lane ${i===2?'short':''}"><div class="lbl">${b}<br>${BANDD[i]}${i===2?'<br>DM+4':i===3?'<br>DM+2':''}</div>${inLane}${miss}</div>`;
+    return `<div class="lane ${i===2?'short':''}"><div class="lbl">${b}<br>${BANDD[i]}${i===2?'<br><span class="lanetag">DM+4 · NO ESCAPE</span>':i===3?'<br><span class="lanetag" style="color:var(--dim);border-color:var(--line)">DM+2</span>':''}</div>${inLane}${miss}</div>`;
   }).join('');
 
   const selC=S.space.contacts.find(c=>c.id===S.space.sel);
