@@ -61,6 +61,7 @@ button:hover{border-color:var(--green);}
 .glink{background:none;border:none;color:var(--dim);font-size:11px;letter-spacing:.08em;
   text-decoration:underline;margin-top:14px;min-height:auto;padding:6px;}
 .glink:hover{color:var(--ink);border:none;}
+.gcopy{margin-top:26px;font-size:10px;letter-spacing:.1em;color:var(--green);}
 #dicePanel{display:none;position:fixed;right:calc(12px + env(safe-area-inset-right,0px));
   top:calc(66px + env(safe-area-inset-top,0px));z-index:130;width:280px;
   background:var(--panel);border:1px solid var(--green);padding:12px;
@@ -235,6 +236,9 @@ textarea{width:100%;min-height:120px;resize:vertical;line-height:1.6;}
   box-shadow:0 20px 60px rgba(0,0,0,.7);}
 button.danger{background:var(--green);border-color:var(--green);color:#0c0405;font-weight:700;}
 button.danger:hover{background:var(--red);border-color:var(--red);}
+.pgfoot{margin:22px 0 4px;padding-top:11px;border-top:1px solid var(--line);
+  font-size:10px;letter-spacing:.08em;color:var(--green);line-height:1.6;}
+.pgfoot span{display:block;font-size:9px;letter-spacing:.04em;color:var(--green);opacity:.62;margin-top:3px;}
 .log div{border-bottom:1px solid #1e1516;padding:2px 0;}
 </style>
 <script src="https://www.gstatic.com/firebasejs/12.17.1/firebase-app-compat.js"></script>
@@ -277,6 +281,7 @@ button.danger:hover{background:var(--red);border-color:var(--red);}
     </div>
     <p class="gnote" id="gNote">Players do not sign in here. Use the link your referee sent you.</p>
     <button class="glink" onclick="gateSkip()">Work offline without signing in</button>
+    <div class="gcopy">&copy; 2026 Effigy Media. All rights reserved.</div>
   </div>
 </div>
 <div id="dicePanel">
@@ -417,6 +422,9 @@ button.danger:hover{background:var(--red);border-color:var(--red);}
       </div>
     </div>
   </div>
+  <div class="pgfoot">&copy; 2026 Effigy Media. All rights reserved.
+    <span>Traveller is a trademark of Far Future Enterprises. Contains material &copy; Mongoose Publishing,
+    used under the Community Content Agreement for The Travellers' Aid Society.</span></div>
 </section>
 
 <!-- ============================ PARTY ============================ -->
@@ -489,6 +497,9 @@ button.danger:hover{background:var(--red);border-color:var(--red);}
       the wounds and ammunition you set here appear on their sheet.</p>
   </div>
   <div id="partyList"></div>
+  <div class="pgfoot">&copy; 2026 Effigy Media. All rights reserved.
+    <span>Traveller is a trademark of Far Future Enterprises. Contains material &copy; Mongoose Publishing,
+    used under the Community Content Agreement for The Travellers' Aid Society.</span></div>
 </section>
 
 <!-- ============================ SPACE ============================ -->
@@ -522,11 +533,72 @@ button.danger:hover{background:var(--red);border-color:var(--red);}
         <option value="5">Resolve 5 &mdash; will die for it (14+)</option>
       </select>
       <button onclick="addContact()">Add contact</button>
+      <button class="mini" onclick="toggleBuild()" id="bldBtn">Build it out &hellip;</button>
       <button class="mini" onclick="launch('out')" title="A missile of yours, running outward">&#9679;&rarr; Missile out</button>
       <button class="mini" onclick="launch('in')" title="A missile inbound at you">&larr;&#9679; Missile in</button>
       <button class="mini" onclick="rollPosture()">Roll posture</button>
       <span class="hint grow" id="postureOut"></span>
     </div>
+    <div id="buildBox" style="display:none;margin-top:9px;padding:10px;border:1px solid var(--line)">
+      <div class="row">
+        <label class="hint" style="display:flex;flex-direction:column;gap:3px">Tonnage
+          <input id="bTons" placeholder="200t" style="width:88px"></label>
+        <label class="hint" style="display:flex;flex-direction:column;gap:3px">Thrust
+          <input id="bTh" type="number" style="width:74px"></label>
+        <label class="hint" style="display:flex;flex-direction:column;gap:3px">Jump
+          <input id="bJmp" type="number" style="width:70px"></label>
+        <label class="hint" style="display:flex;flex-direction:column;gap:3px">Armour
+          <input id="bArmr" type="number" style="width:82px"></label>
+        <label class="hint" style="display:flex;flex-direction:column;gap:3px">Damage pips
+          <input id="bDmg" type="number" value="3" style="width:96px"></label>
+        <label class="hint" style="display:flex;flex-direction:column;gap:3px">Sensors DM
+          <input id="bSens" type="number" style="width:96px"></label>
+        <label class="hint" style="display:flex;flex-direction:column;gap:3px">Crew
+          <input id="bCrew" type="number" style="width:74px"></label>
+      </div>
+      <div class="row" style="margin-top:7px">
+        <label class="hint" style="display:flex;flex-direction:column;gap:3px">Attacks / exchange
+          <input id="bAtt" type="number" value="1" style="width:120px"></label>
+        <label class="hint" style="display:flex;flex-direction:column;gap:3px">Marks a pip on
+          <input id="bTn" type="number" value="8" style="width:110px"></label>
+        <label class="hint" style="display:flex;flex-direction:column;gap:3px">Reaches
+          <select id="bRng" style="width:120px">
+            <option>Adjacent</option><option>Close</option><option selected>Short</option>
+            <option>Medium</option><option>Long</option><option>Very Long</option><option>Distant</option>
+          </select></label>
+        <label class="hint grow" style="display:flex;flex-direction:column;gap:3px;min-width:180px">Armament
+          <input id="bArm" placeholder="two turrets, beam lasers"></label>
+      </div>
+      <div class="row" style="margin-top:7px">
+        <label class="hint" style="display:flex;flex-direction:column;gap:3px;min-width:150px">Crew archetype
+          <select id="bArch"></select></label>
+        <label class="hint" style="display:flex;flex-direction:column;gap:3px">Crew tier
+          <select id="bTier">
+            <option value="-1">Defenceless</option><option value="0">Rabble</option>
+            <option value="1" selected>Trained</option><option value="2">Veteran</option>
+            <option value="3">Elite</option>
+          </select></label>
+        <label class="hint" style="display:flex;flex-direction:column;gap:3px">How many
+          <select id="bSize">
+            <option value="0">Single foe</option><option value="1">Handful</option>
+            <option value="2" selected>Squad</option><option value="3">Crowd</option>
+          </select></label>
+        <label class="hint" style="display:flex;flex-direction:column;gap:3px">Cargo (Cr)
+          <input id="bCargo" type="number" style="width:120px"></label>
+        <label class="hint grow" style="display:flex;flex-direction:column;gap:3px;min-width:170px">Cargo type
+          <input id="bCargoT" placeholder="Luxury goods"></label>
+      </div>
+      <div class="row" style="margin-top:7px">
+        <label class="hint grow" style="display:flex;flex-direction:column;gap:3px">Complication or note
+          <input id="bComp" placeholder="A passenger aboard changes everything"></label>
+        <select id="bBand" style="width:130px">
+          <option value="6" selected>Starts Distant</option><option value="5">Very Long</option>
+          <option value="4">Long</option><option value="3">Medium</option><option value="2">Short</option>
+          <option value="1">Close</option><option value="0">Adjacent</option>
+        </select>
+        <button onclick="addBuilt()">Add this ship</button>
+        <button class="mini" onclick="fillFromLast()" title="Prefill from the last rolled ship">Prefill from roll</button>
+      </div></div>
   </div>
 
   <div class="card">
@@ -583,6 +655,9 @@ button.danger:hover{background:var(--red);border-color:var(--red);}
       <b class="redc">known to kill crews &minus;2</b>
     </p>
   </div>
+  <div class="pgfoot">&copy; 2026 Effigy Media. All rights reserved.
+    <span>Traveller is a trademark of Far Future Enterprises. Contains material &copy; Mongoose Publishing,
+    used under the Community Content Agreement for The Travellers' Aid Society.</span></div>
 </section>
 
 <!-- ============================ CAMPAIGN ============================ -->
@@ -728,6 +803,9 @@ button.danger:hover{background:var(--red);border-color:var(--red);}
       <button class="mini" onclick="hideBox()">Cancel</button>
     </div>
   </div>
+  <div class="pgfoot">&copy; 2026 Effigy Media. All rights reserved.
+    <span>Traveller is a trademark of Far Future Enterprises. Contains material &copy; Mongoose Publishing,
+    used under the Community Content Agreement for The Travellers' Aid Society.</span></div>
 </section>
 
 
@@ -738,15 +816,36 @@ button.danger:hover{background:var(--red);border-color:var(--red);}
       <button id="rb0" class="on2" onclick="rules(0)">Traveller core</button>
       <button id="rb1" onclick="rules(1)">Pirates of Drinax</button>
       <button id="rb2" onclick="rules(2)">Where to look</button>
+      <button id="rb3" onclick="rules(3)">Psionics</button>
       <div class="grow"></div>
       <span class="hint">A summary for mid-session recall. Core page numbers are for the 2022 update &mdash; the books are the authority.</span>
     </div>
   </div>
   <div id="rulesBody"></div>
+  <div class="pgfoot">&copy; 2026 Effigy Media. All rights reserved.
+    <span>Traveller is a trademark of Far Future Enterprises. Contains material &copy; Mongoose Publishing,
+    used under the Community Content Agreement for The Travellers' Aid Society.</span></div>
 </section>
 
 <!-- ============================ TABLES ============================ -->
 <section class="tab" id="tab-tables">
+  <div class="card">
+    <h2>Names</h2>
+    <div class="row">
+      <select id="nmSp" style="min-width:120px"></select>
+      <select id="nmPart">
+        <option>♂ first</option><option>♀ first</option><option>surname</option>
+      </select>
+      <button class="mini" onclick="showNameTable()">Show the table</button>
+      <button class="mini" onclick="rollNameTable()">Roll it</button>
+      <button class="mini" style="border-color:var(--green);color:var(--green)"
+              onclick="rollAnyName()">✦ One-off NPC name</button>
+    </div>
+    <p class="hint" style="margin-top:7px">Fifteen D66 tables &mdash; first names by gender and
+      surnames, for Vilani, Solomani, Zhodani, Aslan and Vargr. The gold button rolls species,
+      gender and both halves at once.</p>
+  </div>
+
   <div class="card">
     <h2>Tables</h2>
     <div id="tableBtns" class="row"></div>
@@ -759,10 +858,7 @@ button.danger:hover{background:var(--red);border-color:var(--red);}
           <b id="tblName" style="font-size:17px;letter-spacing:.04em">Pick a table</b>
           <span class="hint" id="tblDice"></span>
           <div class="grow"></div>
-          <input id="tblLook" placeholder="rolled?" style="width:96px;text-align:center"
-                 onkeyup="if(event.key==='Enter')lookUp()">
-          <button class="mini" onclick="lookUp()">Find</button>
-          <button onclick="rollCurrent()">Roll it for me</button>
+          <button id="tblRoll" onclick="rollCurrent()">Roll it for me</button>
         </div>
         <div id="tblBody" style="margin-top:10px"></div>
         <div class="row" id="respRow" style="display:none;margin-top:9px">
@@ -806,11 +902,17 @@ button.danger:hover{background:var(--red);border-color:var(--red);}
       <div class="row" style="margin-top:8px"><button class="mini" onclick="clearRolls()">Clear</button></div>
     </div>
   </div>
+  <div class="pgfoot">&copy; 2026 Effigy Media. All rights reserved.
+    <span>Traveller is a trademark of Far Future Enterprises. Contains material &copy; Mongoose Publishing,
+    used under the Community Content Agreement for The Travellers' Aid Society.</span></div>
 </section>
 
 <!-- ============================ HELP ============================ -->
 <section class="tab" id="tab-help">
   <div id="helpBody"></div>
+  <div class="pgfoot">&copy; 2026 Effigy Media. All rights reserved.
+    <span>Traveller is a trademark of Far Future Enterprises. Contains material &copy; Mongoose Publishing,
+    used under the Community Content Agreement for The Travellers' Aid Society.</span></div>
 </section>
 </main>
 
@@ -1248,6 +1350,80 @@ const RULES=[[
   "<b>Chieftain Galx</b> &mdash; Vespexer tribal leader, never removes her hazard suit.","TR p.22&ndash;25"]
 ]];
 
+
+const PSIRULES=[
+ ["Using a power","Core p.229",
+  "Roll the talent's skill <b>+ PSI DM</b> against the power's difficulty. Spend the <b>PSI cost</b> on a success, "+
+  "<b>1 point</b> on a failure. Excess below zero is applied as <b>damage</b>; at 0 PSI you cannot attempt anything.<br>"+
+  "Recover <b>1 point per hour</b>, starting three hours after the last use.<br>"+
+  "<b>Reach:</b> +1 band for <b>double</b> the cost, +2 bands for <b>four times</b>."],
+ ["Psionic range","Core p.229",
+  "Personal under 1m · Close 1–5m · Short 6–10m · Medium 11–50m · Long 51–250m · Very Long 251–500m · "+
+  "Distant 501m–5km · Very Distant 6–500km · Continental 501–5,000km · Planetary 5,001–50,000km"],
+ ["Telepathy","Core p.230",
+  "<table><tr><th>Power</th><th>Check</th><th>Reach</th><th>PSI</th><th>Notes</th></tr>"+
+  "<tr><td>Life Detection</td><td>4+</td><td>Distant</td><td>1</td><td>Number, type, rough position. Shielded minds unseen</td></tr>"+
+  "<tr><td>Mind Link</td><td>4+</td><td>Distant</td><td>1</td><td>Both must use it. Combined Effects in minutes</td></tr>"+
+  "<tr><td>Telempathy</td><td>6+</td><td>Long</td><td>1</td><td>Read or project emotion</td></tr>"+
+  "<tr><td>Read Surface Thoughts</td><td>8+</td><td>Long</td><td>2</td><td>Active thoughts only. Effect = clarity</td></tr>"+
+  "<tr><td>Send Thoughts</td><td>10+</td><td>Distant</td><td>2</td><td>Target need not be psionic</td></tr>"+
+  "<tr><td>Suggestion</td><td>12+</td><td>Short</td><td>3</td><td>Effect 6+ even suicidal commands</td></tr>"+
+  "<tr><td>Probe</td><td>12+</td><td>Close</td><td>4</td><td>Deep reading, detects lies. Not vs a shield</td></tr>"+
+  "<tr><td>Assault</td><td>14+</td><td>Short</td><td>8</td><td>Unshielded: out cold, <b>Effect×3</b> damage. Shielded: opposed</td></tr></table>"],
+ ["Clairvoyance","Core p.231",
+  "<table><tr><th>Power</th><th>Check</th><th>Reach</th><th>PSI</th><th>Notes</th></tr>"+
+  "<tr><td>Sense</td><td>6+</td><td>Very Distant</td><td>1</td><td>Bare description of a place</td></tr>"+
+  "<tr><td>Tactical Awareness</td><td>8+</td><td>Long</td><td>2</td><td>Ignore darkness and smoke, spot hidden foes. Effect = rounds</td></tr>"+
+  "<tr><td>Clairvoyance</td><td>8+</td><td>Very Distant</td><td>1</td><td>See. Effect = detail</td></tr>"+
+  "<tr><td>Clairaudience</td><td>8+</td><td>Very Distant</td><td>1</td><td>Hear</td></tr>"+
+  "<tr><td>Clairsentience</td><td>10+</td><td>Very Distant</td><td>1</td><td>Both together</td></tr></table>"+
+  "Clairvoyance <b>cannot be detected</b>, even by other psions."],
+ ["Telekinesis","Core p.232",
+  "<table><tr><th>Power</th><th>Check</th><th>Reach</th><th>PSI</th><th>Notes</th></tr>"+
+  "<tr><td>Telekinesis</td><td>8+</td><td>Short</td><td>1 per 10kg</td><td>Effect = rounds. PSI spent = mass</td></tr>"+
+  "<tr><td>Flight</td><td>10+</td><td>Personal</td><td>5</td><td>Effect = rounds, 15m each</td></tr>"+
+  "<tr><td>Telekinetic Punch</td><td>8+</td><td>Short</td><td>1</td><td><b>Damage = Effect</b>, armour protects</td></tr>"+
+  "<tr><td>Microkinesis</td><td>10+</td><td>Close</td><td>3</td><td>Locks, microsurgery, sabotage</td></tr>"+
+  "<tr><td>Pyrokinesis</td><td>6+</td><td>Short</td><td>3</td><td>0–4 warm · 5–8 burnt 1D · 9+ 2D and may ignite</td></tr></table>"],
+ ["Awareness — yourself only","Core p.233",
+  "<table><tr><th>Power</th><th>Check</th><th>PSI</th><th>Notes</th></tr>"+
+  "<tr><td>Suspended Animation</td><td>8+</td><td>3</td><td>Seven days, wakeable</td></tr>"+
+  "<tr><td>Enhanced Strength</td><td>8+</td><td>= increase</td><td>Effect×10 minutes, then −1/min</td></tr>"+
+  "<tr><td>Enhanced Endurance</td><td>8+</td><td>= increase</td><td>As above, for END</td></tr>"+
+  "<tr><td>Fortitude</td><td>10+</td><td>= armour</td><td>Effect = rounds. Stacks with worn armour</td></tr>"+
+  "<tr><td>Inspiration</td><td>8+</td><td>1</td><td>DM+2 to one check within a minute</td></tr>"+
+  "<tr><td>Regeneration</td><td>10+</td><td>= healed</td><td>1 PSI per characteristic point. Not ageing or SOC</td></tr></table>"+
+  "Awareness <b>never</b> works on anyone else — unless the psion is Zhodani."],
+ ["Teleportation","Core p.234",
+  "Yourself, Reach Distant — <b>8+</b>, 2 PSI. With clothing and 10kg — <b>10+</b>, +2. With 500kg — <b>12+</b>, +4.<br>"+
+  "Never armour, never another person, never loose objects.<br>"+
+  "On a planet, no further than <b>Very Distant</b>. Beyond sight, disorientation for <b>2D − Effect × 10</b> seconds.<br>"+
+  "<b>Altitude kills:</b> no more than <b>400m</b> change per jump, 600m cumulative in an hour. "+
+  "A teleportation suit (TL12, Cr5000) raises that to 600m and 10km."],
+ ["Training and testing","Core p.228",
+  "PSI = <b>2D − terms served</b>. Testing Cr5000 and two weeks; training four months and Cr100000.<br>"+
+  "One PSI check per talent, <b>DM−1 for every attempt already made</b>.<br>"+
+  "Telepathy <b>+4</b> · Clairvoyance <b>+3</b> · Telekinesis <b>+2</b> · Awareness <b>+1</b> · Teleportation <b>+0</b><br>"+
+  "Choose Telepathy first and it is gained automatically. Talents begin at level 0."],
+ ["Kit, and how to stop a psion","Core p.234",
+  "<b>Psi-drugs</b> (TL8) restore PSI; a failure is 3D damage and −1 PSI permanently.<br>"+
+  "<b>Inhibitor drug</b> (TL9, Cr500) DM−3 to all PSI checks, no recovery. END check hourly to shake it.<br>"+
+  "<b>Psionic shield</b> (TL12, Cr4000) in a helmet or hood — blocks reading, probing and assault.<br>"+
+  "<b>Psionic interface</b> (+20% cost) use PSI DM in place of DEX DM.<br>"+
+  "Psionics are <b>illegal in the Imperium</b>; the institutes are underground. The Zhodani train from childhood."],
+ ["Zhodani talent","Aliens of Charted Space Vol 1, p.277",
+  "<table><tr><th>Power</th><th>Check</th><th>Reach</th><th>PSI</th><th>Notes</th></tr>"+
+  "<tr><td>Awareness of Others</td><td>as ability</td><td>as ability</td><td>+2</td><td>Awareness powers, on someone else. Not through a shield</td></tr>"+
+  "<tr><td>Teleprojection</td><td>as ability</td><td>as ability</td><td>+2</td><td>Teleport someone else. They take the motion and altitude effects</td></tr>"+
+  "<tr><td>Blocking</td><td>8+</td><td>Long</td><td>4</td><td>Every other psion in range takes a Telepathy penalty of half your PSI</td></tr>"+
+  "<tr><td>Control</td><td>8+</td><td>Medium</td><td>3</td><td>Command a machine, one instruction at a time</td></tr>"+
+  "<tr><td>Interrogate</td><td>8+</td><td>Close</td><td>2</td><td>Read a device: 0 maker · 1 power and repair · 2 data · 3 hidden programming · 4 hidden functions</td></tr>"+
+  "<tr><td>Interact</td><td>8+</td><td>Close</td><td>1</td><td>Every Computer check one difficulty easier</td></tr>"+
+  "<tr><td>Mimic</td><td>8+</td><td>Close</td><td>2</td><td>False personality over a shield. Opposed PSI to see through</td></tr>"+
+  "<tr><td>Empathic Healing</td><td>8+</td><td>Personal</td><td>= damage</td><td>Take another's wounds onto yourself, immediately</td></tr>"+
+  "<tr><td>Psychic Transfer</td><td>6+</td><td>Medium</td><td>= PSI +1</td><td>Give your PSI to another psion</td></tr></table>"]
+];
+
 const PAGES=[
 ["Pirates of Drinax &mdash; Book 1",[
  ["Campaign overview","3"],["Running the campaign","7"],
@@ -1330,7 +1506,12 @@ function rules(i){
   document.getElementById('rb0').classList.toggle('on2',i===0);
   document.getElementById('rb1').classList.toggle('on2',i===1);
   document.getElementById('rb2').classList.toggle('on2',i===2);
-  if(i===2){
+  document.getElementById('rb3').classList.toggle('on2',i===3);
+  if(i===3){
+    document.getElementById('rulesBody').innerHTML=PSIRULES.map(r=>
+      `<div class="card"><h2>${r[0]}<span class="pg">${r[1]}</span></h2>
+       <div class="hint" style="font-size:14px;line-height:1.65">${r[2]}</div></div>`).join('');
+  } else if(i===2){
     document.getElementById('rulesBody').innerHTML=PAGES.map(b=>
       `<div class="card"><h2>${b[0]}</h2><table class="idx">`+
       b[1].map(r=>`<tr><td>${r[0]}</td><td>${r[1]}</td></tr>`).join('')+
@@ -1483,8 +1664,7 @@ function curTable(){
   if(s.k==='b') return TABLES[s.i]||null;
   return (S.custom||[]).find(x=>x.id===s.i)||null;
 }
-function showTable(kind,id){ S.tblSel={k:kind,i:id}; S.tblHit=null;
-  document.getElementById('tblLook').value=''; renderTable(); queueSave(); }
+function showTable(kind,id){ S.tblSel={k:kind,i:id}; S.tblHit=null; renderTable(); queueSave(); }
 function rollCurrent(){
   const t=curTable(); if(!t) return;
   const r=tblRoll(t);
@@ -1497,20 +1677,13 @@ function rollCurrent(){
     else if(txt.includes('&times;10')) pendingResp=d(6)*10;
     else if(txt.includes('&times;5')) pendingResp=d(6)*5;
   }
-  document.getElementById('tblLook').value=r.label;
   S.rolls=S.rolls||[];
   S.rolls.unshift(`<b>${t.n}</b> ${r.label} — ${t.items[r.idx]||'&mdash;'}`);
   if(S.rolls.length>40) S.rolls.length=40;
   renderTable(); renderRolls(); queueSave();
 }
-function lookUp(){
-  const t=curTable(); if(!t) return;
-  const v=document.getElementById('tblLook').value;
-  const i=tblIndexFor(t,v);
-  S.tblHit=(i>=0?i:null);
-  renderTable(); queueSave();
-}
 function renderTable(){
+  const rb=document.getElementById('tblRoll'); if(rb) rb.style.display='';
   const t=curTable();
   const nm=document.getElementById('tblName'), dc=document.getElementById('tblDice'),
         bd=document.getElementById('tblBody'), rr=document.getElementById('respRow');
@@ -1527,9 +1700,9 @@ function renderTable(){
 }
 function renderTableBtns(){
   document.getElementById('tableBtns').innerHTML =
-    `<button class="mini" style="border-color:var(--green);color:var(--green)"
-        onclick="rollAnyName()">✦ One-off NPC name</button>`
-    + TABLES.map((t,i)=>`<button class="mini ${S.tblSel&&S.tblSel.k==='b'&&S.tblSel.i===i?'on2':''}"
+    `<button class="mini" style="border-color:var(--gold);color:var(--gold)"
+        onclick="showBookTables()">&#9776; Tables in the books</button>`
+    + TABLES.map((t,i)=> NAMETBL[t.n] ? '' :`<button class="mini ${S.tblSel&&S.tblSel.k==='b'&&S.tblSel.i===i?'on2':''}"
         onclick="showTable('b',${i})">${t.n}</button>`).join('')
     + (S.custom||[]).map(t=>`<button class="mini ${S.tblSel&&S.tblSel.k==='c'&&S.tblSel.i===t.id?'on2':''}"
         style="${S.tblSel&&S.tblSel.k==='c'&&S.tblSel.i===t.id?'':'border-color:var(--gold);color:var(--gold)'}"
@@ -1538,11 +1711,23 @@ function renderTableBtns(){
 function renderRolls(){
   document.getElementById('rollLog').innerHTML=(S.rolls||[]).map(r=>`<div>${r}</div>`).join('')||'<div>Nothing yet.</div>';
 }
+/* the fifteen name tables stay rollable, but they live behind one control
+   instead of swamping the button list */
+const NAMETBL={};
 SPECIES.forEach(sp=>{
-  TABLES.push({n:`${sp} ♂ first`,  mode:'d66', items:NAMEDATA[sp].m});
-  TABLES.push({n:`${sp} ♀ first`,  mode:'d66', items:NAMEDATA[sp].f});
-  TABLES.push({n:`${sp} surname`,  mode:'d66', items:NAMEDATA[sp].s});
+  [['♂ first','m'],['♀ first','f'],['surname','s']].forEach(([label,key])=>{
+    const n=`${sp} ${label}`;
+    TABLES.push({n, mode:'d66', items:NAMEDATA[sp][key]});
+    NAMETBL[n]=true;
+  });
 });
+function nameTableIndex(){
+  const sp=document.getElementById('nmSp').value;
+  const part=document.getElementById('nmPart').value;
+  return TABLES.findIndex(t=>t.n===`${sp} ${part}`);
+}
+function showNameTable(){ const i=nameTableIndex(); if(i>=0) showTable('b',i); }
+function rollNameTable(){ const i=nameTableIndex(); if(i<0) return; showTable('b',i); rollCurrent(); }
 function rollAnyName(){
   const sp=SPECIES[Math.floor(Math.random()*SPECIES.length)];
   const g=d(6)<=3?'m':'f';
@@ -1558,6 +1743,75 @@ function rollAnyName(){
   if(S.rolls.length>40) S.rolls.length=40;
   renderRolls(); renderTableBtns(); queueSave();
 }
+
+/* ---- where the printed tables live ---- */
+const BOOKTABLES=[
+ ["Pirates of Drinax — Book 1",[
+  ["Port attitudes · fence, recruit, arrest, spies, protection","9"],
+  ["Port attitude by Law Level","10"],
+  ["Crew pay rates and crew quality","10"],
+  ["<b>Crewman Names</b> (D66)","11"],
+  ["<b>Crewman Quirks</b> (D66)","11"],
+  ["Morale modifiers","12"],
+  ["Division of the spoils","12"],
+  ["Effects of Standing","13"],
+  ["<b>Prey Encounter</b> (D66) and traffic DMs","14"],
+  ["Prey types and their cargoes","15"],
+  ["Enemy morale by ship type","15"],
+  ["Encounter distance and timing","15"],
+  ["<b>Jump Limit Transit</b>","16"],
+  ["Pirate attack skill checks, the five steps","16–18"],
+  ["<b>Prey Quirks</b> (D66)","18–19"],
+  ["<b>Prey Complications</b> (D66)","20"],
+  ["<b>Response</b> — pirate hunters, 2D","21"],
+  ["Customs ships, SDBs and Q-ships","21"],
+  ["Patrons and opportunities","263"]]],
+ ["The Trojan Reach — Book 2",[
+  ["Harrier deckplan","9"],
+  ["Harrier stats","10"],
+  ["The court of Drinax, NPC by NPC","22–25"],
+  ["Powers of the Reach","24–25"],
+  ["Aslan Central Supply Catalogue","96"],
+  ["World listings by subsector","133+"],
+  ["Library data","209"]]],
+ ["Ships of the Reach — Book 3",[
+  ["Ship listings","2"],
+  ["Planet-class heavy cruiser (Krond)","53"],
+  ["Aslan ships","62"],
+  ["Ship index and deckplan keys","96"]]],
+ ["Drinaxian Companion",[
+  ["Key concepts — PWH, Allegiance, Asset Value, PRI","2–3"],
+  ["Empire building — worlds, assets, projects","9"],
+  ["Harrier damage and defects","59"],
+  ["Repair Units and refit costs","59–62"],
+  ["Crew requirements and shipboard operations","63"],
+  ["Commerce raiding operations","65"],
+  ["Operational considerations","75"],
+  ["<b>Sindal Scholar</b> (2D) and rumour gathering","96"],
+  ["<b>Ship Encounters</b> — full encounter tables","149"],
+  ["<b>Information Bounties</b> (2D)","149"],
+  ["Equipment and base components","177–184"],
+  ["Starships of the Reach","187"],
+  ["Personalities and factions","214"]]]
+];
+function showBookTables(){
+  S.tblSel=null; S.tblHit=null;
+  document.getElementById('tblName').innerHTML='Tables in the books';
+  document.getElementById('tblDice').textContent='page references — nothing to roll here';
+  document.getElementById('respRow').style.display='none';
+  document.getElementById('tblRoll').style.display='none';
+  document.getElementById('tblBody').innerHTML=
+    BOOKTABLES.map(b=>`<div style="margin-bottom:12px">
+      <div style="font-size:10px;letter-spacing:.2em;color:var(--dim);text-transform:uppercase;
+                  border-bottom:1px solid var(--line);padding-bottom:4px;margin-bottom:5px">${b[0]}</div>`+
+      b[1].map(r=>`<div class="trow"><span>${r[0]}</span>
+        <span style="margin-left:auto;color:var(--green);font-weight:700;white-space:nowrap">${r[1]}</span></div>`).join('')+
+      `</div>`).join('')+
+    '<p class="hint">Bold entries are the roll tables worth entering into <b>Your own tables</b> below, '+
+    'so you never have to open the book mid-session.</p>';
+  renderTableBtns();
+}
+
 let pendingResp=null;
 function sendResp(){
   if(!pendingResp) return;
@@ -1748,7 +2002,9 @@ const HELP=[
   "The Harrier's five defects tick off as they are repaired, with Repair Unit pools. Ports and crew are editable lists. "+
   "The log at the bottom is plain text &mdash; use it."],
  ["Rules &amp; Tables",
-  "<b>Rules</b> has three panes: Traveller core mechanics, the Drinax campaign subsystems, and "+
+  "<b>Rules</b> has four panes: Traveller core mechanics, the Drinax campaign subsystems, <b>Psionics</b> "+
+  "&mdash; every talent with its check, reach and PSI cost, including the Zhodani talent from Aliens of "+
+  "Charted Space &mdash; and "+
   "<b>Where to look</b> &mdash; a page index for all four books, so you can turn straight to anything "+
   "this console only summarises. Page cites also sit in the corner of each rules card.<br><br>"+
   "<b>&#9860; Dice</b> in the header opens a roller that works on every tab. Type <b>2D</b>, <b>3D+1</b>, "+
@@ -1760,9 +2016,10 @@ const HELP=[
   "<b>Name tables</b> sit at the front of the Tables tab: first names by gender and surnames, as separate D66 "+
   "tables for Vilani, Solomani, Zhodani, Aslan and Vargr. The gold <b>✦ One-off NPC name</b> button rolls species, "+
   "gender and both halves in one go when you just need somebody called something, now.<br><br>"+
+  "<b>&#9776; Tables in the books</b> lists every roll table across all four books with its page number, "+
+  "grouped by book, so you can find one without hunting. It is a reference, not a roller.<br><br>"+
   "<b>Tables</b> lays each table out in full when you tap it, so you can roll your own dice and read it off. "+
-  "Type what you rolled into the box and press Find to highlight the row, or hit <b>Roll it for me</b> "+
-  "and the console highlights it instead. Everything rolled is logged beside it.<br><br>"+
+  "<b>Roll it for me</b> is there when you would rather not. Everything the console rolls is logged beside it.<br><br>"+
   "<b>Your own tables</b> is the important part. Paste any table in, one entry per line, pick the dice, and it becomes "+
   "a gold button up with the others. Type your books' D66 tables in once and you never open the PDF mid-session again. "+
   "It works for homebrew and for anything out of Central Supply too, and it saves with everything else."],
@@ -2142,7 +2399,16 @@ function chList(p){ return (p.mx && p.mx.PSI!==undefined) ? CHK_ALL : CHK; }
 function curOf(p,k){ return Math.max(0,(p.mx[k]||0)-((p.wd&&p.wd[k])||0)+((p.md&&p.md[k])||0)); }
 function syncCh(p){ p.ch=p.ch||{}; chList(p).forEach(k=>p.ch[k]=curOf(p,k)); }
 function migratePC(p){
+  /* saves written by earlier builds are missing whole fields — fill them in rather than
+     letting a render blow up halfway through */
   p.mx=p.mx||{}; p.ch=p.ch||{};
+  p.wpn=Array.isArray(p.wpn)?p.wpn:[];
+  p.skl=Array.isArray(p.skl)?p.skl:[];
+  if(p.arm===undefined) p.arm=0;
+  if(p.armMax===undefined) p.armMax=p.arm||0;
+  if(p.ablate===undefined) p.ablate=true;
+  if(!p.id) p.id=uid();
+  if(!p.n) p.n='Unnamed';
   if(p.mx.PSI===undefined && p.ch.PSI!==undefined) p.mx.PSI=p.ch.PSI;
   if(!p.wd){ p.wd={}; chList(p).forEach(k=>{
     const cur=(p.ch[k]!==undefined?p.ch[k]:p.mx[k]);
@@ -2271,7 +2537,7 @@ function delWpn(pid,wid){ const p=S.party.find(x=>x.id===pid), w=p&&p.wpn.find(x
 function delWpnNow(pid,wid){ const p=S.party.find(x=>x.id===pid);
   p.wpn=p.wpn.filter(x=>x.id!==wid); renderParty(); queueSave(); }
 
-function renderTable(){
+function renderLiveTable(){
   const el=document.getElementById('tableView'); if(!el) return;
   const rem=S.party.filter(p=>p.remote);
   const ci=document.getElementById('campIn');
@@ -2290,7 +2556,7 @@ function renderTable(){
       return `<tr><td><b>${p.n}</b> <span class="hint">${p.role||''}</span></td>
         <td class="num">${curOf(p,'END')}<span class="hint">/${p.mx.END||0}</span></td>
         <td class="num">${p.arm}<span class="hint">/${p.armMax}</span></td>
-        <td class="hint">${(p.wpn||[]).filter(w=>w.mag).map(w=>w.n+' '+w.cur+'/'+w.mag).join(' · ')||'—'}</td>
+        <td class="hint">${(Array.isArray(p.wpn)?p.wpn:[]).filter(w=>w.mag).map(w=>w.n+' '+w.cur+'/'+w.mag).join(' · ')||'—'}</td>
         <td>${st[0]} ${p.online?'<span class="greenc">●</span>':'<span class="hint">○</span>'}</td>
         <td><button class="mini" onclick="copySlot('${p.uid}')">Link</button>
             <button class="mini" onclick="openSheet('${p.uid}')">Open</button>
@@ -2300,7 +2566,7 @@ function renderTable(){
 }
 function renderParty(){
   S.party.forEach(migratePC);
-  renderTable();
+  renderLiveTable();
   const el=document.getElementById('partyList');
   if(!S.party.length){ el.innerHTML='<div class="card"><p class="hint">No Travellers yet.</p></div>'; return; }
   el.innerHTML=S.party.map(p=>{
@@ -2834,7 +3100,8 @@ function saveNPC(id){
   S.npcs.push(copy); renderCombat(); queueSave(); note('Saved '+c.n);
 }
 function dropNPC(i){
-  const n=JSON.parse(JSON.stringify((S.npcs||[])[i])); if(!n) return;
+  const src=(S.npcs||[])[i]; if(!src) return;
+  const n=JSON.parse(JSON.stringify(src));
   n.id=uid(); n.init=null; n.zone=(ZONES[S.combat.mode||'ground'])[0];
   if(n.t==='mob'){ n.pips=n.pipsMax; }
   else { n.end=n.endMax; }
@@ -2875,6 +3142,7 @@ function renderCombat(){
       if(p){ c.end=p.ch.END; c.endMax=p.mx.END; c.arm=p.arm; c.n=p.n; } }
     const down=(c.t==='mob'?c.pips<=0:c.end<=0&&c.endMax>0);
     if(c.t==='mob') mobMigrate(c);
+    if(c.weps && !Array.isArray(c.weps)) c.weps=[];
     const bodies=(c.t==='mob'?(c.pips||0):0);
     const broke=(c.t==='mob'&&c.brk&&bodies<=c.brk&&bodies>0);
     const sh=(c.t==='mob'?mobShaken(c):0);
@@ -3060,7 +3328,7 @@ function addGenShip(){
 function ammoStrip(c){
   if(!c.pcId) return '';
   const p=S.party.find(x=>x.id===c.pcId);
-  if(!p||!p.wpn||!p.wpn.length) return '';
+  if(!p||!Array.isArray(p.wpn)||!p.wpn.length) return '';
   const live=p.wpn.filter(w=>w.mag>0);
   if(!live.length) return '';
   return '<div class="ammostrip">'+live.map(w=>{
@@ -3080,19 +3348,32 @@ function makeMobFrom(archName,sizeName,tierIdx){
   const a=MOBS[ai>=0?ai:0];
   const z={'single foe':0,'single':0,'handful':1,'squad':2,'crowd':3}[sizeName.trim().toLowerCase()];
   const zi=(z===undefined?2:z);
-  const t=(tierIdx===undefined?1:tierIdx);
+  let t=(tierIdx===undefined?1:tierIdx);
+  const helpless=(t===-1); if(helpless) t=0;
   const pips = zi===0 ? 1 : zi===1 ? d(6)+2 : zi===2 ? d(6)+d(6)+4 : d(6)+d(6)+d(6)+9;
-  const brk = zi===0 ? 0 : [Math.ceil(pips*0.5),Math.ceil(pips*0.34),Math.ceil(pips*0.25),0][t];
-  return {id:uid(),n:`${TIERN[t]} ${a.n.toLowerCase()}`,t:'mob',init:null,end:0,endMax:0,
-    arm:a.arm[t],dm:[0,1,2,3][t],pips,pipsMax:pips,brk,hitsEach:a.hits||21,
-    weps:a.w[t],note:a.w[t].join(' · ')+' — '+a.t[d(3)-1],
+  let brk = zi===0 ? 0 : [Math.ceil(pips*0.5),Math.ceil(pips*0.34),Math.ceil(pips*0.25),0][t];
+  if(helpless) brk=Math.max(1,pips-1);
+  const weps = helpless ? ['Nothing worth the name'] : a.w[t];
+  const psiEach = (a.psi && !helpless) ? a.psi[t] : 0;
+  return {id:uid(),n:`${helpless?DEFENCELESS:TIERN[t]} ${a.n.toLowerCase()}`,t:'mob',init:null,end:0,endMax:0,
+    arm:helpless?0:a.arm[t], dm:helpless?-2:[0,1,2,3][t], pips,pipsMax:pips,brk,hitsEach:a.hits||21,
+    psiEach, psiMax:psiEach*pips, psiSpent:0,
+    weps, note:weps.join(' · ')+' — '+a.t[d(3)-1],
     zone:'Lock',breach:false};
 }
 function boardContact(id){
   const c=S.space.contacts.find(x=>x.id===id); if(!c||!c.brd) return;
-  const parts=c.brd.split(',');
-  const tier = /marine|naval|q-ship/i.test(c.n)?2 : /corsair|aslan|customs/i.test(c.n)?1 : 1;
-  const mob=makeMobFrom(parts[0]||'Merchant crew', parts[1]||'squad', tier);
+  let arch, size, tier;
+  if(c.brdArch!==undefined){          /* built by hand — use exactly what was chosen */
+    arch=c.brdArch;
+    size=['single foe','handful','squad','crowd'][c.brdSize===undefined?2:c.brdSize];
+    tier=c.brdTier;
+  } else {
+    const parts=c.brd.split(',');
+    arch=parts[0]||'Merchant crew'; size=parts[1]||'squad';
+    tier = /marine|naval|q-ship/i.test(c.n)?2 : /corsair|aslan|customs/i.test(c.n)?1 : 1;
+  }
+  const mob=makeMobFrom(arch, size, tier);
   S.combat.mode='boarding';
   S.combat.scene='Boarding the '+c.n;
   S.combat.list=[];
@@ -3122,6 +3403,52 @@ function launch(dir){
 function moveM(id,v){ const m=S.space.missiles.find(x=>x.id===id);
   m.band=Math.max(0,Math.min(6,m.band+v)); renderSpace(); queueSave(); }
 function delM(id){ S.space.missiles=S.space.missiles.filter(x=>x.id!==id); renderSpace(); queueSave(); }
+function toggleBuild(){
+  const b=document.getElementById('buildBox');
+  b.style.display = b.style.display==='none' ? '' : 'none';
+  document.getElementById('bldBtn').classList.toggle('on2', b.style.display==='');
+}
+const bv=id=>{const e=document.getElementById(id);return e?e.value.trim():'';};
+const bn=id=>{const e=document.getElementById(id);return e&&e.value!==''?+e.value:null;};
+function addBuilt(){
+  const n=bv('pName')||'Contact';
+  const c={id:uid(), n, band:+bv('bBand')||6, res:+document.getElementById('pRes').value,
+    dmg:0, dmgMax:bn('bDmg')||3,
+    tons:bv('bTons')||null, th:bn('bTh'), jmp:bn('bJmp'), armr:bn('bArmr'),
+    sens:bn('bSens'), crew:bn('bCrew'),
+    att:bn('bAtt'), tn:bn('bTn'), rng:bv('bRng'),
+    arm:bv('bArm')||null,
+    brd:MOBS[+document.getElementById('bArch').value].n+', '+
+        ['single foe','handful','squad','crowd'][+document.getElementById('bSize').value],
+    cargo:bn('bCargo'), cargoType:bv('bCargoT')||null,
+    brdArch:MOBS[+document.getElementById('bArch').value].n,
+    brdTier:+document.getElementById('bTier').value,
+    brdSize:+document.getElementById('bSize').value,
+    comp:bv('bComp')||null, tier:'built by hand'};
+  S.space.contacts.push(c);
+  ['pName','bTons','bTh','bJmp','bArmr','bSens','bCrew','bArm','bCargo','bCargoT','bComp']
+    .forEach(i=>{const e=document.getElementById(i); if(e) e.value='';});
+  S.space.sel=c.id;
+  renderSpace(); queueSave();
+}
+function fillFromLast(){
+  if(!lastShip){ note('Roll a ship first'); return; }
+  const set=(id,v)=>{const e=document.getElementById(id); if(e&&v!==undefined&&v!==null) e.value=v;};
+  set('pName',lastShip.n); set('bTons',lastShip.tons); set('bTh',lastShip.th);
+  set('bArmr',lastShip.armr); set('bDmg',lastShip.dmg); set('bSens',lastShip.sens);
+  set('bCrew',lastShip.crew); set('bAtt',lastShip.att); set('bTn',lastShip.tn);
+  set('bArm',lastShip.arm); set('bBrd',lastShip.brd); set('bCargo',lastShip.cargo);
+  set('bCargoT',lastShip.cargoType); set('bComp',lastShip.comp);
+  if(lastShip.brd){
+    const [a,sz]=lastShip.brd.split(',').map(s=>s.trim().toLowerCase());
+    const ai=MOBS.findIndex(m=>m.n.toLowerCase()===a);
+    if(ai>=0) document.getElementById('bArch').value=ai;
+    const si={'single foe':0,'single':0,'handful':1,'squad':2,'crowd':3}[sz];
+    if(si!==undefined) document.getElementById('bSize').value=si;
+  }
+  const r=document.getElementById('bRng'); if(r&&lastShip.rng) r.value=lastShip.rng;
+  const rs=document.getElementById('pRes'); if(rs&&lastShip.res) rs.value=lastShip.res;
+}
 function addContact(){
   const n=document.getElementById('pName').value.trim()||'Contact';
   S.space.contacts.push({id:uid(),n,band:6,res:+document.getElementById('pRes').value,dmg:0});
@@ -3143,12 +3470,13 @@ function infoPane(c){
       ${cell('SURRENDER',[0,4,8,10,12,14][c.res]+'+')}
       ${cell('THRUST',c.th!==undefined?c.th:'—')}
       ${cell('JUMP',c.jmp!==undefined?c.jmp:'—')}
-      ${cell('ARMOUR',c.av!==undefined?c.av:'—')}
+      ${cell('ARMOUR', c.av!==undefined ? c.av : ((c.armr===undefined||c.armr===null) ? '—' : c.armr))}
       ${cell('DAMAGE',(c.dmg||0)+'/'+(c.dmgMax||3))}
       ${cell('SENSORS',c.sens!==undefined?sgn(c.sens):'—')}
       ${cell('CREW',c.crew||'—')}
       ${cell('BERTHS',c.berths!==undefined?c.berths:'—')}
       ${cell('HOLD',(c.hold!==undefined?c.hold+'t':'—'))}
+      ${cell('TONNAGE',c.tons||'—')}
     </div>
     ${c.att?`<div><span class="hotc">Shoots:</span> <b>${c.att}</b> attack${c.att===1?'':'s'} an exchange on <b>${c.tn}+</b>, out to <b>${c.rng}</b> — ${c.arm}</div>`
            :`<div><span class="hint">${c.arm||'Unarmed'}</span></div>`}
@@ -3184,7 +3512,14 @@ function resetSpaceNow(){ S.space={exch:1,alarm:0,scuttle:0,own:0,resp:null,resp
 function critical(){ const r=d(6); document.getElementById('critOut').innerHTML=`<b class="goldc">${r}</b> &mdash; ${CRITS[r-1]}`; }
 function rollPosture(){ const r=d(6); document.getElementById('postureOut').innerHTML=`<b class="goldc">${r}</b> &mdash; ${POSTURE[r-1]}`; }
 function renderSpace(){
-  S.space.missiles=S.space.missiles||[];
+  S.space=S.space||{};
+  S.space.contacts=Array.isArray(S.space.contacts)?S.space.contacts:[];
+  S.space.missiles=Array.isArray(S.space.missiles)?S.space.missiles:[];
+  if(S.space.exch===undefined) S.space.exch=1;
+  if(S.space.alarm===undefined) S.space.alarm=0;
+  if(S.space.scuttle===undefined) S.space.scuttle=0;
+  if(S.space.own===undefined) S.space.own=0;
+  if(S.space.resp===undefined) S.space.resp=null;
   document.getElementById('sExch').textContent=S.space.exch;
   const rr=document.getElementById('sResp');
   rr.textContent=S.space.resp===null?'—':S.space.resp;
@@ -3285,6 +3620,15 @@ function splitSpoils(){
      &nbsp;·&nbsp; captain <b class="goldc">${m(per*5)}</b>`;
 }
 function renderCamp(){
+  /* an older save may be missing whole sub-objects */
+  S.camp=S.camp||{};
+  S.camp.ru=S.camp.ru||{s:0,t:0,c:0};
+  S.camp.defects=Array.isArray(S.camp.defects)?S.camp.defects:[false,false,false,false,false];
+  S.camp.ports=Array.isArray(S.camp.ports)?S.camp.ports:[];
+  S.camp.crew=Array.isArray(S.camp.crew)?S.camp.crew:[];
+  if(S.camp.imp===undefined) S.camp.imp=0;
+  if(S.camp.as===undefined) S.camp.as=-5;
+  if(S.camp.mor===undefined) S.camp.mor=null;
   document.getElementById('impVal').textContent=S.camp.imp;
   document.getElementById('asVal').textContent=S.camp.as;
   document.getElementById('impEff').innerHTML=standEff(S.camp.imp);
@@ -3330,6 +3674,11 @@ document.getElementById('helpBody').innerHTML=HELP.map(x=>
 document.getElementById('gArch').innerHTML=
   '<optgroup label="Standard">'+MOBS.map((m,i)=>m.g==='S'?`<option value="${i}">${m.n}</option>`:'').join('')+'</optgroup>'+
   '<optgroup label="Trojan Reach">'+MOBS.map((m,i)=>m.g==='R'?`<option value="${i}">${m.n}</option>`:'').join('')+'</optgroup>';
+document.getElementById('bArch').innerHTML=
+  '<optgroup label="Standard">'+MOBS.map((m,i)=>m.g==='S'?`<option value="${i}">${m.n}</option>`:'').join('')+'</optgroup>'+
+  '<optgroup label="Trojan Reach">'+MOBS.map((m,i)=>m.g==='R'?`<option value="${i}">${m.n}</option>`:'').join('')+'</optgroup>';
+document.getElementById('bArch').value=MOBS.findIndex(m=>m.n==='Merchant crew');
+document.getElementById('nmSp').innerHTML=SPECIES.map(s=>`<option>${s}</option>`).join('');
 document.getElementById('sArch').innerHTML=SHIPS.map((s,i)=>`<option value="${i}">${s.n} &mdash; ${s.t}</option>`).join('');
 typeChanged(); loadAll(); setTimeout(gateBoot,700);
 </script>
