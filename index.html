@@ -38,6 +38,22 @@ button:hover{border-color:var(--green);}
   background:var(--panel);border:1px solid var(--green);padding:11px;
   box-shadow:0 14px 40px rgba(0,0,0,.65);max-height:60vh;overflow:auto;}
 #undoPanel.on{display:block;}
+#gate{position:fixed;inset:0;z-index:400;background:var(--bg);display:flex;
+  align-items:center;justify-content:center;padding:24px;}
+#gate.off{display:none;}
+.gbox{width:100%;max-width:340px;text-align:center;}
+.gmark{margin-bottom:14px;}
+.gbox h1{font-size:26px;letter-spacing:.34em;font-weight:700;color:var(--ink);}
+.gbox .sub{font-size:9px;letter-spacing:.3em;color:var(--dim);margin-top:5px;}
+.gbox input{width:100%;text-align:center;}
+.gbtn{width:100%;background:var(--green);border-color:var(--green);color:#0c0405;font-weight:700;
+  letter-spacing:.14em;min-height:46px;}
+.gbtn:hover{background:var(--red);border-color:var(--red);}
+.gnote{font-size:12px;color:var(--dim);margin-top:16px;line-height:1.5;}
+.gnote.bad{color:var(--red);}
+.glink{background:none;border:none;color:var(--dim);font-size:11px;letter-spacing:.08em;
+  text-decoration:underline;margin-top:14px;min-height:auto;padding:6px;}
+.glink:hover{color:var(--ink);border:none;}
 #dicePanel{display:none;position:fixed;right:calc(12px + env(safe-area-inset-right,0px));
   top:calc(66px + env(safe-area-inset-top,0px));z-index:130;width:280px;
   background:var(--panel);border:1px solid var(--green);padding:12px;
@@ -232,12 +248,37 @@ button.danger:hover{background:var(--red);border-color:var(--red);}
     <button id="t-help" onclick="tab('help')">Help</button>
   </nav>
   <div class="save" id="saveState">—</div>
+  <button class="mini" onclick="refSignOut()" title="Sign out">Lock</button>
   <button class="mini" onclick="toggleDice()" title="Dice roller">&#9860; Dice</button>
   <button class="mini" id="undoBtn" onclick="undo()" title="Undo the last change" disabled>&#8630; Undo</button>
   <button class="mini" id="histBtn" onclick="toggleHistory()" title="Undo history" disabled>&#9662;</button>
   <button class="mini" onclick="downloadSave()" title="Save a copy to Files">&#8681; Files</button>
 </header>
 <div id="undoPanel"></div>
+
+<div id="gate">
+  <div class="gbox">
+    <div class="gmark">
+      <svg viewBox="0 0 200 200" width="52" height="52" aria-hidden="true">
+        <g fill="var(--green)"><path d="M74 75 L46 47 L36 57 L64 86 Z"/><path d="M126 75 L154 47 L164 57 L136 86 Z"/>
+        <path d="M72 69 L128 69 L135 89 L123 112 L113 127 L100 149 L87 127 L77 112 L65 89 Z"/></g>
+        <g fill="#0a0708"><ellipse cx="85" cy="91" rx="7" ry="8.5" transform="rotate(16 85 91)"/>
+        <ellipse cx="115" cy="91" rx="7" ry="8.5" transform="rotate(-16 115 91)"/></g>
+      </svg>
+    </div>
+    <h1>DRINAX</h1>
+    <p class="sub">REFEREE CONSOLE</p>
+    <div class="row" style="margin-top:18px;flex-direction:column;align-items:stretch;gap:8px">
+      <input id="gMail" placeholder="Referee email" autocomplete="username"
+             onkeyup="if(event.key==='Enter')document.getElementById('gPass').focus()">
+      <input id="gPass" type="password" placeholder="Password" autocomplete="current-password"
+             onkeyup="if(event.key==='Enter')gateIn()">
+      <button class="gbtn" onclick="gateIn()">Sign in</button>
+    </div>
+    <p class="gnote" id="gNote">Players do not sign in here. Use the link your referee sent you.</p>
+    <button class="glink" onclick="gateSkip()">Work offline without signing in</button>
+  </div>
+</div>
 <div id="dicePanel">
   <div class="row" style="margin-bottom:8px">
     <b style="letter-spacing:.16em;font-size:12px">DICE</b>
@@ -417,8 +458,16 @@ button.danger:hover{background:var(--red);border-color:var(--red);}
       <input id="campIn" style="width:150px" onchange="syncCamp(this.value)">
       <button class="mini" onclick="syncStart()">Connect</button>
       <button class="mini" onclick="syncStop()">Go offline</button>
-      <button class="mini" id="gmBtn" onclick="claimGM()">Claim as referee</button>
+      <button class="mini" id="gmBtn" onclick="toggleRefBox()">Referee sign-in</button>
       <span id="syncState" class="hint">Offline</span>
+    </div>
+    <div class="row" id="refBox" style="display:none;margin-top:8px;padding:9px;border:1px solid var(--green)">
+      <input id="refMail" placeholder="Referee email" style="min-width:170px" autocomplete="username">
+      <input id="refPass" type="password" placeholder="Password" style="width:150px" autocomplete="current-password"
+             onkeyup="if(event.key==='Enter')refSignIn()">
+      <button onclick="refSignIn()">Sign in</button>
+      <button class="mini" onclick="refSignOut()">Sign out</button>
+      <span class="hint grow" id="refNote">Only this account can see the whole table.</span>
     </div>
     <div class="row" style="margin-top:8px">
       <input id="slotName" class="grow" placeholder="Character name" style="min-width:150px">
@@ -430,8 +479,8 @@ button.danger:hover{background:var(--red);border-color:var(--red);}
     </div>
     <div id="tableView" style="margin-top:9px"></div>
     <p class="hint" style="margin-top:7px"><b>Claim as referee</b> once, from the browser you run games on.
-      Only that browser can see the whole table; players can only reach their own character, and only via
-      the link you send them. A player running two characters opens each link in its own tab.</p>
+      Sign in from any device. Players can only reach their own character, and only via the link you send them.
+      A player running two characters opens each link in its own tab.</p>
     <p class="hint" style="margin-top:7px">Each character is a <b>slot</b> with its own link. One per player, or several
       if somebody runs two. A player opens their link once and their browser remembers it &mdash; no login, no password.
       Lose the link and you can copy it again from here.</p>
@@ -1747,45 +1796,80 @@ async function syncStart(){
   if(typeof firebase==='undefined'){ syncStatus('Firebase did not load — offline','hotc'); return; }
   try{
     if(!FB.app){ FB.app=firebase.initializeApp(FBCONF); }
-    try{ await firebase.auth().signInAnonymously(); }catch(e){ /* rules may not need auth */ }
+    /* sign in anonymously only if nobody is signed in — never clobber a referee session */
+    try{ if(!firebase.auth().currentUser) await firebase.auth().signInAnonymously(); }
+    catch(e){ /* rules may not need auth */ }
     FB.db=firebase.database();
     if(FB.ref) FB.ref.off();
     FB.camp=campaignId();
     FB.ref=FB.db.ref('campaigns/'+FB.camp+'/players');
     FB.ref.on('value', snap=>{ applyRemote(snap.val()||{}); },
-      err=>{ syncStatus('Cannot see the table — claim as referee','hotc'); });
-    setTimeout(checkGM,800);
+      err=>{ syncStatus('Cannot see the table — sign in as referee','hotc'); });
+    showRef();
+    firebase.auth().onAuthStateChanged(()=>showRef());
     FB.db.ref('.info/connected').on('value', s=>{
       FB.ok=!!s.val();
       syncStatus(FB.ok?('Live · '+FB.camp):'Reconnecting…', FB.ok?'greenc':'hotc');
     });
   }catch(e){ syncStatus('Sync failed: '+e.message,'redc'); }
 }
-function claimGM(){
-  if(!FB.db||!FB.ok){ slotMsg('Connect first.','redc'); return; }
-  const uid=(firebase.auth().currentUser||{}).uid;
-  if(!uid){ slotMsg('No anonymous sign-in — enable it in Firebase.','redc'); return; }
-  const r=FB.db.ref('campaigns/'+campaignId()+'/gm');
-  r.once('value').then(s=>{
-    if(s.exists() && s.val()!==uid){
-      askConfirm('This campaign is already claimed by another browser. '+
-        'Take it over? The old referee browser will lose the overview.',
-        ()=>r.set(uid).then(()=>{ slotMsg('Claimed. Reconnecting…','greenc'); syncStart(); })
-             .catch(e=>slotMsg('Refused: '+e.code,'redc')),'Take over');
-    } else {
-      r.set(uid).then(()=>{ slotMsg('Claimed as referee for this browser.','greenc'); syncStart(); })
-       .catch(e=>slotMsg('Refused: '+e.code,'redc'));
-    }
-  }).catch(e=>slotMsg('Refused: '+e.code,'redc'));
+function gateNote(t,bad){ const e=document.getElementById('gNote');
+  if(e){ e.textContent=t; e.className='gnote'+(bad?' bad':''); } }
+function gateOpen(){ document.getElementById('gate').classList.remove('off'); }
+function gateClose(){ document.getElementById('gate').classList.add('off'); }
+function gateIn(){
+  const m=(document.getElementById('gMail').value||'').trim();
+  const p=document.getElementById('gPass').value||'';
+  if(!m||!p){ gateNote('Email and password, please.',true); return; }
+  if(typeof firebase==='undefined'){ gateNote('No connection to the campaign server.',true); return; }
+  try{ if(!FB.app) FB.app=firebase.initializeApp(FBCONF); }catch(e){}
+  gateNote('Signing in…');
+  firebase.auth().signInWithEmailAndPassword(m,p)
+    .then(()=>{ document.getElementById('gPass').value=''; gateClose(); syncStart(); showRef(); })
+    .catch(e=>gateNote(
+      (e.code==='auth/invalid-credential'||e.code==='auth/wrong-password'||e.code==='auth/user-not-found')
+        ? 'That is not the referee account.' : 'Refused: '+e.code, true));
 }
-function checkGM(){
-  if(!FB.db) return;
-  const uid=(firebase.auth().currentUser||{}).uid;
-  FB.db.ref('campaigns/'+campaignId()+'/gm').once('value').then(s=>{
-    const b=document.getElementById('gmBtn'); if(!b) return;
-    if(s.val()&&s.val()===uid){ b.textContent='Referee ✓'; b.classList.add('on2'); }
-    else { b.textContent=s.exists()?'Claim (held elsewhere)':'Claim as referee'; b.classList.remove('on2'); }
-  }).catch(()=>{});
+function gateSkip(){
+  gateClose(); S.offlineOK=true; queueSave();
+  note('Offline — nothing will sync');
+}
+function gateBoot(){
+  if(typeof firebase==='undefined'){ gateNote('No connection — you can still work offline.',true); return; }
+  try{ if(!FB.app) FB.app=firebase.initializeApp(FBCONF); }catch(e){ return; }
+  firebase.auth().onAuthStateChanged(u=>{
+    if(u && u.email){ gateClose(); syncStart(); showRef(); }
+    else if(!S.offlineOK){ gateOpen(); }
+  });
+}
+function toggleRefBox(){
+  const b=document.getElementById('refBox');
+  b.style.display = b.style.display==='none' ? '' : 'none';
+  if(b.style.display==='') document.getElementById('refMail').focus();
+}
+function refNote(t,cls){ const e=document.getElementById('refNote');
+  if(e){ e.textContent=t; e.className='hint grow '+(cls||''); } }
+function refSignIn(){
+  const m=(document.getElementById('refMail').value||'').trim();
+  const p=document.getElementById('refPass').value||'';
+  if(!m||!p){ refNote('Email and password, please.','hotc'); return; }
+  if(typeof firebase==='undefined'){ refNote('Firebase did not load.','redc'); return; }
+  try{ if(!FB.app) FB.app=firebase.initializeApp(FBCONF); }catch(e){}
+  firebase.auth().signInWithEmailAndPassword(m,p)
+    .then(()=>{ document.getElementById('refPass').value='';
+      refNote('Signed in as '+m,'greenc'); syncStart(); showRef(); })
+    .catch(e=>refNote(e.code==='auth/invalid-credential'||e.code==='auth/wrong-password'
+      ? 'Wrong email or password.' : 'Refused: '+e.code,'redc'));
+}
+function refSignOut(){
+  if(typeof firebase==='undefined') return;
+  firebase.auth().signOut().then(()=>{ S.offlineOK=false; syncStop(); showRef(); gateOpen(); });
+}
+function showRef(){
+  const b=document.getElementById('gmBtn'); if(!b) return;
+  const u=(typeof firebase!=='undefined'&&firebase.auth)?firebase.auth().currentUser:null;
+  if(u&&u.email){ b.textContent='Referee ✓'; b.classList.add('on2'); }
+  else { b.textContent='Referee sign-in'; b.classList.remove('on2'); }
 }
 function syncStop(){ if(FB.ref){FB.ref.off();FB.ref=null;} FB.ok=false; syncStatus('Offline',''); }
 function syncCamp(v){ S.sync=S.sync||{}; S.sync.camp=(v||'drinax').trim()||'drinax'; queueSave(); syncStart(); }
@@ -3244,7 +3328,7 @@ document.getElementById('gArch').innerHTML=
   '<optgroup label="Standard">'+MOBS.map((m,i)=>m.g==='S'?`<option value="${i}">${m.n}</option>`:'').join('')+'</optgroup>'+
   '<optgroup label="Trojan Reach">'+MOBS.map((m,i)=>m.g==='R'?`<option value="${i}">${m.n}</option>`:'').join('')+'</optgroup>';
 document.getElementById('sArch').innerHTML=SHIPS.map((s,i)=>`<option value="${i}">${s.n} &mdash; ${s.t}</option>`).join('');
-typeChanged(); loadAll(); setTimeout(syncStart,700);
+typeChanged(); loadAll(); setTimeout(gateBoot,700);
 </script>
 </body>
 </html>
