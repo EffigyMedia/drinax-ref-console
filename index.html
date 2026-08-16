@@ -417,6 +417,7 @@ button.danger:hover{background:var(--red);border-color:var(--red);}
       <input id="campIn" style="width:150px" onchange="syncCamp(this.value)">
       <button class="mini" onclick="syncStart()">Connect</button>
       <button class="mini" onclick="syncStop()">Go offline</button>
+      <button class="mini" id="gmBtn" onclick="claimGM()">Claim as referee</button>
       <span id="syncState" class="hint">Offline</span>
     </div>
     <div class="row" style="margin-top:8px">
@@ -426,6 +427,9 @@ button.danger:hover{background:var(--red);border-color:var(--red);}
       <span class="hint grow" id="slotNote">Make one per player, then send them the link.</span>
     </div>
     <div id="tableView" style="margin-top:9px"></div>
+    <p class="hint" style="margin-top:7px"><b>Claim as referee</b> once, from the browser you run games on.
+      Only that browser can see the whole table; players can only reach their own character, and only via
+      the link you send them. A player running two characters opens each link in its own tab.</p>
     <p class="hint" style="margin-top:7px">Each character is a <b>slot</b> with its own link. One per player, or several
       if somebody runs two. A player opens their link once and their browser remembers it &mdash; no login, no password.
       Lose the link and you can copy it again from here.</p>
@@ -1741,12 +1745,39 @@ async function syncStart(){
     FB.camp=campaignId();
     FB.ref=FB.db.ref('campaigns/'+FB.camp+'/players');
     FB.ref.on('value', snap=>{ applyRemote(snap.val()||{}); },
-      err=>{ syncStatus('Denied: '+err.code,'redc'); });
+      err=>{ syncStatus('Cannot see the table — claim as referee','hotc'); });
+    setTimeout(checkGM,800);
     FB.db.ref('.info/connected').on('value', s=>{
       FB.ok=!!s.val();
       syncStatus(FB.ok?('Live · '+FB.camp):'Reconnecting…', FB.ok?'greenc':'hotc');
     });
   }catch(e){ syncStatus('Sync failed: '+e.message,'redc'); }
+}
+function claimGM(){
+  if(!FB.db||!FB.ok){ slotMsg('Connect first.','redc'); return; }
+  const uid=(firebase.auth().currentUser||{}).uid;
+  if(!uid){ slotMsg('No anonymous sign-in — enable it in Firebase.','redc'); return; }
+  const r=FB.db.ref('campaigns/'+campaignId()+'/gm');
+  r.once('value').then(s=>{
+    if(s.exists() && s.val()!==uid){
+      askConfirm('This campaign is already claimed by another browser. '+
+        'Take it over? The old referee browser will lose the overview.',
+        ()=>r.set(uid).then(()=>{ slotMsg('Claimed. Reconnecting…','greenc'); syncStart(); })
+             .catch(e=>slotMsg('Refused: '+e.code,'redc')),'Take over');
+    } else {
+      r.set(uid).then(()=>{ slotMsg('Claimed as referee for this browser.','greenc'); syncStart(); })
+       .catch(e=>slotMsg('Refused: '+e.code,'redc'));
+    }
+  }).catch(e=>slotMsg('Refused: '+e.code,'redc'));
+}
+function checkGM(){
+  if(!FB.db) return;
+  const uid=(firebase.auth().currentUser||{}).uid;
+  FB.db.ref('campaigns/'+campaignId()+'/gm').once('value').then(s=>{
+    const b=document.getElementById('gmBtn'); if(!b) return;
+    if(s.val()&&s.val()===uid){ b.textContent='Referee ✓'; b.classList.add('on2'); }
+    else { b.textContent=s.exists()?'Claim (held elsewhere)':'Claim as referee'; b.classList.remove('on2'); }
+  }).catch(()=>{});
 }
 function syncStop(){ if(FB.ref){FB.ref.off();FB.ref=null;} FB.ok=false; syncStatus('Offline',''); }
 function syncCamp(v){ S.sync=S.sync||{}; S.sync.camp=(v||'drinax').trim()||'drinax'; queueSave(); syncStart(); }
@@ -1763,7 +1794,7 @@ function makeSlot(){
   const nm=(document.getElementById('slotName').value||'').trim();
   if(!nm){ document.getElementById('slotNote').textContent='Give the character a name first.'; return; }
   const id=nm.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'').slice(0,24)
-    +'-'+Math.random().toString(36).slice(2,6);
+    +'-'+Math.random().toString(36).slice(2,8)+Math.random().toString(36).slice(2,6);
   if(!FB.db||!FB.ok){ document.getElementById('slotNote').textContent='Connect first — the slot lives in the campaign.'; return; }
   FB.db.ref('campaigns/'+campaignId()+'/players/'+id+'/meta').update({name:nm,created:Date.now()})
     .then(()=>{ document.getElementById('slotName').value='';
@@ -1779,20 +1810,30 @@ function promptCopy(t){
   askConfirm('Copy this link and send it to the player:<br><br><span style="word-break:break-all;font-size:12px">'
     +t+'</span>', ()=>{}, 'Done');
 }
+function slotMsg(t,cls){ const e=document.getElementById('slotNote');
+  if(e){ e.innerHTML=t; e.className='hint grow '+(cls||''); } }
 function purgeEmpty(){
   const empty=(S.slots||[]).filter(s=>!s.filled);
   if(!empty.length){ document.getElementById('slotNote').textContent='Nothing empty to clear.'; return; }
   askConfirm('Delete <b>'+empty.length+'</b> empty slot'+(empty.length===1?'':'s')+
     ' from the campaign? Slots with a character in them are left alone.',
-    ()=>{ if(!FB.db) return;
-      empty.forEach(s=>FB.db.ref('campaigns/'+campaignId()+'/players/'+s.id).remove());
-      note('Cleared '+empty.length); },'Delete');
+    ()=>{
+      if(!FB.db||!FB.ok){ slotMsg('Not connected — cannot delete from the campaign.','redc'); return; }
+      Promise.all(empty.map(s=>FB.db.ref('campaigns/'+campaignId()+'/players/'+s.id).remove()))
+        .then(()=>slotMsg('Cleared '+empty.length+' empty slot'+(empty.length===1?'':'s'),'greenc'))
+        .catch(e=>slotMsg('Refused: '+e.code+' — your rules do not allow deleting here','redc'));
+    },'Delete');
 }
 function copySlot(id){ copyText(slotLink(id)); note('Link copied'); }
 function forgetSlot(id,nm){
   askConfirm('Delete the character slot <b>'+(nm||id)+'</b> from the campaign? Their sheet data goes with it.',
-    ()=>{ if(FB.db) FB.db.ref('campaigns/'+campaignId()+'/players/'+id).remove();
-          S.party=S.party.filter(p=>p.uid!==id); renderParty(); queueSave(); });
+    ()=>{
+      if(!FB.db||!FB.ok){ slotMsg('Not connected — cannot delete from the campaign.','redc'); return; }
+      FB.db.ref('campaigns/'+campaignId()+'/players/'+id).remove()
+        .then(()=>{ S.party=S.party.filter(p=>p.uid!==id); renderParty(); queueSave();
+                    slotMsg('Deleted '+(nm||id),'greenc'); })
+        .catch(e=>slotMsg('Refused: '+e.code+' — check your database rules','redc'));
+    });
 }
 
 /* ---- incoming: players own their sheets ---- */
@@ -1853,7 +1894,7 @@ function pushLive(){
         wd:p.wd||{}, md:p.md||{}, arm:p.arm===undefined?null:p.arm,
         ammo:(p.wpn||[]).map(w=>w.cur),
         by:'console', at:firebase.database.ServerValue.TIMESTAMP
-      }).catch(()=>{});
+      }).catch(e=>syncStatus('Write refused: '+e.code,'redc'));
     });
   },500);
 }
