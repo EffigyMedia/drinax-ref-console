@@ -1796,8 +1796,11 @@ async function syncStart(){
   if(typeof firebase==='undefined'){ syncStatus('Firebase did not load — offline','hotc'); return; }
   try{
     if(!FB.app){ FB.app=firebase.initializeApp(FBCONF); }
-    /* sign in anonymously only if nobody is signed in — never clobber a referee session */
-    try{ if(!firebase.auth().currentUser) await firebase.auth().signInAnonymously(); }
+    /* only sign in anonymously if there genuinely is no session, and only once
+       Firebase has finished restoring one — otherwise we race it and clobber ourselves */
+    try{ await new Promise(res=>{ const un=firebase.auth().onAuthStateChanged(u=>{ un();
+      if(u) return res(u);
+      firebase.auth().signInAnonymously().then(c=>res(c.user)).catch(()=>res(null)); }); }); }
     catch(e){ /* rules may not need auth */ }
     FB.db=firebase.database();
     if(FB.ref) FB.ref.off();
