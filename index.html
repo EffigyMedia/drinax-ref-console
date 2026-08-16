@@ -25,7 +25,7 @@
 *{box-sizing:border-box;margin:0;padding:0;}
 body{background:var(--bg);color:var(--ink);
   font-family:"Cn","Helvetica Neue",Arial,sans-serif;font-size:15px;line-height:1.4;
-  padding-bottom:60px;}
+  padding-bottom:calc(60px + env(safe-area-inset-bottom,0px));}
 button,input,select,textarea{font-family:inherit;font-size:16px;color:var(--ink);
   background:var(--panel2);border:1px solid var(--line);padding:8px 11px;border-radius:2px;
   -webkit-appearance:none;appearance:none;}
@@ -34,6 +34,12 @@ button{cursor:pointer;letter-spacing:.05em;min-height:42px;
   -webkit-tap-highlight-color:transparent;touch-action:manipulation;}
 body{-webkit-text-size-adjust:100%;}
 button:hover{border-color:var(--green);}
+#undoPanel{display:none;position:fixed;right:calc(12px + env(safe-area-inset-right,0px));top:calc(66px + env(safe-area-inset-top,0px));z-index:120;width:250px;
+  background:var(--panel);border:1px solid var(--green);padding:11px;
+  box-shadow:0 14px 40px rgba(0,0,0,.65);max-height:60vh;overflow:auto;}
+#undoPanel.on{display:block;}
+button:disabled{opacity:.35;cursor:default;}
+button:disabled:hover{border-color:var(--line);}
 button:active{background:#241618;}
 input:focus,select:focus,textarea:focus{outline:1px solid var(--green);}
 h2{font-size:11px;letter-spacing:.22em;color:var(--dim);font-weight:700;
@@ -44,7 +50,9 @@ h2{font-size:11px;letter-spacing:.22em;color:var(--dim);font-weight:700;
 
 /* header + tabs */
 header{position:sticky;top:0;z-index:20;background:var(--panel);
-  border-bottom:1px solid var(--line);padding:9px 14px;
+  border-bottom:1px solid var(--line);
+  padding:calc(10px + env(safe-area-inset-top,0px)) calc(14px + env(safe-area-inset-right,0px))
+          10px calc(14px + env(safe-area-inset-left,0px));
   display:flex;gap:14px;align-items:center;flex-wrap:wrap;}
 header .brand{color:var(--ink);font-weight:700;letter-spacing:.24em;font-size:13px;}
 header .brand span{color:var(--dim);font-weight:400;letter-spacing:.1em;}
@@ -55,7 +63,9 @@ nav button.on{background:var(--green);color:#0c0405;border-color:var(--green);fo
 .save{font-size:12px;color:var(--dim);letter-spacing:.08em;min-width:96px;text-align:right;}
 .save.dirty{color:var(--hot);}
 
-main{max-width:1180px;margin:0 auto;padding:14px;}
+main{max-width:1180px;margin:0 auto;
+  padding:14px calc(14px + env(safe-area-inset-right,0px))
+          14px calc(14px + env(safe-area-inset-left,0px));}
 .tab{display:none;}
 .tab.on{display:block;}
 .cols{display:grid;grid-template-columns:1fr 1fr;gap:12px;align-items:start;}
@@ -98,6 +108,14 @@ main{max-width:1180px;margin:0 auto;padding:14px;}
 .lane .lbl{font-size:9px;letter-spacing:.1em;color:var(--dim);text-transform:uppercase;
   text-align:center;margin-bottom:5px;line-height:1.2;}
 .lane.short .lbl{color:var(--green);}
+.chip.msl{border-color:var(--hot);background:#1c1310;}
+.chip.sel{box-shadow:0 0 0 2px var(--green);}
+.info{border:1px solid var(--green);background:var(--panel2);padding:12px;margin:6px 0 10px;}
+.info h3{font-size:16px;letter-spacing:.04em;margin-bottom:2px;}
+.info .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(96px,1fr));gap:7px;margin:9px 0;}
+.info .cell{border:1px solid var(--line);padding:5px 6px;text-align:center;}
+.info .cell .k{font-size:9px;letter-spacing:.14em;color:var(--dim);}
+.info .cell .v{font-size:17px;font-weight:700;font-variant-numeric:tabular-nums;}
 .chip{background:#1d1214;border:1px solid var(--green);padding:3px 4px;margin-bottom:4px;
   font-size:11px;text-align:center;line-height:1.25;}
 .chip b{display:block;font-size:12px;}
@@ -160,6 +178,11 @@ textarea{width:100%;min-height:120px;resize:vertical;line-height:1.6;}
 .trow .ix{color:var(--gold);font-weight:700;min-width:26px;font-variant-numeric:tabular-nums;font-size:13px;}
 .trow.hit{background:#221214;border-left-color:var(--green);}
 .trow.hit .ix{color:var(--green);}
+.conds{display:flex;gap:5px;flex-wrap:wrap;margin-top:5px;}
+.cnd{border:1px solid var(--line);background:#170f11;padding:2px 4px 2px 7px;
+  font-size:12px;display:flex;align-items:center;gap:4px;}
+.cnd.soon{border-color:var(--hot);color:var(--hot);}
+.cnd button{min-height:22px;padding:0 5px;font-size:11px;background:transparent;border:none;color:var(--dim);}
 .ammostrip{display:flex;gap:6px;flex-wrap:wrap;margin-top:5px;}
 .agrp{display:flex;align-items:center;gap:4px;border:1px solid var(--line);
   background:#150f10;padding:3px 5px;}
@@ -168,7 +191,8 @@ textarea{width:100%;min-height:120px;resize:vertical;line-height:1.6;}
 .agrp .ac.low{color:var(--hot);} .agrp .ac.out{color:var(--red);}
 .agrp button{min-height:30px;padding:2px 8px;font-size:12px;}
 .modal{position:fixed;inset:0;background:rgba(4,2,3,.78);z-index:200;
-  display:none;align-items:center;justify-content:center;padding:24px;}
+  display:none;align-items:center;justify-content:center;
+  padding:calc(24px + env(safe-area-inset-top,0px)) 24px calc(24px + env(safe-area-inset-bottom,0px));}
 .modal.on{display:flex;}
 .mbox{background:var(--panel);border:1px solid var(--green);padding:22px;max-width:420px;width:100%;
   box-shadow:0 20px 60px rgba(0,0,0,.7);}
@@ -191,9 +215,13 @@ button.danger:hover{background:var(--red);border-color:var(--red);}
     <button id="t-help" onclick="tab('help')">Help</button>
   </nav>
   <div class="save" id="saveState">—</div>
+  <button class="mini" id="undoBtn" onclick="undo()" title="Undo the last change" disabled>&#8630; Undo</button>
+  <button class="mini" id="histBtn" onclick="toggleHistory()" title="Undo history" disabled>&#9662;</button>
   <button class="mini" onclick="downloadSave()" title="Save a copy to Files">&#8681; Files</button>
 </header>
+<div id="undoPanel"></div>
 
+<datalist id="condlist"><option value="Stunned"><option value="Prone"><option value="Suppressed"><option value="Dazed"><option value="Bleeding"><option value="Drugged"><option value="Suit breached"><option value="Drifting"><option value="Aiming"><option value="In cover"><option value="Grappled"><option value="Burning"><option value="Blinded"><option value="Deafened"></datalist>
 <main>
 
 <!-- ============================ COMBAT ============================ -->
@@ -247,6 +275,7 @@ button.danger:hover{background:var(--red);border-color:var(--red);}
         </div>
         <div class="row" style="margin-top:6px">
           <select id="gTier">
+            <option value="-1">Defenceless</option>
             <option value="0">Rabble</option><option value="1" selected>Trained</option>
             <option value="2">Veteran</option><option value="3">Elite</option>
           </select>
@@ -280,6 +309,13 @@ button.danger:hover{background:var(--red);border-color:var(--red);}
         <h2>Order of battle</h2>
         <div id="cbtList"></div>
         <p class="hint" id="cbtEmpty">Nobody in the fight yet.</p>
+      </div>
+
+      <div class="card">
+        <h2>Saved NPCs</h2>
+        <div id="npcList" class="hint">None saved.</div>
+        <p class="hint" style="margin-top:7px">Save any named NPC or mob out of the fight and drop them back in
+        next session. Recurring enemies keep their stats.</p>
       </div>
 
       <div class="card">
@@ -330,6 +366,7 @@ button.danger:hover{background:var(--red);border-color:var(--red);}
       <div class="grow"></div>
       <input id="sRespSet" type="number" placeholder="turns" style="width:80px">
       <button onclick="setResponse()">Start clock</button>
+      <button class="mini" onclick="backExchange()" title="Step back an exchange">&lsaquo;</button>
       <button onclick="advanceExchange()">Advance exchange &rsaquo;</button>
       <button class="x" onclick="resetSpace()">Clear</button>
     </div>
@@ -350,6 +387,8 @@ button.danger:hover{background:var(--red);border-color:var(--red);}
         <option value="5">Resolve 5 &mdash; will die for it (14+)</option>
       </select>
       <button onclick="addContact()">Add contact</button>
+      <button class="mini" onclick="launch('out')" title="A missile of yours, running outward">&#9679;&rarr; Missile out</button>
+      <button class="mini" onclick="launch('in')" title="A missile inbound at you">&larr;&#9679; Missile in</button>
       <button class="mini" onclick="rollPosture()">Roll posture</button>
       <span class="hint grow" id="postureOut"></span>
     </div>
@@ -522,6 +561,16 @@ button.danger:hover{background:var(--red);border-color:var(--red);}
   </div>
 
   <div class="card">
+    <h2>Session log &mdash; written as you play</h2>
+    <div class="log" id="eventLog" style="max-height:260px"></div>
+    <div class="row" style="margin-top:8px">
+      <button class="mini" onclick="copyEvents()">Copy</button>
+      <button class="mini x" onclick="clearEvents()">Clear</button>
+      <span class="hint grow">Damage, kills, alarms, standing and spoils, timestamped.</span>
+    </div>
+  </div>
+
+  <div class="card">
     <h2>Campaign log</h2>
     <textarea id="notes" placeholder="What they did, who saw them, who owes them, what is coming."></textarea>
     <div class="row" style="margin-top:8px">
@@ -657,6 +706,7 @@ function modalYes(){ const f=modalFn; modalNo(); if(f) f(); }
 document.addEventListener('keydown',e=>{ if(e.key==='Escape') modalNo(); });
 
 /* ---------------- reference data ---------------- */
+
 const BANDS=["Adjacent","Close","Short","Medium","Long","Very Long","Distant"];
 const BANDD=["1 km","10 km","1,250 km","10,000 km","25,000 km","50,000 km","500,000 km"];
 const ALARM=["Oblivious","Curious &mdash; probably a rock","Wary &mdash; sensors up, crew to stations",
@@ -694,13 +744,18 @@ const REF={
     "Lasers and slugs hole the compartment on a <b>natural 2</b>. Snub pistols and blades don't.<br>"+
     "Locked iris valve &mdash; <b>Electronics (computers) 12+</b>, or explosives and the noise."]};
 
-const TIERN=["Rabble","Trained","Veteran","Elite"];
+const TIERN=["Rabble","Trained","Veteran","Elite"]; const DEFENCELESS="Defenceless";
 const SIZEN=["Single foe","Handful","Squad","Crowd"];
 const MOBS=[
  /* ---- standard fare ---- */
  {n:"Street thugs",g:"S",hits:19,arm:[0,1,2,3],
   w:[["Cudgel 2D"],["Knife 2D","Autopistol 3D-3"],["Autopistol 3D-3","Blade 2D+2"],["Autopistol 3D-3","Shotgun 4D"]],
   t:["Loud, and used to people backing down","Somebody here has a reputation to protect","They fight for the corner, not the coin"]},
+ {n:"Psions",g:"S",hits:19,arm:[0,1,2,4],psi:[3,5,8,12],
+  w:[["Telepathic assault 2D"],["Telepathic assault 2D","Sidearm 3D-3"],
+     ["Psionic assault 3D","Sidearm 3D-3"],["Psionic assault 4D","Laser pistol 3D+3"]],
+  t:["They knew you were coming before you arrived","One of them is the real talent, the rest are screens",
+     "Psionics are illegal here and they have everything to lose"]},
  {n:"Bandits",g:"S",hits:20,arm:[1,2,3,4],
   w:[["Improvised weapon 2D"],["Autorifle 3D"],["Autorifle 3D","Shotgun 4D"],["Assault rifle 3D","Grenades 4D"]],
   t:["They know the ground and the exits","Taking prisoners is worth more than killing","There is a lookout you have not seen"]},
@@ -734,6 +789,15 @@ const MOBS=[
  {n:"Wild beasts",g:"S",hits:24,arm:[1,2,4,6],
   w:[["Claws 2D"],["Claws and teeth 2D+2"],["Claws and teeth 3D"],["Claws and teeth 4D"]],
   t:["No tactics, only hunger","Fire and noise will turn them","They hunt as a pack and flank"]},
+ {n:"Civilians",g:"S",hits:18,arm:[0,0,1,1],
+  w:[["Nothing"],["Improvised 1D"],["Improvised 1D"],["Sidearm 3D-3"]],
+  t:["They are trying to get away, not to fight","One of them is filming you","Somebody here is hurt already"]},
+ {n:"Ship's passengers",g:"S",hits:18,arm:[0,0,1,2],
+  w:[["Nothing"],["Nothing"],["Improvised 1D"],["Concealed pistol 3D-3"]],
+  t:["Panicking in a confined space","One is far more important than they admit","They will do what a calm voice tells them"]},
+ {n:"Station workers",g:"S",hits:19,arm:[1,1,2,3],
+  w:[["Tools 1D"],["Cutting torch 3D"],["Cutting torch 3D"],["Autopistol 3D-3"]],
+  t:["They know where every hatch and crawlway goes","Union first, employer second","They will down tools rather than die"]},
  /* ---- Trojan Reach ---- */
  {n:"Merchant crew",g:"R",hits:20,arm:[0,1,2,3],
   w:[["Whatever was in the locker 2D"],["Snub pistol 3D-3"],["Snub pistol 3D-3","Shotgun 4D"],["Snub pistol 3D-3","Blade 2D+2"]],
@@ -773,19 +837,78 @@ const MOBS=[
   t:["No morale. They stop when destroyed","Networked — one sees, all see","Someone can override them"]}];
 
 const SHIPS=[
- {n:"Free trader",      t:"200t", th:1, arm:"unarmed or one turret",     res:2, dmg:3, cargo:[2,20000], note:"Broke, cutting corners, probably smuggling something"},
- {n:"Far trader",       t:"200t", th:2, arm:"one turret, beam laser",    res:2, dmg:3, cargo:[2,30000], note:"Fast enough to be annoying, poor enough to fold"},
- {n:"Bulk freighter",   t:"800t", th:1, arm:"two turrets, badly crewed", res:1, dmg:4, cargo:[4,50000], note:"Slow, fat, and someone's whole livelihood"},
- {n:"Passenger liner",  t:"600t", th:2, arm:"token turret",              res:2, dmg:4, cargo:[3,40000], note:"Hundreds of witnesses. Every one of them has a camera"},
- {n:"Private yacht",    t:"100t", th:3, arm:"unarmed",                   res:1, dmg:3, cargo:[2,60000], note:"Somebody aboard is worth more as a hostage than the hull"},
- {n:"Scout / courier",  t:"100t", th:2, arm:"one turret",                res:3, dmg:3, cargo:[1,10000], note:"Will run, and will report you accurately"},
- {n:"Mining tender",    t:"400t", th:1, arm:"unarmed, industrial lasers",res:1, dmg:4, cargo:[3,25000], note:"Outsystem, unprotected, and nobody counts the ore"},
- {n:"Customs cutter",   t:"100t", th:4, arm:"turret, sandcaster",        res:4, dmg:3, cargo:[0,0],     note:"Not built to win a fight, built to keep you busy until help lands"},
- {n:"System defence boat",t:"400t",th:6,arm:"heavy turrets, no jump",    res:5, dmg:5, cargo:[0,0],     note:"Faster and better armed than you. It simply cannot follow you out"},
- {n:"Naval escort",     t:"400t", th:6, arm:"military turrets, missiles",res:5, dmg:5, cargo:[0,0],     note:"Skilled crew, and it CAN follow you out"},
- {n:"Q-ship",           t:"400t", th:2, arm:"concealed &mdash; reveals at Close",res:5,dmg:4,cargo:[2,20000], note:"Surrenders instantly. Opens fire the moment you are close enough to board"},
- {n:"Corsair",          t:"400t", th:4, arm:"turrets, boarding crew",    res:3, dmg:4, cargo:[3,30000], note:"Rival pirates. Killing these RAISES your Standing"},
- {n:"Aslan raider",     t:"400t", th:4, arm:"turrets, many warriors",    res:4, dmg:4, cargo:[3,30000], note:"Ihatei looking for land. They will board you"}];
+ {n:"Free trader",      t:"200t", th:1, res:2, dmg:3, cargo:[2,20000], crew:5,   sens:-2,
+  arm:"one turret, often empty", att:1, tn:9, rng:"Medium", brd:"Merchant crew, handful",
+  jmp:1, av:2, hold:82, berths:6,
+  note:"Broke, cutting corners, probably smuggling something"},
+ {n:"Far trader",       t:"200t", th:2, res:2, dmg:3, cargo:[2,30000], crew:5,   sens:-1,
+  arm:"one turret, beam laser", att:1, tn:9, rng:"Medium", brd:"Merchant crew, handful",
+  jmp:2, av:2, hold:64, berths:6,
+  note:"Fast enough to be annoying, poor enough to fold"},
+ {n:"Bulk freighter",   t:"800t", th:1, res:1, dmg:4, cargo:[4,50000], crew:12,  sens:-2,
+  arm:"two turrets, badly crewed", att:1, tn:10, rng:"Medium", brd:"Merchant crew, squad",
+  jmp:1, av:2, hold:520, berths:12,
+  note:"Slow, fat, and someone's whole livelihood"},
+ {n:"Passenger liner",  t:"600t", th:2, res:2, dmg:4, cargo:[3,40000], crew:20,  sens:-1,
+  arm:"one token turret", att:1, tn:10, rng:"Medium", brd:"Merchant crew, handful · 80 passengers",
+  jmp:2, av:4, hold:90, berths:90,
+  note:"Hundreds of witnesses, every one of them with a camera"},
+ {n:"Private yacht",    t:"100t", th:3, res:1, dmg:3, cargo:[2,60000], crew:4,   sens:0,
+  arm:"unarmed", att:0, tn:"—", rng:"—", brd:"Bodyguards, handful",
+  jmp:2, av:2, hold:12, berths:8,
+  note:"Somebody aboard is worth more as a hostage than the hull"},
+ {n:"Scout / courier",  t:"100t", th:2, res:3, dmg:3, cargo:[1,10000], crew:2,   sens:2,
+  arm:"one turret, pulse laser", att:1, tn:8, rng:"Long", brd:"Naval ratings, single foe",
+  jmp:2, av:4, hold:3, berths:4,
+  note:"Will run, and will report you accurately"},
+ {n:"Mining tender",    t:"400t", th:1, res:1, dmg:4, cargo:[3,25000], crew:14,  sens:-2,
+  arm:"unarmed, industrial cutting lasers", att:0, tn:"—", rng:"Adjacent", brd:"Scavengers, squad",
+  jmp:1, av:2, hold:180, berths:16,
+  note:"Outsystem, unprotected, and nobody counts the ore"},
+ {n:"Customs cutter",   t:"100t", th:4, res:4, dmg:3, cargo:[0,0], crew:6,       sens:1,
+  arm:"turret and sandcaster", att:1, tn:8, rng:"Long", brd:"Starport security, handful",
+  jmp:1, av:6, hold:4, berths:8,
+  note:"Not built to win a fight, built to keep you busy until help lands"},
+ {n:"System defence boat",t:"400t",th:6,res:5, dmg:5, cargo:[0,0], crew:12,      sens:2,
+  arm:"heavy turrets, no jump drive", att:3, tn:7, rng:"Very Long", brd:"Marines, handful",
+  jmp:0, av:12, hold:0, berths:12,
+  note:"Faster and better armed than you. It simply cannot follow you out of the system"},
+ {n:"Naval escort",     t:"400t", th:6, res:5, dmg:5, cargo:[0,0], crew:20,      sens:3,
+  arm:"military turrets and missiles", att:3, tn:6, rng:"Very Long", brd:"Marines, squad",
+  jmp:3, av:10, hold:8, berths:22,
+  note:"Skilled crew, and it CAN follow you out"},
+ {n:"Q-ship",           t:"400t", th:2, res:5, dmg:4, cargo:[2,20000], crew:16,  sens:2,
+  arm:"concealed military turrets — reveal at Close", att:3, tn:7, rng:"Short", brd:"Marines, squad",
+  jmp:2, av:8, hold:90, berths:20,
+  note:"Surrenders instantly. Opens fire the moment you are close enough to board"},
+ {n:"Corsair",          t:"400t", th:4, res:3, dmg:4, cargo:[3,30000], crew:14,  sens:1,
+  arm:"two turrets and a boarding crew", att:2, tn:8, rng:"Medium", brd:"Corsairs, squad",
+  jmp:2, av:6, hold:120, berths:20,
+  note:"Rival pirates. Killing these RAISES your Standing with both powers"},
+ {n:"Aslan raider",     t:"400t", th:4, res:4, dmg:4, cargo:[3,30000], crew:18,  sens:1,
+  arm:"two turrets, many warriors aboard", att:2, tn:8, rng:"Medium", brd:"Aslan warriors, squad",
+  jmp:2, av:6, hold:100, berths:24,
+  note:"Ihatei looking for land. They will try to board you"}];
+const CARGOTYPE=[
+ ["Bulk foodstuffs","Low value, fences anywhere, nobody hunts you for it"],
+ ["Industrial parts","Needs a buyer with a factory — Tolerant ports or better"],
+ ["Traceable pharmaceuticals","High value, and every crate is serialised. Standing risk"],
+ ["Luxury goods","Only moves at a Haven or Friendly port, but it moves well"],
+ ["Small arms and ammunition","Illegal almost everywhere. Sells fast on Theev, doubles the heat"],
+ ["Data cores","Worth little to a fence and a fortune to the right person"],
+ ["Passengers' baggage","Petty, personal, and someone will remember your face"],
+ ["Livestock and biologicals","Perishable. Needs life support and a buyer within a jump"],
+ ["Refined hydrogen","Bulky and cheap, but you can burn it yourself"],
+ ["Exotic materials","<b class=\'hotc\'>Repair Units for the Harrier.</b> Worth more to you than to a fence"],
+ ["Sindalian relics","Rachando will buy these on Drinax, and ask no questions"],
+ ["Medical supplies","Someone downstream dies without it. Your players will argue about this"]];
+const CREWBEHAVE=[
+ "Surrender the moment the airlock cycles",
+ "Barricade themselves in engineering and threaten the drive",
+ "Fight at the airlock, then fold once someone goes down",
+ "Scatter and hide through the ship — Recon 8+ to find them",
+ "One of them plays hero and the rest follow if it works",
+ "Comply perfectly, while quietly wiping the computer"];
 const STIER=["Desperate","Ordinary","Well run","Escorted"];
 const SCOMP=["A second contact you did not see","Their transponder is false too",
   "They are already damaged from something else","A passenger aboard changes everything",
@@ -794,6 +917,66 @@ const SCOMP=["A second contact you did not see","Their transponder is false too"
 const DEFECTS=[["Keel microfractures","Reduced hull points"],["Manoeuvre drive","Cuts out on a double-1 Pilot check"],
   ["Jump drive","DM&minus;2 on all jump checks"],["General systems","~20% efficiency loss"],
   ["Outer hull","20 Cosmetic RU to restore"]];
+
+
+/* ==================== NAMES — 2 x D66 per species ==================== */
+const NAMEDATA={
+ Human:{
+  first:["Adaeze","Bellamy","Corin","Dov","Esme","Fenwick",
+         "Gita","Halvard","Ilse","Jorun","Katarzyna","Lucien",
+         "Maret","Nikolai","Ondine","Perrin","Quilla","Rasmus",
+         "Sabine","Tobias","Ulla","Vashti","Wendel","Xiomara",
+         "Yusuf","Zerlina","Ambrose","Beatriz","Caius","Dagny",
+         "Emeric","Fiadh","Goran","Hesper","Ivo","Juno"],
+  last:["Achall","Brennig","Corvane","Duhalde","Erskine","Falzon",
+        "Gallardo","Halloway","Ibori","Jarnvid","Kessel","Lindqvist",
+        "Marchetti","Ndiaye","Okonkwo","Pellerin","Quintero","Rooker",
+        "Sandoval","Tarrant","Ulvaeus","Vasquez","Winterbourne","Xanthos",
+        "Yarrow","Zangari","Abelard","Bosch","Caraway","Delacroix",
+        "Ephraim","Fontaine","Grisham","Holloway","Ivanenko","Jessop"],
+  note:"Imperial, Sindalian and Reach-born alike"},
+ Aslan:{
+  first:["Aeuwao","Ftahaowao","Hkaakhaia","Iyriyeh","Khtiylei","Luawaikh",
+         "Miykhoal","Ohuiyah","Riyseakh","Sahoiyfe","Tiykhrao","Uawiyre",
+         "Weahroi","Yaokhaiw","Ahtoiwe","Fteiylao","Hriykhau","Ikhtaraw",
+         "Kealraoh","Lyeahfti","Moaikhre","Ohtaeyu","Reihkoaw","Saeftly",
+         "Tahroiye","Uikhalao","Weyftaor","Yliahkae","Aokhrewi","Ftyauleh",
+         "Hoikhaya","Ireahwao","Khoalytei","Lauhriyk","Miyahtre","Oyftakhe"],
+  last:["Yerlyaruiwo","Khaukhilo","Hlyueawi","Syoisuis","Tralyeaeawi","Uikhilaa",
+        "Aokhalte","Eakhtiyr","Ftahalikh","Hrakoiwea","Iyfteahlu","Khiylahtre",
+        "Lyeakhriy","Moirtayah","Naoykhile","Oiwreahta","Rahtiykho","Seakhwiyl",
+        "Tyaoheikh","Uahriklea","Weahtolry","Yrikhaowe","Ahleaskoi","Ekhtoyria",
+        "Ftrialweo","Hoykhearl","Ilyawtehk","Khreaotyi","Loiwahkre","Miykhaotl",
+        "Nyahroeki","Oakhtelry","Riawohkei","Syeloakhi","Taykhreio","Waohliyke"],
+  note:"Clan name second, and it matters more than the first"},
+ Vargr:{
+  first:["Aegzuegh","Dzarrgh","Ekhaell","Fangvueth","Gvoudzon","Hraeksang",
+         "Irrgekh","Ksangdze","Llaenzugh","Naerrgho","Oughvekh","Rrangsel",
+         "Souekhan","Thaengvu","Ukhaersz","Vaegzoll","Zaengrukh","Aerrgvoll",
+         "Dzuenkhae","Enghsarra","Fhaergvoz","Grroudzel","Hsangkhoe","Illaengz",
+         "Kaevrougz","Lloezanth","Muezgharr","Nghaerrsu","Ourzgvael","Rhaesungz",
+         "Szoerrikh","Thuenzagh","Uersanggh","Vhoellaez","Zueghrran","Aekhsollu"],
+  last:["of Gzaengsvo","of Rrudzoegh","of Khaellan","of Ngvaerroth","of Suezgvel","of Thaerrukh",
+        "Uenzagh","Vraekholl","Zangvurra","Aerrikhso","Dzoellaeng","Ekhvaurro",
+        "Fhaengzoll","Gharruezan","Hsollaevgz","Ikhraengvo","Kvaellzoen","Llaesungvo",
+        "Murzaenggh","Nghoellars","Oezvarrukh","Rraengsollu","Sungvaerroz","Thoellaenz",
+        "Uarrgvoekh","Vaengzhoell","Zoerrakhun","Aengsvurrol","Dzhaellorr","Ekhungvaez",
+        "Fhorrsaeng","Gzuellaenv","Hraevzollun","Ilaengzurro","Khaesvorrun","Lloengvaerz"],
+  note:"Charisma is everything; the name changes with the pack"}};
+const SPECIES=["Human","Aslan","Vargr"];
+function d66pick(arr){ return arr[(d(6)-1)*6+(d(6)-1)]; }
+function makeName(sp){
+  const s=NAMEDATA[sp]||NAMEDATA.Human;
+  const f=d66pick(s.first), l=d66pick(s.last);
+  return (sp==='Vargr' && l.startsWith('of ')) ? f+' '+l : f+' '+l;
+}
+function speciesFor(shipName){
+  if(/aslan/i.test(shipName)) return 'Aslan';
+  const r=d(6)+d(6);
+  if(r<=3) return 'Vargr';
+  if(r<=4) return 'Aslan';
+  return 'Human';
+}
 
 /* ==================== RULES ==================== */
 const RULES=[[
@@ -1270,6 +1453,9 @@ const HELP=[
   "effective DM and flags SHAKEN, so a group that is winning stays dangerous and a group that is losing falls apart. "+
   "The <b>Shaken</b> button overrides it by hand &mdash; which is how you handle a single foe, since one body has no "+
   "casualty ratio to read.<br><br>"+
+  "<b>Psions</b> carry a shared PSI pool &mdash; the group's total, with a cap on any single use equal to one "+
+  "member's share. A squad of five trained psions has 25 points and can throw at most 5 at you in one go. "+
+  "Spend with the buttons on their row; the arrow gives points back if you miscount.<br><br>"+
   "Sizes run <b>Single foe</b>, Handful, Squad and Crowd. Generated enemies come with one or two weapons and their "+
   "damage dice, listed under the name.<br><br>"+
   "<b>Roll a mob</b> builds one from twelve archetypes, four tiers and three sizes. It gives you a <b>break number</b> &mdash; "+
@@ -1287,7 +1473,10 @@ const HELP=[
   "<b>Edit</b> on any card changes the name, the role, every maximum and the armour rating, and adds or removes "+
   "<b>PSI</b> for anyone with psionic training &mdash; it only appears on characters who have it. Renaming updates "+
   "their row in the fight too.<br><br>"+
-  "Every delete asks first, so a stray tap at the table cannot wipe a character.<br><br>"+
+  "Every delete asks first, and <b>&#8630; Undo</b> in the header reverses the last change anywhere in the console "+
+  "&mdash; a mistyped damage figure, a wrong band, a fat-fingered pip. The <b>&#9662;</b> beside it opens a short "+
+  "history: the last twelve changes with a time and which tab they touched, and tapping one steps the whole "+
+  "console back to that point.<br><br>"+
   "Each characteristic shows its <b>base</b> value, which never changes in play, and a small <b>wound box</b> "+
   "underneath. The big number is base minus wounds. Type a number straight into the box, or use &minus; to take "+
   "a wound and + to recover one. On a psion the same box counts <b>PSI points spent</b>, so casting drains it and "+
@@ -1309,14 +1498,46 @@ const HELP=[
   "for you to type in as your players call their numbers out. <b>Send and roll</b> does it for you at 2D + DEX DM. "+
   "Damage dealt there writes straight back here &mdash; one set of numbers, two views. "+
   "<b>Restore all</b> resets characteristics, armour and ammunition after a long rest."],
- ["Space",
-  "The plot is seven range bands. Add a contact and it appears at Distant; walk it inward with the arrows. "+
-  "The centre pip button cycles its damage.<br><br>"+
-  "<b>Alarm</b> is the real fight. Reach Short at 2 or less and the hunt is won &mdash; say that rule to your players once.<br><br>"+
-  "The <b>Response clock</b> is your pressure. Roll it on the Tables tab the moment shooting starts, send it here, "+
-  "and count it down out loud each exchange.<br><br>"+
-  "The <b>Scuttle clock</b> ticks every exchange nobody is fighting for the bridge. It is what forces the party to split.<br><br>"+
-  "<b>Roll a ship</b> builds prey from thirteen hulls and four conditions, with Resolve, thrust, armament, cargo value and a complication."],
+ ["Space &mdash; how to run an encounter",
+  "<b>The idea.</b> A pirate's fight is a stalk that ends in a conversation. You are not trying to destroy the "+
+  "target, you are trying to reach it before it wakes up. Shooting is what happens when the stalk fails.<br><br>"+
+
+  "<b>1. Set up.</b> Roll a ship, or add a contact by hand. It lands at <b>Distant</b>. Two checks decide most of "+
+  "what follows: <b>Astrogation 10+</b> to plot a quiet approach, then <b>Pilot 8+</b> using that Effect as a DM. "+
+  "Success means you arrive at <b>Short</b>. Failure means you are seen further out &mdash; walk the contact in only "+
+  "as far as the roll earned.<br><br>"+
+
+  "<b>2. Run exchanges.</b> An exchange is ten minutes to a few hours, not six seconds. Each one: the prey acts, "+
+  "each player takes one action (pilot, sensors, astrogation, comms, gunnery, engineering, marines), you move the "+
+  "contact a band with the arrows, and you adjust <b>Alarm</b>.<br><br>"+
+
+  "<b>3. Watch the Alarm, not the damage.</b> This is the real fight. Going active on sensors, burning hard, being "+
+  "seen to close or hailing them each add a point; a warning shot adds two; a whole exchange run dark takes one off. "+
+  "<b>Reach Short at Alarm 2 or less and you have won</b> &mdash; the merchant folds and nobody ever files a report. "+
+  "Tell your players that rule once.<br><br>"+
+
+  "<b>4. Make the Ask.</b> Roll Persuade or Deception against the contact's <b>surrender number</b>, shown on the "+
+  "detail line. At Short you get <b>+4</b>, at Medium <b>+2</b>; a warning shot is <b>+2</b> more, a disabling hit "+
+  "<b>+4</b>, visible marines <b>+1</b>, no escape vector <b>+2</b>. A reputation for mercy is <b>+2</b>; a "+
+  "reputation for killing crews is <b>&minus;2</b>, because cornered rats fight. The argument is never <i>you "+
+  "cannot win</i> &mdash; they know that. It is <i>we will be merciful if you do not make us.</i><br><br>"+
+
+  "<b>5. If it goes loud.</b> Each contact has damage pips. Roll <b>Gunnery 8+</b> to mark one, then roll a critical "+
+  "and describe it. The ship's own line tells you what it does back: how many attacks an exchange, the number it "+
+  "needs to mark a pip on you, and how far out it reaches. Aim for the manoeuvre drive or the fuel &mdash; breaching "+
+  "the hull ruins the cargo you came for.<br><br>"+
+
+  "<b>6. Start the Response clock the moment you fire.</b> Roll it on the Tables tab, send it here, and count it "+
+  "down out loud every exchange. That clock, not the freighter, is what kills pirates.<br><br>"+
+
+  "<b>7. Board it.</b> Tap <b>Board it &rsaquo;</b> on the contact. That builds the defenders from the ship's crew, "+
+  "drops your whole party in with blank initiative, names the scene, flips the Combat tab to Boarding mode and "+
+  "takes you there. The <b>Scuttle "+
+  "clock</b> ticks every exchange nobody is fighting for the bridge: distress call, computer wiped, fuel dumped, "+
+  "drive blown. That is what forces the party to split.<br><br>"+
+
+  "<b>8. Afterwards.</b> Roll Spies on departure, adjust Standing, adjust Morale, fence the cargo on the Campaign "+
+  "tab, and decide who lived and what they will say about you."],
  ["Campaign",
   "Both Standing tracks name their effect band automatically. Morale warns you before the mutiny.<br><br>"+
   "<b>Division of the spoils</b> is the one to show your players: put in the haul, pick the port, and it does Oleb's tithe "+
@@ -1432,6 +1653,7 @@ function pcHit(id,amt){
     syncCh(p); renderParty(); renderCombat(); queueSave(); return;
   }
   if(p.ablate&&p.arm>0) p.arm-=1;
+  logEvent(`<b>${p.n}</b> takes <b class="hotc">${amt}</b> damage`);
   const endLeft=curOf(p,'END');
   const toEnd=Math.min(amt,endLeft);
   p.wd.END=(p.wd.END||0)+toEnd;
@@ -1448,6 +1670,9 @@ function pcStatus(p){
   if(p.ch.END<p.mx.END/2) return ['<span class="hotc">Winded</span>',''];
   return ['Unhurt',''];
 }
+function setSkills(id,v){ const p=S.party.find(x=>x.id===id); if(!p) return;
+  p.skills=v; S.combat.list.forEach(c=>{ if(c.pcId===id) c.note=v; });
+  setTimeout(()=>{ renderCombat(); },0); queueSave(); }
 function addWpn(id){
   const p=S.party.find(x=>x.id===id);
   const n=document.getElementById('w-n-'+id).value.trim()||'Weapon';
@@ -1560,6 +1785,12 @@ function renderParty(){
         <button class="mini" onclick="pcHit('${p.id}',6)">Take 6</button>
         <button class="mini" onclick="pcHit('${p.id}',-3)">Heal 3</button>
       </div>
+      <div class="row" style="margin-top:10px">
+        <span class="state" style="flex:0 0 auto">Skills</span>
+        <input class="grow" value="${(p.skills||'').replace(/"/g,'&quot;')}"
+               placeholder="Recon 2, Gun Combat (slug) 1, Vacc Suit 0 …"
+               onchange="setSkills('${p.id}',this.value)">
+      </div>
       <h2 style="margin-top:12px">Weapons &amp; ammunition</h2>
       ${wpns||'<p class="hint">Nothing loaded.</p>'}
       <div class="row" style="margin-top:7px">
@@ -1576,7 +1807,7 @@ function addParty(roll){
     if(S.combat.list.some(c=>c.pcId===p.id)) return;
     S.combat.list.push({id:uid(),pcId:p.id,n:p.n,t:'pc',init:roll?(d(6)+d(6)+chDM(p.ch.DEX)):null,
       end:p.ch.END,endMax:p.mx.END,arm:p.arm,pips:0,pipsMax:0,
-      zone:(ZONES[S.combat.mode||'ground'])[0],breach:false,note:p.role||''});
+      zone:(ZONES[S.combat.mode||'ground'])[0],breach:false,note:p.skills||p.role||''});
   });
   if(roll) sortC();
   renderCombat(); tab('combat'); queueSave();
@@ -1589,10 +1820,10 @@ function addParty(roll){
 
 let S={
   combat:{round:1,turn:0,list:[],mode:'ground',scene:''},
-  space:{exch:1,alarm:0,scuttle:0,own:0,resp:null,respMax:null,contacts:[]},
+  space:{exch:1,alarm:0,scuttle:0,own:0,resp:null,respMax:null,contacts:[],missiles:[]},
   camp:{imp:0,as:-5,mor:null,ru:{s:0,t:0,c:0},defects:[false,false,false,false,false],
         ports:[{n:"Drinax",a:"Haven"},{n:"Theev",a:"Friendly"}],crew:[],notes:""},
-  rolls:[],rulePane:0,party:[],custom:[],tblSel:null,tblHit:null,editPC:null
+  rolls:[],rulePane:0,party:[],custom:[],tblSel:null,tblHit:null,editPC:null,npcs:[],events:[]
 };
 const FENCE={Haven:30,Friendly:25,Tolerant:20,Neutral:10,Suspicious:10,Unfriendly:0,Hostile:0};
 const d=n=>Math.floor(Math.random()*n)+1;
@@ -1600,6 +1831,64 @@ const uid=()=>Math.random().toString(36).slice(2,8);
 
 /* ---------------- persistence ---------------- */
 let memory=null, saveTimer=null, dirty=false;
+/* ---- undo: queueSave fires after every change, so bank the previous state there ---- */
+let undoStack=[], lastSerial=null, undoing=false;
+function whatChanged(a,b){
+  try{ const A=JSON.parse(a), B=JSON.parse(b);
+    const names={combat:'Combat',party:'Party',space:'Space',camp:'Campaign',
+                 custom:'Tables',rolls:'Roll log',tblSel:'Tables',editPC:'Party'};
+    for(const k of Object.keys(names))
+      if(JSON.stringify(A[k])!==JSON.stringify(B[k])) return names[k];
+  }catch(e){}
+  return 'Change';
+}
+function pushUndo(){
+  if(undoing) return;
+  const now=JSON.stringify(S);
+  if(lastSerial!==null && lastSerial!==now){
+    undoStack.push({json:lastSerial,label:whatChanged(lastSerial,now),
+      time:new Date().toLocaleTimeString([], {hour:'2-digit',minute:'2-digit',second:'2-digit'})});
+    if(undoStack.length>40) undoStack.shift();
+  }
+  lastSerial=now;
+  refreshUndoUI();
+}
+function refreshUndoUI(){
+  const b=document.getElementById('undoBtn'); if(b) b.disabled=!undoStack.length;
+  const h=document.getElementById('histBtn'); if(h) h.disabled=!undoStack.length;
+  const p=document.getElementById('undoPanel');
+  if(p&&p.classList.contains('on')) renderHistory();
+}
+function toggleHistory(){
+  const p=document.getElementById('undoPanel');
+  p.classList.toggle('on'); if(p.classList.contains('on')) renderHistory();
+}
+function renderHistory(){
+  const list=undoStack.slice(-12).reverse();
+  document.getElementById('undoPanel').innerHTML =
+    '<div class="hint" style="margin-bottom:7px">Step back to any point. Newest first.</div>'+
+    (list.length?list.map((e,i)=>
+      `<button class="mini" style="display:block;width:100%;text-align:left;margin-bottom:4px"
+        onclick="undoTo(${undoStack.length-1-i})">${e.time} &nbsp; <b>${e.label}</b></button>`).join('')
+      :'<div class="hint">Nothing yet.</div>');
+}
+function undoTo(i){
+  if(i<0||i>=undoStack.length) return;
+  undoing=true;
+  const target=undoStack[i].json;
+  undoStack=undoStack.slice(0,i);
+  try{ S=JSON.parse(target); }catch(e){}
+  lastSerial=target;
+  renderAll(); saveAll(false);
+  undoing=false; refreshUndoUI();
+  document.getElementById('undoPanel').classList.remove('on');
+  note('Stepped back');
+}
+function undo(){
+  if(!undoStack.length){ note('Nothing to undo'); return; }
+  undoTo(undoStack.length-1);
+  note('Undone');
+}
 const stamp=()=>new Date().toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'});
 async function saveAll(loud){
   const json=JSON.stringify(S);
@@ -1609,9 +1898,25 @@ async function saveAll(loud){
     dirty=false; note('Saved '+stamp());
   }catch(e){ memory=json; dirty=false; note('Held '+stamp()); }
 }
+function logEvent(txt){
+  S.events=S.events||[];
+  S.events.unshift({t:txt,time:new Date().toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'})});
+  if(S.events.length>200) S.events.length=200;
+  const el=document.getElementById('eventLog'); if(el) renderEvents();
+}
+function renderEvents(){
+  const el=document.getElementById('eventLog'); if(!el) return;
+  el.innerHTML=(S.events||[]).length? S.events.slice(0,60).map(e=>
+    `<div><span class="hint">${e.time}</span> ${e.t}</div>`).join('') : '<div class="hint">Nothing yet.</div>';
+}
+function clearEvents(){ askConfirm('Clear the session log?',()=>{S.events=[];renderEvents();queueSave();},'Clear'); }
+function copyEvents(){
+  const t=(S.events||[]).slice().reverse().map(e=>e.time+'  '+e.t.replace(/<[^>]+>/g,'')).join('\n');
+  navigator.clipboard.writeText(t).then(()=>note('Log copied')).catch(()=>note('Could not copy'));
+}
 function note(t){ const el=document.getElementById('saveState');
   el.textContent=t; el.classList.toggle('dirty',dirty); }
-function queueSave(){ dirty=true; note('Saving…'); clearTimeout(saveTimer);
+function queueSave(){ pushUndo(); dirty=true; note('Saving…'); clearTimeout(saveTimer);
   saveTimer=setTimeout(()=>saveAll(false),600); }
 
 /* ---- Files, clipboard ---- */
@@ -1655,7 +1960,7 @@ function wipe(){ askConfirm('Erase <b>everything</b> &mdash; party, campaign, ta
   'This cannot be undone, so export a copy first if you want one.',()=>wipeNow(),'Erase it all'); }
 function wipeNow(){
   S={combat:{round:1,turn:0,list:[],mode:'ground',scene:''},
-     space:{exch:1,alarm:0,scuttle:0,own:0,resp:null,respMax:null,contacts:[]},
+     space:{exch:1,alarm:0,scuttle:0,own:0,resp:null,respMax:null,contacts:[],missiles:[]},
      camp:{imp:0,as:-5,mor:null,ru:{s:0,t:0,c:0},defects:[false,false,false,false,false],
            ports:[{n:"Drinax",a:"Haven"},{n:"Theev",a:"Friendly"}],crew:[],notes:""}};
   renderAll(); saveAll(true);
@@ -1711,8 +2016,30 @@ function mobAutoShaken(c){
 function mobShaken(c){ return (c.sh===undefined||c.sh===null) ? mobAutoShaken(c) : c.sh; }
 function mobBody(id,n){
   const c=S.combat.list.find(x=>x.id===id); if(!c) return; mobMigrate(c);
+  const before=c.pips||0;
   c.pips=Math.max(0,Math.min(c.pipsMax,(c.pips||0)+n));
+  if(c.pips<before) logEvent(`<b>${c.n}</b> down to <b>${c.pips}</b> of ${c.pipsMax}`);
   renderCombat(); queueSave();
+}
+function psiSpend(id,n){
+  const c=S.combat.list.find(x=>x.id===id); if(!c||!c.psiMax) return;
+  const before=c.psiSpent||0;
+  c.psiSpent=Math.max(0,Math.min(c.psiMax,before+n));
+  if(n>0 && c.psiSpent>before) logEvent(`<b>${c.n}</b> spends <b>${c.psiSpent-before}</b> PSI`);
+  renderCombat(); queueSave();
+}
+function psiStrip(c){
+  if(!c.psiMax) return '';
+  const left=c.psiMax-(c.psiSpent||0);
+  const cls=left===0?'out':(left<=c.psiMax*0.34?'low':'');
+  return `<div class="ammostrip"><div class="agrp">
+    <span class="an">PSI pool</span>
+    <span class="ac ${cls}">${left}<span class="hint" style="font-size:10px">/${c.psiMax}</span></span>
+    <button onclick="psiSpend('${c.id}',1)" title="Spend one">1</button>
+    <button onclick="psiSpend('${c.id}',${c.psiEach||1})" title="A full activation">${c.psiEach||1}</button>
+    <button onclick="psiSpend('${c.id}',-${c.psiEach||1})" title="Give it back">&#8630;</button>
+    <span class="an">max ${c.psiEach} per use</span>
+  </div></div>`;
 }
 function cycleShaken(id){
   const c=S.combat.list.find(x=>x.id===id); if(!c) return;
@@ -1722,10 +2049,7 @@ function cycleShaken(id){
   renderCombat(); queueSave();
 }
 function sortC(){ S.combat.list.sort((a,b)=>(b.init===null?-99:b.init)-(a.init===null?-99:a.init)); }
-function sortInit(){ const act=S.combat.list[S.combat.turn];
-  sortC();
-  if(act) S.combat.turn=Math.max(0,S.combat.list.indexOf(act));
-  renderCombat(); queueSave(); }
+function sortInit(){ sortC(); S.combat.turn=0; renderCombat(); queueSave(); }
 function setInit(id,v){ const c=S.combat.list.find(x=>x.id===id);
   c.init = (v===''?null:+v); queueSave(); }   /* no re-render: keeps focus while you tab down the list */
 function moveOrder(id,dir){
@@ -1739,7 +2063,7 @@ function rollInit(){ S.combat.list.forEach(c=>c.init=d(6)+d(6)); sortC(); S.comb
 function nextTurn(){
   if(!S.combat.list.length) return;
   S.combat.turn++;
-  if(S.combat.turn>=S.combat.list.length){ S.combat.turn=0; S.combat.round++; }
+  if(S.combat.turn>=S.combat.list.length){ S.combat.turn=0; S.combat.round++; tickConds(); }
   renderCombat(); queueSave();
 }
 function resetCombat(){ askConfirm('Clear the whole order of battle?',()=>resetCombatNow(),'Clear'); }
@@ -1751,11 +2075,57 @@ function dmg(id,v){
   c.end=Math.max(0,Math.min(c.endMax,c.end+v));
   renderCombat(); queueSave();
 }
+const CONDS=["Stunned","Prone","Suppressed","Dazed","Bleeding","Drugged",
+  "Suit breached","Drifting","Aiming","In cover","Grappled","Burning","Blinded","Deafened"];
+function addCond(id){
+  const c=S.combat.list.find(x=>x.id===id); if(!c) return;
+  const n=document.getElementById('cn-'+id).value.trim();
+  const r=+document.getElementById('cr-'+id).value||0;
+  if(!n) return;
+  c.cond=c.cond||[]; c.cond.push({n,r,timed:r>0});
+  S.combat.condFor=null; renderCombat(); queueSave();
+}
+function delCond(id,i){ const c=S.combat.list.find(x=>x.id===id);
+  c.cond.splice(i,1); renderCombat(); queueSave(); }
+function saveNPC(id){
+  const c=S.combat.list.find(x=>x.id===id); if(!c||c.pcId) return;
+  S.npcs=S.npcs||[];
+  const copy=JSON.parse(JSON.stringify(c)); delete copy.id; delete copy.cond;
+  S.npcs.push(copy); renderCombat(); queueSave(); note('Saved '+c.n);
+}
+function dropNPC(i){
+  const n=JSON.parse(JSON.stringify((S.npcs||[])[i])); if(!n) return;
+  n.id=uid(); n.init=null; n.zone=(ZONES[S.combat.mode||'ground'])[0];
+  if(n.t==='mob'){ n.pips=n.pipsMax; }
+  else { n.end=n.endMax; }
+  S.combat.list.push(n); renderCombat(); queueSave();
+}
+function delNPC(i){ const n=(S.npcs||[])[i];
+  askConfirm('Forget <b>'+(n?n.n:'this NPC')+'</b> permanently?',()=>{ S.npcs.splice(i,1); renderCombat(); queueSave(); }); }
+function renderNPCs(){
+  const el=document.getElementById('npcList'); if(!el) return;
+  el.innerHTML=(S.npcs||[]).length? S.npcs.map((n,i)=>
+    `<div class="row" style="border-top:1px solid #1e1516;padding:5px 0">
+      <b class="grow">${n.n}</b>
+      <span class="hint">${n.t==='mob'?n.pipsMax+' bodies':'END '+n.endMax}</span>
+      <button class="mini" onclick="dropNPC(${i})">Add to fight</button>
+      <button class="mini x" onclick="delNPC(${i})">&times;</button>
+    </div>`).join('') : 'None saved.';
+}
+function condPanel(id){ S.combat.condFor=(S.combat.condFor===id?null:id); renderCombat(); }
+function tickConds(){
+  S.combat.list.forEach(c=>{
+    if(!c.cond) return;
+    c.cond.forEach(x=>{ if(x.r>0) x.r--; });
+    c.cond=c.cond.filter(x=>!(x.r===0&&x.timed));
+  });
+}
 function toggleBreach(id){ const c=S.combat.list.find(x=>x.id===id); c.breach=!c.breach; renderCombat(); queueSave(); }
 function delC(id){ const c=S.combat.list.find(x=>x.id===id);
   askConfirm('Remove <b>'+(c?c.n:'this combatant')+'</b> from the order of battle?',()=>delCNow(id)); }
 function delCNow(id){ S.combat.list=S.combat.list.filter(x=>x.id!==id); if(S.combat.turn>=S.combat.list.length)S.combat.turn=0; renderCombat(); queueSave(); }
 function renderCombat(){
+  renderNPCs();
   document.getElementById('cRound').textContent=S.combat.round;
   const L=S.combat.list;
   document.getElementById('cTurn').textContent=L.length?L[S.combat.turn].n:'—';
@@ -1790,7 +2160,16 @@ function renderCombat(){
         <span class="meta">${c.zone}</span>
       </div>
       ${c.note?`<div class="hint" style="margin-top:3px">${c.note}</div>`:''}
-      ${ammoStrip(c)}
+      ${(c.cond&&c.cond.length)?`<div class="conds">${c.cond.map((x,i)=>
+        `<span class="cnd ${x.timed&&x.r<=1?'soon':''}">${x.n}${x.timed?` <b>${x.r}</b>`:''}
+         <button onclick="delCond('${c.id}',${i})">&times;</button></span>`).join('')}</div>`:''}
+      ${S.combat.condFor===c.id?`<div class="row" style="margin-top:5px">
+        <input id="cn-${c.id}" list="condlist" placeholder="Condition" class="grow" style="min-width:120px">
+        <input id="cr-${c.id}" type="number" placeholder="rounds" style="width:96px">
+        <button class="mini" onclick="addCond('${c.id}')">Add</button>
+        <span class="hint">blank rounds = until you remove it</span>
+      </div>`:''}
+      ${ammoStrip(c)}${c.t==='mob'?psiStrip(c):''}
       <div class="row" style="margin-top:5px">
         ${body}
         <div class="grow"></div>
@@ -1802,6 +2181,8 @@ function renderCombat(){
              <button class="mini" onclick="dmg('${c.id}',-3)">&minus;3</button>
              <button class="mini" onclick="dmg('${c.id}',3)">+3</button>
              <button class="mini" onclick="toggleBreach('${c.id}')">Suit</button>`}
+        <button class="mini" onclick="condPanel('${c.id}')" title="Add a condition">+C</button>
+        ${!c.pcId?`<button class="mini" onclick="saveNPC('${c.id}')" title="Keep for later">Save</button>`:''}
         <button class="mini x" onclick="delC('${c.id}')">&times;</button>
       </div></div>`;
   }).join('');
@@ -1822,25 +2203,33 @@ function renderMode(){
 let lastMob=null;
 function genMob(){
   const a=MOBS[+document.getElementById('gArch').value];
-  const t=+document.getElementById('gTier').value, z=+document.getElementById('gSize').value;
+  let t=+document.getElementById('gTier').value;
+  const z=+document.getElementById('gSize').value;
+  const helpless=(t===-1); if(helpless) t=0;
   const pips = z===0 ? 1 : z===1 ? d(6)+2 : z===2 ? d(6)+d(6)+4 : d(6)+d(6)+d(6)+9;
-  const dm=[0,1,2,3][t];
-  const brk = (z===0) ? 0 : [Math.ceil(pips*0.5),Math.ceil(pips*0.34),Math.ceil(pips*0.25),0][t];
+  const dm = helpless ? -2 : [0,1,2,3][t];
+  let brk = (z===0) ? 0 : [Math.ceil(pips*0.5),Math.ceil(pips*0.34),Math.ceil(pips*0.25),0][t];
+  if(helpless) brk = Math.max(1, pips-1);        /* they break the moment anyone falls */
   const hitsEach=a.hits||21;
-  const weps=a.w[t];
+  const weps = helpless ? ["Nothing worth the name"] : a.w[t];
   const single=(z===0);
-  lastMob={n: single ? `${TIERN[t]} ${a.n.replace(/s$/,'').toLowerCase()}` : `${TIERN[t]} ${a.n.toLowerCase()}`,
-    pips,dm,arm:a.arm[t],weps,trait:a.t[d(3)-1],brk,hitsEach,single};
+  const psiEach = (a.psi && !helpless) ? a.psi[t] : 0;
+  const tname = helpless ? DEFENCELESS : TIERN[t];
+  lastMob={n: single ? `${tname} ${a.n.replace(/s$/,'').toLowerCase()}` : `${tname} ${a.n.toLowerCase()}`,
+    pips,dm,arm:(helpless?0:a.arm[t]),weps,trait:a.t[d(3)-1],brk,hitsEach,single,helpless,
+    psiEach, psiMax:psiEach*pips};
   document.getElementById('mobOut').innerHTML=
     `<b class="greenc" style="font-size:15px">${lastMob.n}</b> &mdash; ${SIZEN[z]}<br>
      ${single ? `<b class="goldc num">1</b> foe &nbsp;·&nbsp; <b>1</b> attack a round`
               : `<b class="goldc num">${pips}</b> bodies &nbsp;·&nbsp; <b>${Math.floor(pips/3)}</b> attacks a round`}
-     &nbsp;·&nbsp; skill <b>DM+${dm}</b> &nbsp;·&nbsp; armour <b>${lastMob.arm}</b><br>
+     &nbsp;·&nbsp; skill <b>DM${sgn(dm)}</b> &nbsp;·&nbsp; armour <b>${lastMob.arm}</b><br>
      <b>${hitsEach}</b> hits${single?'':' each'} &mdash; mark damage on the token, remove them here when they drop.<br>
      Armed with <b>${weps.join('</b> and <b>')}</b>.<br>
+     ${psiEach?`<b class="hotc">PSI pool ${psiEach*pips}</b> &mdash; at most <b>${psiEach}</b> points in any single use.<br>`:''}
      ${brk?`Breaks at <b class="hotc">${brk}</b> bodies.`:(single?'A lone foe does not break &mdash; it fights or it runs.':'<b class="redc">Does not break.</b>')}<br>
      ${single?'Set its shaken penalty by hand as it takes damage.'
               :'Shaken <b>&minus;1</b> at a quarter dead, <b>&minus;2</b> at half, <b>&minus;3</b> at three quarters.'}<br>
+     ${helpless?'<b class="hotc">Defenceless</b> &mdash; they break as soon as one of them falls. Do not roll this out; decide what happens.<br>':''}
      <i>${lastMob.trait}.</i>`;
   document.getElementById('mobAddRow').style.display='';
 }
@@ -1849,6 +2238,7 @@ function addGenMob(){
   S.combat.list.push({id:uid(),n:lastMob.n,t:'mob',init:d(6)+d(6),end:0,endMax:0,
     arm:lastMob.arm,dm:lastMob.dm,pips:lastMob.pips,pipsMax:lastMob.pips,brk:lastMob.brk,
     hitsEach:lastMob.hitsEach,dmg:0,weps:lastMob.weps,single:lastMob.single,
+    psiEach:lastMob.psiEach||0, psiMax:lastMob.psiMax||0, psiSpent:0,
     note:lastMob.weps.join(' · ')+' — '+lastMob.trait,
     zone:(ZONES[S.combat.mode||'ground'])[0],breach:false});
   renderCombat(); queueSave();
@@ -1861,23 +2251,43 @@ function genShip(){
   const res=Math.max(1,Math.min(5, s.res + [-1,0,1,1][t]));
   const dmg=Math.max(3, s.dmg + (t>=2?1:0));
   const cargo = s.cargo[0] ? Array.from({length:s.cargo[0]},()=>d(6)).reduce((x,y)=>x+y,0)*s.cargo[1] : 0;
+  const att=Math.max(0, s.att + (t>=2?1:0) - (t===0?1:0));
+  const ct=cargo?CARGOTYPE[d(6)+d(6)-2]:null;
+  const sp=speciesFor(s.n);
   lastShip={n:s.n,res,dmg,th:s.th,arm:s.arm,tons:s.t,cargo,tier:STIER[t],
+    crew:s.crew,sens:s.sens,att,tn:s.tn,rng:s.rng,brd:s.brd,
+    cargoType:ct?ct[0]:null, cargoNote:ct?ct[1]:null, behave:CREWBEHAVE[d(6)-1],
+    capt:makeName(sp), sp, jmp:s.jmp, av:s.av, hold:s.hold, berths:s.berths,
     note:s.note,comp:SCOMP[d(6)-1],escort:t===3};
   document.getElementById('shipOut').innerHTML=
     `<b class="greenc" style="font-size:15px">${s.n}</b> &mdash; ${STIER[t]} · ${s.t}<br>
-     Resolve <b class="goldc">${res}</b> (surrender check <b>${[0,4,8,10,12,14][res]}+</b>)
-     &nbsp;·&nbsp; Thrust <b>${s.th}</b> &nbsp;·&nbsp; damage <b>${dmg}</b> pips<br>
-     Armament: ${s.arm}<br>
-     ${cargo?`Cargo worth roughly <b class="goldc">Cr${cargo.toLocaleString()}</b> before fencing.<br>`:''}
-     ${t===3?'<b class="hotc">Escorted &mdash; add a second contact.</b><br>':''}
+     Under <b>${lastShip.capt}</b> <span class="hint">(${sp})</span><br>
+     <b>Surrender check ${[0,4,8,10,12,14][res]}+</b> (Resolve ${res}) &nbsp;·&nbsp;
+     Thrust <b>${s.th}</b> &nbsp;·&nbsp; takes <b>${dmg}</b> damage pips<br>
+     Jump <b>${s.jmp}</b> &nbsp;·&nbsp; armour <b>${s.av}</b> &nbsp;·&nbsp; hold <b>${s.hold}t</b>
+     &nbsp;·&nbsp; berths <b>${s.berths}</b><br>
+     <b>Sensors DM${sgn(s.sens)}</b> to spot you &nbsp;·&nbsp; crew <b>${s.crew}</b><br>
+     <br><b class="hotc">If it fights:</b> ${s.arm}.<br>
+     ${att?`<b>${att}</b> attack${att===1?'':'s'} an exchange, marking a pip on <b>${s.tn}+</b>, out to <b>${s.rng}</b>.`
+          :'No weapons worth the name.'}<br>
+     <b class="hotc">If you board:</b> ${s.brd}. <i>${lastShip.behave}.</i><br>
+     ${cargo?`<br><b class="hotc">Cargo:</b> ${lastShip.cargoType}, roughly
+       <b class="goldc">Cr${cargo.toLocaleString()}</b> before fencing.<br>
+       <span class="hint">${lastShip.cargoNote}.</span><br>`:'<br>'}
+     ${t===3?'<b class="hotc">Escorted &mdash; roll a second contact and put it at Long.</b><br>':''}
      <i>${s.note}.</i><br>Complication: <b>${lastShip.comp}</b>.`;
   document.getElementById('shipAddRow').style.display='';
 }
 function addGenShip(){
   if(!lastShip) return;
+  logEvent(`Contact: <b>${lastShip.n}</b>${lastShip.capt?` under ${lastShip.capt}`:''}`);
   S.space.contacts.push({id:uid(),n:lastShip.n,band:6,res:lastShip.res,dmg:0,
     dmgMax:lastShip.dmg,th:lastShip.th,arm:lastShip.arm,cargo:lastShip.cargo,
-    tier:lastShip.tier,comp:lastShip.comp});
+    tier:lastShip.tier,comp:lastShip.comp,crew:lastShip.crew,sens:lastShip.sens,
+    att:lastShip.att,tn:lastShip.tn,rng:lastShip.rng,brd:lastShip.brd,
+    cargoType:lastShip.cargoType,cargoNote:lastShip.cargoNote,behave:lastShip.behave,
+    capt:lastShip.capt,sp:lastShip.sp,jmp:lastShip.jmp,av:lastShip.av,
+    hold:lastShip.hold,berths:lastShip.berths,note:lastShip.note});
   renderSpace(); queueSave();
 }
 
@@ -1898,6 +2308,38 @@ function ammoStrip(c){
   }).join('')+'</div>';
 }
 
+/* build the boarding fight straight off a contact */
+function makeMobFrom(archName,sizeName,tierIdx){
+  const ai=MOBS.findIndex(m=>m.n.toLowerCase()===archName.trim().toLowerCase());
+  const a=MOBS[ai>=0?ai:0];
+  const z={'single foe':0,'single':0,'handful':1,'squad':2,'crowd':3}[sizeName.trim().toLowerCase()];
+  const zi=(z===undefined?2:z);
+  const t=(tierIdx===undefined?1:tierIdx);
+  const pips = zi===0 ? 1 : zi===1 ? d(6)+2 : zi===2 ? d(6)+d(6)+4 : d(6)+d(6)+d(6)+9;
+  const brk = zi===0 ? 0 : [Math.ceil(pips*0.5),Math.ceil(pips*0.34),Math.ceil(pips*0.25),0][t];
+  return {id:uid(),n:`${TIERN[t]} ${a.n.toLowerCase()}`,t:'mob',init:null,end:0,endMax:0,
+    arm:a.arm[t],dm:[0,1,2,3][t],pips,pipsMax:pips,brk,hitsEach:a.hits||21,
+    weps:a.w[t],note:a.w[t].join(' · ')+' — '+a.t[d(3)-1],
+    zone:'Lock',breach:false};
+}
+function boardContact(id){
+  const c=S.space.contacts.find(x=>x.id===id); if(!c||!c.brd) return;
+  const parts=c.brd.split(',');
+  const tier = /marine|naval|q-ship/i.test(c.n)?2 : /corsair|aslan|customs/i.test(c.n)?1 : 1;
+  const mob=makeMobFrom(parts[0]||'Merchant crew', parts[1]||'squad', tier);
+  S.combat.mode='boarding';
+  S.combat.scene='Boarding the '+c.n;
+  S.combat.list=[];
+  S.party.forEach(p=>{ migratePC(p);
+    S.combat.list.push({id:uid(),pcId:p.id,n:p.n,t:'pc',init:null,
+      end:curOf(p,'END'),endMax:p.mx.END,arm:p.arm,pips:0,pipsMax:0,
+      zone:'Lock',breach:false,note:p.skills||p.role||''}); });
+  S.combat.list.push(mob);
+  S.combat.round=1; S.combat.turn=0;
+  logEvent(`Boarded the <b>${c.n}</b>${c.capt?` under ${c.capt}`:''}`);
+  renderMode(); renderCombat(); tab('combat'); queueSave();
+}
+
 function dice(n,label){
   let t=0,r=[]; for(let i=0;i<n;i++){const v=d(6);r.push(v);t+=v;}
   document.getElementById('diceOut').innerHTML=`<b class="goldc">${t}</b> &nbsp;[${r.join(' ')}] &nbsp;${label}`;
@@ -1905,6 +2347,15 @@ function dice(n,label){
 function defenderAct(){ const r=d(6); document.getElementById('defOut').innerHTML=`<b class="goldc">${r}</b> &mdash; ${DEFEND[r-1]}`; }
 
 /* ---------------- space ---------------- */
+function launch(dir){
+  S.space.missiles=S.space.missiles||[];
+  const band = dir==='out' ? 1 : 5;
+  S.space.missiles.push({id:uid(),dir,band,n:dir==='out'?'Our salvo':'Inbound'});
+  renderSpace(); queueSave();
+}
+function moveM(id,v){ const m=S.space.missiles.find(x=>x.id===id);
+  m.band=Math.max(0,Math.min(6,m.band+v)); renderSpace(); queueSave(); }
+function delM(id){ S.space.missiles=S.space.missiles.filter(x=>x.id!==id); renderSpace(); queueSave(); }
 function addContact(){
   const n=document.getElementById('pName').value.trim()||'Contact';
   S.space.contacts.push({id:uid(),n,band:6,res:+document.getElementById('pRes').value,dmg:0});
@@ -1915,18 +2366,58 @@ function moveC(id,v){ const c=S.space.contacts.find(x=>x.id===id); c.band=Math.m
 function delP(id){ const c=S.space.contacts.find(x=>x.id===id);
   askConfirm('Remove <b>'+(c?c.n:'this contact')+'</b> from the plot?',()=>delPNow(id)); }
 function delPNow(id){ S.space.contacts=S.space.contacts.filter(x=>x.id!==id); renderSpace(); queueSave(); }
-function cDmg(id){ const c=S.space.contacts.find(x=>x.id===id); c.dmg=(c.dmg+1)%((c.dmgMax||3)+1); renderSpace(); queueSave(); }
-function setAlarm(v){ S.space.alarm=(S.space.alarm===v)?v-1:v; if(S.space.alarm<0)S.space.alarm=0; renderSpace(); queueSave(); }
+function selContact(id){ S.space.sel=(S.space.sel===id?null:id); renderSpace(); queueSave(); }
+function infoPane(c){
+  if(!c) return '';
+  const cell=(k,v)=>`<div class="cell"><div class="k">${k}</div><div class="v">${v}</div></div>`;
+  return `<div class="info">
+    <h3>${c.n}${c.tier?` <span class="hint">— ${c.tier}</span>`:''}</h3>
+    <div class="hint">${c.capt?`Under <b>${c.capt}</b>${c.sp?' ('+c.sp+')':''} · `:''}currently at <b>${BANDS[c.band]}</b></div>
+    <div class="grid">
+      ${cell('SURRENDER',[0,4,8,10,12,14][c.res]+'+')}
+      ${cell('THRUST',c.th!==undefined?c.th:'—')}
+      ${cell('JUMP',c.jmp!==undefined?c.jmp:'—')}
+      ${cell('ARMOUR',c.av!==undefined?c.av:'—')}
+      ${cell('DAMAGE',(c.dmg||0)+'/'+(c.dmgMax||3))}
+      ${cell('SENSORS',c.sens!==undefined?sgn(c.sens):'—')}
+      ${cell('CREW',c.crew||'—')}
+      ${cell('BERTHS',c.berths!==undefined?c.berths:'—')}
+      ${cell('HOLD',(c.hold!==undefined?c.hold+'t':'—'))}
+    </div>
+    ${c.att?`<div><span class="hotc">Shoots:</span> <b>${c.att}</b> attack${c.att===1?'':'s'} an exchange on <b>${c.tn}+</b>, out to <b>${c.rng}</b> — ${c.arm}</div>`
+           :`<div><span class="hint">${c.arm||'Unarmed'}</span></div>`}
+    ${c.brd?`<div style="margin-top:5px"><span class="hotc">Boarding:</span> ${c.brd}${c.behave?` — <i>${c.behave}</i>`:''}
+      <button class="mini" style="margin-left:6px" onclick="boardContact('${c.id}')">Board it &rsaquo;</button></div>`:''}
+    ${c.cargo?`<div style="margin-top:5px"><span class="hotc">Cargo:</span> ${c.cargoType||'general'},
+      ~<b class="goldc">Cr${c.cargo.toLocaleString()}</b><br><span class="hint">${c.cargoNote||''}</span></div>`:''}
+    ${c.note?`<div class="hint" style="margin-top:6px"><i>${c.note}.</i></div>`:''}
+    ${c.comp?`<div class="hint">Complication: <b>${c.comp}</b></div>`:''}
+  </div>`;
+}
+function cDmg(id,v){ const c=S.space.contacts.find(x=>x.id===id);
+  c.dmg=Math.max(0,Math.min((c.dmgMax||3),(c.dmg||0)+(v===undefined?1:v)));
+  renderSpace(); queueSave(); }
+function setAlarm(v){ S.space.alarm=(S.space.alarm===v)?v-1:v; if(S.space.alarm<0)S.space.alarm=0;
+  logEvent(`Alarm <b>${S.space.alarm}</b> &mdash; ${ALARM[S.space.alarm].replace(/<[^>]+>/g,'')}`);
+  renderSpace(); queueSave(); }
 function setScuttle(v){ S.space.scuttle=(S.space.scuttle===v)?v-1:v; if(S.space.scuttle<0)S.space.scuttle=0; renderSpace(); queueSave(); }
 function setOwn(v){ S.space.own=(S.space.own===v)?v-1:v; if(S.space.own<0)S.space.own=0; renderSpace(); queueSave(); }
 function setResponse(){ const v=+document.getElementById('sRespSet').value; if(!v)return;
   S.space.resp=v; S.space.respMax=v; renderSpace(); queueSave(); }
-function advanceExchange(){ S.space.exch++; if(S.space.resp!==null&&S.space.resp>0)S.space.resp--; renderSpace(); queueSave(); }
+function advanceExchange(){ S.space.exch++;
+  if(S.space.resp!==null&&S.space.resp>0)S.space.resp--;
+  (S.space.missiles||[]).forEach(m=>{ m.band = Math.max(0, Math.min(6, m.band + (m.dir==='out'?1:-1))); });
+  renderSpace(); queueSave(); }
+function backExchange(){ S.space.exch=Math.max(1,S.space.exch-1);
+  (S.space.missiles||[]).forEach(m=>{ m.band = Math.max(0, Math.min(6, m.band - (m.dir==='out'?1:-1))); });
+  if(S.space.resp!==null&&S.space.respMax!==null) S.space.resp=Math.min(S.space.respMax,S.space.resp+1);
+  renderSpace(); queueSave(); }
 function resetSpace(){ askConfirm('Clear the plot, both clocks and every contact?',()=>resetSpaceNow(),'Clear'); }
-function resetSpaceNow(){ S.space={exch:1,alarm:0,scuttle:0,own:0,resp:null,respMax:null,contacts:[]}; renderSpace(); queueSave(); }
+function resetSpaceNow(){ S.space={exch:1,alarm:0,scuttle:0,own:0,resp:null,respMax:null,contacts:[],missiles:[]}; renderSpace(); queueSave(); }
 function critical(){ const r=d(6); document.getElementById('critOut').innerHTML=`<b class="goldc">${r}</b> &mdash; ${CRITS[r-1]}`; }
 function rollPosture(){ const r=d(6); document.getElementById('postureOut').innerHTML=`<b class="goldc">${r}</b> &mdash; ${POSTURE[r-1]}`; }
 function renderSpace(){
+  S.space.missiles=S.space.missiles||[];
   document.getElementById('sExch').textContent=S.space.exch;
   const rr=document.getElementById('sResp');
   rr.textContent=S.space.resp===null?'—':S.space.resp;
@@ -1937,20 +2428,35 @@ function renderSpace(){
 
   document.getElementById('ladder').innerHTML=BANDS.map((b,i)=>{
     const inLane=S.space.contacts.filter(c=>c.band===i).map(c=>`
-      <div class="chip"><b>${c.n}</b>Res ${c.res} · dmg ${c.dmg}/${c.dmgMax||3}
+      <div class="chip ${S.space.sel===c.id?'sel':''}" onclick="selContact('${c.id}')"><b>${c.n}</b>Res ${c.res} · dmg ${c.dmg}/${c.dmgMax||3}
         <div class="mv">
-          <button onclick="moveC('${c.id}',-1)">&lsaquo;</button>
-          <button onclick="cDmg('${c.id}')">&#9673;</button>
-          <button onclick="moveC('${c.id}',1)">&rsaquo;</button>
+          <button onclick="moveC('${c.id}',-1)" title="Closer">&lsaquo;</button>
+          <button onclick="cDmg('${c.id}',1)" title="Mark a pip">&#9673;</button>
+          <button onclick="cDmg('${c.id}',-1)" title="Take a pip back">&#9675;</button>
+          <button onclick="moveC('${c.id}',1)" title="Further">&rsaquo;</button>
           <button onclick="delP('${c.id}')">&times;</button>
         </div></div>`).join('');
-    return `<div class="lane ${i===2?'short':''}"><div class="lbl">${b}<br>${BANDD[i]}${i===2?'<br>DM+4':i===3?'<br>DM+2':''}</div>${inLane}</div>`;
+    const miss=(S.space.missiles||[]).filter(m=>m.band===i).map(m=>`
+      <div class="chip msl"><b>${m.dir==='out'?'▶ '+m.n:'◀ '+m.n}</b>
+        ${m.dir==='in'&&m.band===0?'<span class="redc">IMPACT</span>':''}
+        <div class="mv">
+          <button onclick="moveM('${m.id}',-1)">&lsaquo;</button>
+          <button onclick="moveM('${m.id}',1)">&rsaquo;</button>
+          <button onclick="delM('${m.id}')">&times;</button>
+        </div></div>`).join('');
+    return `<div class="lane ${i===2?'short':''}"><div class="lbl">${b}<br>${BANDD[i]}${i===2?'<br>DM+4':i===3?'<br>DM+2':''}</div>${inLane}${miss}</div>`;
   }).join('');
 
-  document.getElementById('contactDetail').innerHTML = S.space.contacts.map(c=>
-    `<div><b class="greenc">${c.n}</b>${c.tier?' &mdash; '+c.tier:''} &nbsp;·&nbsp; ${BANDS[c.band]}
-     &nbsp;·&nbsp; surrender <b>${[0,4,8,10,12,14][c.res]}+</b>${c.th?' · Thrust '+c.th:''}${c.arm?' · '+c.arm:''}
-     ${c.cargo?' · cargo ~Cr'+c.cargo.toLocaleString():''}${c.comp?'<br><i>'+c.comp+'</i>':''}</div>`).join('');
+  const selC=S.space.contacts.find(c=>c.id===S.space.sel);
+  document.getElementById('contactDetail').innerHTML = infoPane(selC) + S.space.contacts.filter(c=>!selC||c.id!==selC.id).map(c=>
+    `<div style="padding:3px 0"><b class="greenc">${c.n}</b>${c.tier?' &mdash; '+c.tier:''} &nbsp;·&nbsp; <b>${BANDS[c.band]}</b>
+     &nbsp;·&nbsp; surrender <b>${[0,4,8,10,12,14][c.res]}+</b>${c.th?' · Thrust '+c.th:''}${c.sens!==undefined?' · sensors DM'+sgn(c.sens):''}${c.crew?' · crew '+c.crew:''}
+     ${c.att?`<br><span class="hotc">Shoots:</span> ${c.att} attack${c.att===1?'':'s'} on ${c.tn}+ to ${c.rng} &mdash; ${c.arm}`:(c.arm?'<br>'+c.arm:'')}
+     ${c.brd?`<br><span class="hotc">Boarding:</span> ${c.brd}${c.behave?' — <i>'+c.behave+'</i>':''}
+       <button class="mini" style="margin-left:6px" onclick="boardContact('${c.id}')">Board it &rsaquo;</button>`:''}
+     ${c.cargo?'<br><span class="hotc">Cargo:</span> '+(c.cargoType||'general')+' ~Cr'+c.cargo.toLocaleString()
+       +(c.cargoNote?' <span class="hint">— '+c.cargoNote+'</span>':''):''}
+     ${c.comp?'<br><i>'+c.comp+'</i>':''}</div>`).join('');
 
   document.getElementById('alarmPips').innerHTML=[0,1,2,3,4].map(i=>
     `<button class="pip ${i<=S.space.alarm?'fill':''}" onclick="setAlarm(${i})">${i}</button>`).join('');
@@ -1974,8 +2480,12 @@ function standEff(v){
   if(v>=-40) return 'Infamy &mdash; a patrol is hunting';
   return 'ENEMY OF THE STATE &mdash; assassins, warships, ports drop a level';
 }
-function stand(k,v){ S.camp[k]+=v; renderCamp(); queueSave(); }
-function standD(k,s){ S.camp[k]+=s*d(6); renderCamp(); queueSave(); }
+function stand(k,v){ S.camp[k]+=v;
+  logEvent(`${k==='imp'?'Imperial':'Aslan'} Standing ${sgn(v)} &rarr; <b>${S.camp[k]}</b>`);
+  renderCamp(); queueSave(); }
+function standD(k,s){ const r=d(6); S.camp[k]+=s*r;
+  logEvent(`${k==='imp'?'Imperial':'Aslan'} Standing ${s>0?'+':'−'}1D (${r}) &rarr; <b>${S.camp[k]}</b>`);
+  renderCamp(); queueSave(); }
 function morale(v){ if(S.camp.mor===null)S.camp.mor=0; S.camp.mor=Math.max(0,S.camp.mor+v); renderCamp(); queueSave(); }
 function moraleD(){ if(S.camp.mor===null)S.camp.mor=0; S.camp.mor=Math.max(0,S.camp.mor-d(6)); renderCamp(); queueSave(); }
 function rollMorale(){ S.camp.mor=d(6)+6; renderCamp(); queueSave(); }
@@ -2000,6 +2510,7 @@ function splitSpoils(){
   const gross=h*f, oleb=gross*0.10, net=gross-oleb, shares=5+t*2+c;
   const per=shares?net/shares:0;
   const m=n=>'Cr'+Math.round(n).toLocaleString();
+  logEvent(`Spoils divided &mdash; ${m(net)} over ${shares} shares, ${m(per)} a share`);
   document.getElementById('spoilsOut').innerHTML=
     `Fenced: <b>${m(gross)}</b><br>Oleb's tithe: <b class="hotc">${m(oleb)}</b><br>
      To divide: <b>${m(net)}</b> over <b>${shares}</b> shares<br>
@@ -2043,9 +2554,10 @@ function importState(){
   try{ S=JSON.parse(io.value); renderAll(); saveAll(true); hideBox(); note('Restored '+stamp()); }
   catch(e){ note('Not a valid save'); }
 }
-function renderAll(){ S.party=S.party||[]; S.rolls=S.rolls||[]; S.custom=S.custom||[];
+function renderAll(){ S.party=S.party||[]; S.rolls=S.rolls||[]; S.custom=S.custom||[]; S.npcs=S.npcs||[]; S.events=S.events||[];
   renderMode(); renderParty(); renderCombat(); renderSpace(); renderCamp();
-  rules(S.rulePane||0); renderRolls(); renderCustom(); renderTableBtns(); renderTable(); }
+  rules(S.rulePane||0); renderRolls(); renderCustom(); renderTableBtns(); renderTable();
+  renderEvents(); refreshUndoUI(); }
 document.getElementById('helpBody').innerHTML=HELP.map(x=>
   `<div class="card"><h2>${x[0]}</h2><div class="hint" style="font-size:14px;line-height:1.7">${x[1]}</div></div>`).join('');
 document.getElementById('gArch').innerHTML=
