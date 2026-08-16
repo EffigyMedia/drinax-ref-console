@@ -183,6 +183,7 @@ textarea{width:100%;min-height:120px;resize:vertical;line-height:1.6;}
 .skchips{display:flex;gap:5px;flex-wrap:wrap;margin-top:6px;}
 .skc{border:1px solid var(--line);background:var(--panel2);padding:3px 7px;font-size:12px;color:var(--dim);}
 .skc b{color:var(--ink);}
+.wstat{color:var(--dim);font-size:11px;letter-spacing:.02em;}
 .wdbox{width:44px;flex:0 0 44px;text-align:center;padding:3px 0;min-height:32px;
   font-size:14px;font-variant-numeric:tabular-nums;color:var(--dim);}
 .wdbox.on{color:var(--hot);font-weight:700;}
@@ -867,6 +868,23 @@ button.danger:hover{background:var(--red);border-color:var(--red);}
       </div>
 
       <div class="card">
+        <h2>Loot</h2>
+        <div class="row">
+          <select id="lootArch" class="grow"></select>
+          <select id="lootTier">
+            <option value="0">Rabble</option><option value="1" selected>Trained</option>
+            <option value="2">Veteran</option><option value="3">Elite</option>
+          </select>
+          <input id="lootN" type="number" value="6" style="width:78px" title="How many of them">
+          <button onclick="rollLoot()">What did they have?</button>
+        </div>
+        <div id="lootOut" class="hint" style="margin-top:9px;font-size:14px;line-height:1.7">&mdash;</div>
+        <p class="hint" style="margin-top:7px">Cash scales with the number of bodies. Better-equipped
+          archetypes carry better gear, and armour only turns up on a 4+. The <b>Loot</b> button on a
+          defeated mob fills this in from that mob.</p>
+      </div>
+
+      <div class="card">
         <h2>Your own tables</h2>
         <p class="hint" style="margin-bottom:8px">Type or paste any table &mdash; one entry per line &mdash; and it joins the
         buttons above, displayed and rollable the same way.</p>
@@ -983,94 +1001,233 @@ const REF={
 
 const TIERN=["Rabble","Trained","Veteran","Elite"]; const DEFENCELESS="Defenceless";
 const SIZEN=["Single foe","Handful","Squad","Crowd"];
+/* ---- short-form stat blocks, from the Core Rulebook weapon tables ---- */
+const WEP={
+ "Unarmed":            {d:"1D",    r:"Melee", t:""},
+ "Club":               {d:"2D",    r:"Melee", t:""},
+ "Cudgel":             {d:"2D",    r:"Melee", t:""},
+ "Staff":              {d:"2D",    r:"Melee", t:""},
+ "Blade":              {d:"2D",    r:"Melee", t:""},
+ "Knife":              {d:"1D+2",  r:"Melee", t:""},
+ "Dagger":             {d:"1D+2",  r:"Melee", t:""},
+ "Shiv":               {d:"1D+2",  r:"Melee", t:""},
+ "Cutlass":            {d:"3D",    r:"Melee", t:""},
+ "Broadsword":         {d:"4D",    r:"Melee", t:"Bulky"},
+ "Rapier":             {d:"2D",    r:"Melee", t:""},
+ "Ceremonial blade":   {d:"3D",    r:"Melee", t:""},
+ "Poison blade":       {d:"2D",    r:"Melee", t:"+ toxin"},
+ "Ritual blade":       {d:"2D",    r:"Melee", t:""},
+ "Stunstick":          {d:"2D",    r:"Melee", t:"Stun"},
+ "Baton":              {d:"2D",    r:"Melee", t:""},
+ "Chains":             {d:"2D",    r:"Melee", t:""},
+ "Spear":              {d:"2D",    r:"Melee", t:""},
+ "Improvised":         {d:"2D-2",  r:"Melee", t:""},
+ "Tools":              {d:"2D-2",  r:"Melee", t:""},
+ "Salvage tool":       {d:"2D-2",  r:"Melee", t:""},
+ "Dewclaw":            {d:"2D",    r:"Melee", t:"Aslan natural"},
+ "Claws":              {d:"2D",    r:"Melee", t:"natural"},
+ "Claws and teeth":    {d:"2D+2",  r:"Melee", t:"natural"},
+ "Bite":               {d:"2D",    r:"Melee", t:"natural"},
+ "Savage bite":        {d:"3D",    r:"Melee", t:"natural"},
+ "Crushing bite":      {d:"4D",    r:"Melee", t:"natural, AP 2"},
+ "Raking claws":       {d:"3D",    r:"Melee", t:"natural"},
+ "Goring horns":       {d:"3D",    r:"Melee", t:"natural, charge"},
+ "Trampling mass":     {d:"4D",    r:"Melee", t:"natural, Bulky"},
+ "Crushing coils":     {d:"3D",    r:"Melee", t:"natural, grapple"},
+ "Stinger":            {d:"1D",    r:"Melee", t:"natural + venom"},
+ "Venomous bite":      {d:"2D",    r:"Melee", t:"natural + venom"},
+ "Spines":             {d:"1D+2",  r:"Melee", t:"natural, on contact"},
+ "Spat acid":          {d:"2D",    r:"10m",   t:"AP 3"},
+ "Quill volley":       {d:"2D",    r:"20m",   t:"natural"},
+ "Constricting limbs": {d:"2D+2",  r:"Melee", t:"natural, grapple"},
+ "Swarming bites":     {d:"1D",    r:"Melee", t:"natural, ignores cover"},
+
+ "Autopistol":         {d:"3D-3",  r:"10m",   t:""},
+ "Revolver":           {d:"3D-3",  r:"10m",   t:""},
+ "Snub pistol":        {d:"3D-3",  r:"5m",    t:"Zero-G"},
+ "Body pistol":        {d:"2D",    r:"5m",    t:"concealable"},
+ "Silenced pistol":    {d:"3D-3",  r:"10m",   t:"quiet"},
+ "Sidearm":            {d:"3D-3",  r:"10m",   t:""},
+ "Concealed pistol":   {d:"2D",    r:"5m",    t:"concealable"},
+ "Gauss pistol":       {d:"3D",    r:"20m",   t:"AP 3, Auto 2"},
+ "Laser pistol":       {d:"3D+3",  r:"30m",   t:"Zero-G"},
+ "Stunner":            {d:"3D",    r:"10m",   t:"Stun, Zero-G"},
+ "Stun projector":     {d:"3D",    r:"10m",   t:"Stun, Zero-G"},
+
+ "Shotgun":            {d:"4D",    r:"50m",   t:"Bulky"},
+ "Boarding shotgun":   {d:"4D",    r:"50m",   t:"Bulky"},
+ "Seized shotgun":     {d:"4D",    r:"50m",   t:"Bulky"},
+ "Rifle":              {d:"3D",    r:"250m",  t:""},
+ "Hunting rifle":      {d:"3D",    r:"250m",  t:""},
+ "Old rifle":          {d:"3D-3",  r:"25m",   t:""},
+ "Autorifle":          {d:"3D",    r:"300m",  t:"Auto 2"},
+ "Assault rifle":      {d:"3D",    r:"200m",  t:"Auto 2"},
+ "Carbine":            {d:"3D",    r:"200m",  t:"Auto 2"},
+ "Seized carbine":     {d:"3D",    r:"200m",  t:"Auto 2"},
+ "Stolen carbine":     {d:"3D",    r:"200m",  t:"Auto 2"},
+ "Scavenged carbine":  {d:"3D",    r:"200m",  t:"Auto 2"},
+ "Submachine gun":     {d:"3D",    r:"25m",   t:"Auto 3"},
+ "Laser carbine":      {d:"4D+3",  r:"200m",  t:"Zero-G"},
+ "Laser rifle":        {d:"5D+3",  r:"400m",  t:"Zero-G"},
+ "Light autogun":      {d:"3D",    r:"300m",  t:"Auto 3"},
+ "Autogun":            {d:"3D",    r:"300m",  t:"Auto 3"},
+ "Military autogun":   {d:"3D",    r:"500m",  t:"Auto 4"},
+ "Cutting torch":      {d:"3D",    r:"Melee", t:"AP 4"},
+ "Industrial laser":   {d:"3D",    r:"Melee", t:"AP 4"},
+
+ "Grenades":           {d:"4D",    r:"thrown",t:"Blast 9"},
+ "Explosives":         {d:"4D",    r:"placed",t:"Blast"},
+ "Rocket":             {d:"5D",    r:"200m",  t:"Blast 6, Smart"},
+ "Support weapon":     {d:"3D",    r:"500m",  t:"Auto 4"},
+ "Squad weapon":       {d:"3D",    r:"500m",  t:"Auto 4"},
+
+ "Telepathic assault": {d:"2D",    r:"psionic", t:"Telepathy 14+, 8 PSI"},
+ "Psionic assault":    {d:"3D",    r:"psionic", t:"Telepathy 14+, 8 PSI"}
+};
+/* "Autopistol 3D-3" -> {name, stats}; anything unknown is left as written */
+function wepInfo(s){
+  const m=String(s).match(/^(.*?)(?:\s+\d+D[+-]?\d*)?$/);
+  const raw=(m?m[1]:s).trim();
+  const key=Object.keys(WEP).find(k=>k.toLowerCase()===raw.toLowerCase());
+  if(!key) return {n:s, w:null};
+  return {n:key, w:WEP[key]};
+}
+function wepLine(s){
+  const {n,w}=wepInfo(s);
+  if(!w) return `<b>${n}</b>`;
+  return `<b>${n}</b> <span class="wstat">${w.d} · ${w.r}${w.t?' · '+w.t:''}</span>`;
+}
+function wepShort(s){
+  const {n,w}=wepInfo(s);
+  return w ? `${n} ${w.d} · ${w.r}${w.t?' · '+w.t:''}` : n;
+}
+
 const MOBS=[
  /* ---- standard fare ---- */
  {n:"Street thugs",g:"S",hits:19,arm:[0,1,2,3],
-  w:[["Cudgel 2D"],["Knife 2D","Autopistol 3D-3"],["Autopistol 3D-3","Blade 2D+2"],["Autopistol 3D-3","Shotgun 4D"]],
+  w:[["Cudgel"],["Knife","Autopistol"],["Autopistol","Blade"],["Autopistol","Shotgun"]],
   t:["Loud, and used to people backing down","Somebody here has a reputation to protect","They fight for the corner, not the coin"]},
  {n:"Psions",g:"S",hits:19,arm:[0,1,2,4],psi:[3,5,8,12],
-  w:[["Telepathic assault 2D"],["Telepathic assault 2D","Sidearm 3D-3"],
-     ["Psionic assault 3D","Sidearm 3D-3"],["Psionic assault 4D","Laser pistol 3D+3"]],
+  w:[["Telepathic assault"],["Telepathic assault","Sidearm"],
+     ["Psionic assault","Sidearm"],["Psionic assault","Laser pistol"]],
   t:["They knew you were coming before you arrived","One of them is the real talent, the rest are screens",
      "Psionics are illegal here and they have everything to lose"]},
  {n:"Bandits",g:"S",hits:20,arm:[1,2,3,4],
-  w:[["Improvised weapon 2D"],["Autorifle 3D"],["Autorifle 3D","Shotgun 4D"],["Assault rifle 3D","Grenades 4D"]],
+  w:[["Improvised"],["Autorifle"],["Autorifle","Shotgun"],["Assault rifle","Grenades"]],
   t:["They know the ground and the exits","Taking prisoners is worth more than killing","There is a lookout you have not seen"]},
  {n:"Mercenaries",g:"S",hits:22,arm:[2,4,6,9],
-  w:[["Autopistol 3D-3"],["Carbine 3D"],["Carbine 3D","Grenades 4D"],["Laser carbine 4D","Support weapon 5D"]],
+  w:[["Autopistol"],["Carbine"],["Carbine","Grenades"],["Laser carbine","Support weapon"]],
   t:["Contract has a bonus clause and you are it","They will disengage if it stops being worth it","Someone is filing an after-action report"]},
  {n:"Regular soldiers",g:"S",hits:21,arm:[2,3,5,8],
-  w:[["Autorifle 3D"],["Assault rifle 3D"],["Assault rifle 3D","Grenades 4D"],["Laser rifle 4D","Support weapon 5D"]],
+  w:[["Autorifle"],["Assault rifle"],["Assault rifle","Grenades"],["Laser rifle","Support weapon"]],
   t:["Fire and movement, by the book","An officer is shouting orders somewhere","They expect reinforcement and may be right"]},
  {n:"Police",g:"S",hits:20,arm:[1,3,4,6],
-  w:[["Baton 2D","Stunner 3D stun"],["Stunner 3D stun","Autopistol 3D-3"],["Shotgun 4D","Stunner 3D stun"],["Carbine 3D","Stunner 3D stun"]],
+  w:[["Baton","Stunner"],["Stunner","Autopistol"],["Shotgun","Stunner"],["Carbine","Stunner"]],
   t:["Under orders to arrest, not to kill","Backup is already rolling","Everything here is being recorded"]},
  {n:"Bodyguards",g:"S",hits:22,arm:[2,4,6,9],
-  w:[["Blade 2D+2","Autopistol 3D-3"],["Autopistol 3D-3"],["Carbine 3D","Blade 2D+2"],["Laser carbine 4D"]],
+  w:[["Blade","Autopistol"],["Autopistol"],["Carbine","Blade"],["Laser carbine"]],
   t:["They will not leave their principal","Trained to extract, not to win","One of them is faster than they look"]},
  {n:"Cultists",g:"S",hits:19,arm:[0,1,2,4],
-  w:[["Ritual blade 2D+2"],["Ritual blade 2D+2","Autopistol 3D-3"],["Autorifle 3D"],["Autorifle 3D","Explosives 4D"]],
+  w:[["Ritual blade"],["Ritual blade","Autopistol"],["Autorifle"],["Autorifle","Explosives"]],
   t:["They are not afraid of dying","A leader must be silenced first","They believe you were expected"]},
  {n:"Insurgents",g:"S",hits:20,arm:[1,2,3,5],
-  w:[["Autopistol 3D-3"],["Autorifle 3D","Explosives 4D"],["Assault rifle 3D","Explosives 4D"],["Assault rifle 3D","Rocket 5D"]],
+  w:[["Autopistol"],["Autorifle","Explosives"],["Assault rifle","Explosives"],["Assault rifle","Rocket"]],
   t:["Local, and the locals will hide them","They fight to be seen fighting","They have prepared this ground"]},
  {n:"Scavengers",g:"S",hits:19,arm:[0,1,2,3],
-  w:[["Salvage tool 2D"],["Cutting torch 3D"],["Autorifle 3D","Cutting torch 3D"],["Carbine 3D"]],
+  w:[["Salvage tool"],["Cutting torch"],["Autorifle","Cutting torch"],["Carbine"]],
   t:["They want your gear, not your life","They know every crawlspace here","Skittish, and quick to run"]},
  {n:"Assassins",g:"S",hits:21,arm:[1,3,5,7],
-  w:[["Knife 2D"],["Silenced pistol 3D-3","Knife 2D"],["Silenced pistol 3D-3","Poison blade 2D+2"],["Laser pistol 3D+3","Poison blade 2D+2"]],
+  w:[["Knife"],["Silenced pistol","Knife"],["Silenced pistol","Poison blade"],["Laser pistol","Poison blade"]],
   t:["They opened with the ambush already sprung","One target matters; the rest are obstacles","They have a way out planned"]},
  {n:"Smugglers",g:"S",hits:20,arm:[1,2,3,4],
-  w:[["Snub pistol 3D-3"],["Snub pistol 3D-3","Shotgun 4D"],["Carbine 3D","Snub pistol 3D-3"],["Carbine 3D","Grenades 4D"]],
+  w:[["Snub pistol"],["Snub pistol","Shotgun"],["Carbine","Snub pistol"],["Carbine","Grenades"]],
   t:["More worried about the cargo than the fight","They will deal if the price is right","Somebody outside is waiting on them"]},
  {n:"Wild beasts",g:"S",hits:24,arm:[1,2,4,6],
-  w:[["Claws 2D"],["Claws and teeth 2D+2"],["Claws and teeth 3D"],["Claws and teeth 4D"]],
+  w:[["Claws"],["Claws and teeth"],["Claws and teeth"],["Claws and teeth"]],
   t:["No tactics, only hunger","Fire and noise will turn them","They hunt as a pack and flank"]},
  {n:"Civilians",g:"S",hits:18,arm:[0,0,1,1],
-  w:[["Nothing"],["Improvised 1D"],["Improvised 1D"],["Sidearm 3D-3"]],
+  w:[["Nothing"],["Improvised"],["Improvised"],["Sidearm"]],
   t:["They are trying to get away, not to fight","One of them is filming you","Somebody here is hurt already"]},
  {n:"Ship's passengers",g:"S",hits:18,arm:[0,0,1,2],
-  w:[["Nothing"],["Nothing"],["Improvised 1D"],["Concealed pistol 3D-3"]],
+  w:[["Nothing"],["Nothing"],["Improvised"],["Concealed pistol"]],
   t:["Panicking in a confined space","One is far more important than they admit","They will do what a calm voice tells them"]},
  {n:"Station workers",g:"S",hits:19,arm:[1,1,2,3],
-  w:[["Tools 1D"],["Cutting torch 3D"],["Cutting torch 3D"],["Autopistol 3D-3"]],
+  w:[["Tools"],["Cutting torch"],["Cutting torch"],["Autopistol"]],
   t:["They know where every hatch and crawlway goes","Union first, employer second","They will down tools rather than die"]},
+ /* ---- creatures: unintelligent, and endlessly recombinable ---- */
+ {n:"Vermin swarm",g:"C",hits:8,arm:[0,0,1,1],
+  w:[["Swarming bites"],["Swarming bites"],["Swarming bites","Spines"],["Swarming bites","Venomous bite"]],
+  t:["It cannot be reasoned with or frightened","Fire and smoke will turn it","It is after the food, not you"]},
+ {n:"Small predator",g:"C",hits:14,arm:[0,1,2,3],
+  w:[["Claws"],["Bite"],["Claws and teeth"],["Raking claws","Venomous bite"]],
+  t:["It tests you once, then commits","It goes for the smallest of you","It will drag a kill away rather than fight"]},
+ {n:"Pack hunters",g:"C",hits:18,arm:[1,2,3,4],
+  w:[["Bite"],["Claws and teeth"],["Savage bite"],["Savage bite","Raking claws"]],
+  t:["They circle and flank before they close","One hangs back and watches","They break if the biggest one falls"]},
+ {n:"Ambush pouncer",g:"C",hits:22,arm:[1,3,4,6],
+  w:[["Claws and teeth"],["Raking claws"],["Savage bite","Raking claws"],["Crushing bite","Raking claws"]],
+  t:["It has been watching for some time","It strikes once and withdraws to wait","It takes the last in the line"]},
+ {n:"Apex predator",g:"C",hits:34,arm:[2,4,6,9],
+  w:[["Savage bite"],["Crushing bite"],["Crushing bite","Raking claws"],["Crushing bite","Trampling mass"]],
+  t:["Nothing here has ever hunted it","It is not hungry — it is annoyed","It will follow you for days"]},
+ {n:"Herd grazers",g:"C",hits:26,arm:[1,2,3,5],
+  w:[["Trampling mass"],["Goring horns"],["Goring horns","Trampling mass"],["Trampling mass"]],
+  t:["Harmless until panicked, then lethal","They will not leave the young","The whole herd moves as one"]},
+ {n:"Armoured browser",g:"C",hits:30,arm:[4,6,8,11],
+  w:[["Trampling mass"],["Goring horns"],["Goring horns","Spines"],["Trampling mass","Quill volley"]],
+  t:["It ignores you until you become a nuisance","Its hide turns most small arms","It cannot be moved, only avoided"]},
+ {n:"Burrowing ambusher",g:"C",hits:24,arm:[2,3,5,7],
+  w:[["Crushing coils"],["Constricting limbs"],["Crushing bite","Constricting limbs"],["Crushing bite","Spat acid"]],
+  t:["The ground gives way beneath somebody","It senses vibration, not light","It drags what it takes underground"]},
+ {n:"Flying scavengers",g:"C",hits:12,arm:[0,1,2,3],
+  w:[["Claws"],["Bite","Claws"],["Raking claws"],["Raking claws","Quill volley"]],
+  t:["They are waiting for something to die","They will take anything shiny or loose","They scatter and return, endlessly"]},
+ {n:"Venomous crawlers",g:"C",hits:10,arm:[0,1,2,3],
+  w:[["Stinger"],["Venomous bite"],["Venomous bite","Spines"],["Venomous bite","Spat acid"]],
+  t:["The bite is nothing; the venom is everything","They are in the bedding, the boots, the ducts","They do not chase — they wait"]},
+ {n:"Aquatic hunter",g:"C",hits:28,arm:[2,3,5,7],
+  w:[["Savage bite"],["Crushing bite"],["Crushing bite","Constricting limbs"],["Crushing bite","Crushing coils"]],
+  t:["It takes whoever is nearest the water","You will not see it before it strikes","It is faster than anything on two legs"]},
+ {n:"Hostile flora",g:"C",hits:20,arm:[3,4,6,8],
+  w:[["Spines"],["Constricting limbs"],["Constricting limbs","Spat acid"],["Crushing coils","Spat acid"]],
+  t:["It does not move, and that is the problem","It reacts to heat and breath","Cutting it releases something worse"]},
+
  /* ---- Trojan Reach ---- */
  {n:"Merchant crew",g:"R",hits:20,arm:[0,1,2,3],
-  w:[["Whatever was in the locker 2D"],["Snub pistol 3D-3"],["Snub pistol 3D-3","Shotgun 4D"],["Snub pistol 3D-3","Blade 2D+2"]],
+  w:[["Improvised"],["Snub pistol"],["Snub pistol","Shotgun"],["Snub pistol","Blade"]],
   t:["They want to live more than they want the cargo","One of them is braver than the rest","They know the ship better than you do"]},
  {n:"Dock gang",g:"R",hits:19,arm:[0,1,2,3],
-  w:[["Clubs and knives 2D"],["Blade 2D+2","Snub pistol 3D-3"],["Autopistol 3D-3"],["Stolen carbine 3D"]],
+  w:[["Club"],["Blade","Snub pistol"],["Autopistol"],["Stolen carbine"]],
   t:["They fight for territory, not money","Somebody is filming this","They will scatter and come back later"]},
  {n:"Starport security",g:"R",hits:21,arm:[1,2,3,5],
-  w:[["Stunner 3D stun"],["Stunner 3D stun","Baton 2D"],["Snub pistol 3D-3","Stunner 3D stun"],["Laser carbine 4D"]],
+  w:[["Stunner"],["Stunner","Baton"],["Snub pistol","Stunner"],["Laser carbine"]],
   t:["Under orders to make arrests, not kills","Backup is already called","One of them can be bought"]},
  {n:"Corporate guards",g:"R",hits:22,arm:[2,3,5,8],
-  w:[["Shotgun 4D"],["Laser carbine 4D"],["Laser carbine 4D","Grenades 4D"],["Laser rifle 4D","Support weapon 5D"]],
+  w:[["Shotgun"],["Laser carbine"],["Laser carbine","Grenades"],["Laser rifle","Support weapon"]],
   t:["Paid, not loyal","Protecting one specific thing","There is a contract bonus on your head"]},
  {n:"Planetary militia",g:"R",hits:21,arm:[1,3,4,6],
-  w:[["Hunting rifle 3D"],["Autorifle 3D"],["Autorifle 3D","Shotgun 4D"],["Assault rifle 3D","Support weapon 5D"]],
+  w:[["Hunting rifle"],["Autorifle"],["Autorifle","Shotgun"],["Assault rifle","Support weapon"]],
   t:["Local, angry, and they know the ground","Poorly led","They will not leave their home behind"]},
  {n:"Naval ratings",g:"R",hits:21,arm:[2,3,4,6],
-  w:[["Snub pistol 3D-3"],["Snub pistol 3D-3"],["Boarding shotgun 4D","Snub pistol 3D-3"],["Carbine 3D","Snub pistol 3D-3"]],
+  w:[["Snub pistol"],["Snub pistol"],["Boarding shotgun","Snub pistol"],["Carbine","Snub pistol"]],
   t:["Disciplined but not eager","They fight to hold, not to win","An officer is shouting somewhere"]},
  {n:"Marines",g:"R",hits:24,arm:[3,5,8,14],
-  w:[["Carbine 3D"],["Carbine 3D","Grenades 4D"],["Assault rifle 3D","Grenades 4D"],["Laser rifle 4D","Support weapon 5D"]],
+  w:[["Carbine"],["Carbine","Grenades"],["Assault rifle","Grenades"],["Laser rifle","Support weapon"]],
   t:["They advance by fire and movement","They have done this a hundred times","They will not break"]},
  {n:"Corsairs",g:"R",hits:21,arm:[1,2,3,5],
-  w:[["Cutlass 2D+2"],["Cutlass 2D+2","Snub pistol 3D-3"],["Snub pistol 3D-3","Shotgun 4D"],["Cutlass 2D+2","Carbine 3D"]],
+  w:[["Cutlass"],["Cutlass","Snub pistol"],["Snub pistol","Shotgun"],["Cutlass","Carbine"]],
   t:["Here for the cargo, same as you","Their captain is watching","They would rather rob you than kill you"]},
  {n:"Aslan warriors",g:"R",hits:26,arm:[2,3,5,8],
-  w:[["Dewclaw 2D+2"],["Ceremonial blade 3D"],["Ceremonial blade 3D","Rifle 3D"],["Ceremonial blade 3D","Laser rifle 4D"]],
+  w:[["Dewclaw"],["Ceremonial blade"],["Ceremonial blade","Rifle"],["Ceremonial blade","Laser rifle"]],
   t:["Honour forbids them retreating first","They despise ranged weapons indoors","Land is the only thing worth this"]},
  {n:"Vespexer tribe",g:"R",hits:22,arm:[1,2,3,4],
-  w:[["Spear 2D"],["Old rifle 3D"],["Old rifle 3D","Spear 2D"],["Scavenged carbine 3D"]],
+  w:[["Spear"],["Old rifle"],["Old rifle","Spear"],["Scavenged carbine"]],
   t:["Hazard suits, always","They know the ruins","They are not impressed by your ship"]},
  {n:"Prisoners rioting",g:"R",hits:18,arm:[0,0,1,2],
-  w:[["Improvised blade 2D"],["Chains and shivs 2D"],["Seized shotgun 4D","Shiv 2D"],["Seized carbine 3D"]],
+  w:[["Knife"],["Chains"],["Seized shotgun","Shiv"],["Seized carbine"]],
   t:["Nothing left to lose","Following one loud voice","Some just want a door open"]},
  {n:"Security drones",g:"R",hits:30,arm:[3,5,8,11],
-  w:[["Stun projector 3D stun"],["Light autogun 3D"],["Autogun 3D","Stun projector 3D stun"],["Military autogun 4D"]],
+  w:[["Stun projector"],["Light autogun"],["Autogun","Stun projector"],["Military autogun"]],
   t:["No morale. They stop when destroyed","Networked — one sees, all see","Someone can override them"]}];
 
 const SHIPS=[
@@ -1819,6 +1976,165 @@ function sendResp(){
   renderSpace(); tab('space'); queueSave();
 }
 
+
+/* ==================== LOOT ==================== */
+/* Each archetype maps to a purse profile: how much cash they carry, which gear
+   tables they draw from, and what oddity is in a pocket. */
+const LOOTPROF={
+ "Street thugs":      {cr:[2,60],  g:['street','pocket'],  arm:'cheap'},
+ "Bandits":           {cr:[2,120], g:['street','field'],  arm:'cheap'},
+ "Mercenaries":       {cr:[3,250], g:['mil','field'],     arm:'good'},
+ "Regular soldiers":  {cr:[2,120], g:['mil','field'],     arm:'good'},
+ "Police":            {cr:[2,90],  g:['law','street'],    arm:'mid'},
+ "Bodyguards":        {cr:[3,300], g:['law','tech'],      arm:'good'},
+ "Cultists":          {cr:[2,70],  g:['odd','street'],    arm:'cheap'},
+ "Insurgents":        {cr:[2,100], g:['mil','street'],    arm:'cheap'},
+ "Scavengers":        {cr:[2,50],  g:['salvage','tech'],  arm:'cheap'},
+ "Assassins":         {cr:[4,400], g:['spy','tech'],      arm:'mid'},
+ "Smugglers":         {cr:[3,300], g:['ship','spy'],      arm:'mid'},
+ "Wild beasts":       {cr:[0,0],   g:[],                  arm:null},
+ "Civilians":         {cr:[2,40],  g:['pocket'],          arm:null},
+ "Ship's passengers": {cr:[3,200], g:['pocket','luxury'], arm:null},
+ "Station workers":   {cr:[2,60],  g:['tech','salvage'],  arm:'cheap'},
+ "Merchant crew":     {cr:[2,90],  g:['ship','pocket'],   arm:'cheap'},
+ "Dock gang":         {cr:[2,70],  g:['street','salvage'],arm:'cheap'},
+ "Starport security": {cr:[2,80],  g:['law','tech'],      arm:'mid'},
+ "Corporate guards":  {cr:[3,200], g:['law','tech'],      arm:'good'},
+ "Planetary militia": {cr:[2,80],  g:['mil','field'],     arm:'mid'},
+ "Naval ratings":     {cr:[2,100], g:['ship','mil'],      arm:'mid'},
+ "Marines":           {cr:[2,150], g:['mil','tech'],      arm:'good'},
+ "Corsairs":          {cr:[4,350], g:['ship','luxury'],   arm:'mid'},
+ "Aslan warriors":    {cr:[3,250], g:['odd','luxury'],    arm:'good'},
+ "Vespexer tribe":    {cr:[2,40],  g:['salvage','odd'],   arm:'cheap'},
+ "Prisoners rioting": {cr:[1,20],  g:['pocket'],          arm:null},
+ "Security drones":   {cr:[0,0],   g:['tech'],            arm:null},
+ "Psions":            {cr:[3,200], g:['odd','spy'],       arm:'cheap'},
+ "Vermin swarm":      {cr:[0,0], g:['trophy'], arm:null},
+ "Small predator":    {cr:[0,0], g:['trophy'], arm:null},
+ "Pack hunters":      {cr:[0,0], g:['trophy'], arm:null},
+ "Ambush pouncer":    {cr:[0,0], g:['trophy'], arm:null},
+ "Apex predator":     {cr:[0,0], g:['trophy'], arm:null},
+ "Herd grazers":      {cr:[0,0], g:['trophy'], arm:null},
+ "Armoured browser":  {cr:[0,0], g:['trophy'], arm:null},
+ "Burrowing ambusher":{cr:[0,0], g:['trophy'], arm:null},
+ "Flying scavengers": {cr:[0,0], g:['trophy'], arm:null},
+ "Venomous crawlers": {cr:[0,0], g:['trophy'], arm:null},
+ "Aquatic hunter":    {cr:[0,0], g:['trophy'], arm:null},
+ "Hostile flora":     {cr:[0,0], g:['trophy'], arm:null}
+};
+const GEAR={
+ street:["Cheap comm, cracked screen","Half a bottle of something local","Lockpick set, well used",
+   "Stimulant tabs, 1D doses","Brass knuckles","Burner comm with three numbers in it",
+   "Flick-blade, illegal here","Pouch of loose ammunition","Counterfeit ID, poor quality","Bag of unlabelled pills"],
+ field:["Survival kit, mostly intact","Binoculars","Rope, 20m","Rations for 1D days","Portable stove",
+   "Compass and paper maps","Water purifier","Field dressing kit","Rebreather, half charged","Thermal blanket"],
+ mil:["Grenade, one","IR goggles","Military comm, encrypted","Ammunition, one full magazine",
+   "Combat drug ampoule","Demolition charge","Trauma kit","Squad transponder","Range finder","Camo netting"],
+ law:["Handcuffs, four pairs","Stunner power pack","Body camera, still recording","Warrant chip",
+   "Riot shield, dented","Evidence bags","Restraint ties","Patrol comm, monitored channel"],
+ tech:["Toolkit, electronic","Hand computer, locked","Diagnostic scanner","Spare power cells, 1D",
+   "Data stick, encrypted","Signal jammer, short range","Welding torch","Sensor probe","Repair drone, broken"],
+ spy:["Bug sweeper","Audio bug, three of them","Disguise kit","Forged identity papers","Silencer",
+   "Poison vial, unlabelled","Grapple line","Cutting laser, pen sized","Camera, hidden in a button"],
+ ship:["Vacc suit patch kit","Ship's toolkit","Magnetic boots","Emergency beacon","Fuel purification filter",
+   "Cargo manifest, doctored","Docking clamps key","Oxygen bottle, half full","Ship's log, partial"],
+ salvage:["Scrap plating, saleable","Cutting torch, low fuel","Salvage claim chip","Coil of superconductor",
+   "Broken sensor array","Hull sealant","Bag of fasteners","Recovered escape pod beacon"],
+ luxury:["Bottle of Tobian brandy","Silk scarf, monogrammed","Jewelled pin","Perfume, expensive",
+   "Art print, small, possibly stolen","Cigar case, half full","Gold chain","Watch, mechanical, old"],
+ pocket:["House keys","Photograph of somebody","Sweets","Prayer beads","Notebook, half in code",
+   "Ticket stub for a liner","Letter, unopened","Medicine, prescription","Bad novel","Lucky coin"],
+ trophy:["Pelt, saleable if cured within a day","Venom sacs — worth something to a chemist",
+   "A skull that will not fit through the airlock","Chitin plates, light and very tough",
+   "Meat, edible once you are sure","Scent glands, valuable to hunters",
+   "Something swallowed whole and not digested: a boot, a comm, a hand",
+   "Eggs, still warm","A tracking collar somebody else fitted","Nothing. It was an animal"],
+ odd:["Ritual mask","Sindalian coin, corroded","Vial of something living","Star chart, hand-annotated",
+   "Bones on a string","A key that fits nothing here","Sealed box, warm to the touch","Tattooed skin sample"]
+};
+const ARMR={
+ cheap:["Jack (armour 1)","Reflec vest, worn (armour 2)","Padded jacket (armour 1)","Improvised plate (armour 2)"],
+ mid:  ["Flak jacket (armour 3)","Mesh (armour 4)","Cloth armour (armour 5)","Riot vest (armour 4)"],
+ good: ["Combat armour, damaged (armour 8)","Cloth+ (armour 6)","Vacc suit, armoured (armour 6)","Ablat coat (armour 6)"]
+};
+const CREDSTICK=[
+ "Anonymous credit stick, untraceable",
+ "Credit stick, locked — Electronics (computers) 8+ to crack",
+ "Credit stick in someone else's name — spend it and it is noticed",
+ "Corporate expense chit, needs a matching thumb",
+ "Bearer chit drawn on a bank three jumps away",
+ "Credit stick, drained. Somebody got here first"
+];
+
+function lootFor(archName,bodies,tier){
+  const p=LOOTPROF[archName]||LOOTPROF["Merchant crew"];
+  const n=Math.max(1,Math.min(60,bodies||1));
+  const pick=a=>a[Math.floor(Math.random()*a.length)];
+
+  /* cr:[dice, credits-per-body] — one roll per body, not per die */
+  let cash=0;
+  if(p.cr[0]){
+    for(let i=0;i<n;i++){
+      let r=0; for(let k=0;k<p.cr[0];k++) r+=d(6);
+      cash += Math.round(r/p.cr[0]/3.5*p.cr[1]);   /* averages out at cr[1] a head */
+    }
+  }
+  cash=Math.round(cash/10)*10;
+
+  /* one gear draw per three bodies, capped so a crowd is not a shopping trip */
+  const picks=[];
+  if(p.g.length){
+    const draws=Math.max(1,Math.min(6,Math.round(n/3)+(tier>=2?1:0)));
+    for(let i=0;i<draws;i++){
+      const list=GEAR[pick(p.g)];
+      if(!list||!list.length) continue;      /* a profile naming a list that does not exist */
+      const item=pick(list);
+      if(!picks.includes(item)) picks.push(item);
+    }
+  }
+  const armour = p.arm && d(6)>=4 ? pick(ARMR[p.arm]) : null;
+  const wep = p.g.length && d(6)>=5 ? "One weapon in working order — take it off the mob's own list" : null;
+  const stick = (cash>=200 && d(6)>=4) ? pick(CREDSTICK) : null;
+  /* animals and machines have no pockets */
+  const haspockets = p.g.length>0;
+  const beastly = p.g.length===1 && p.g[0]==='trophy';
+  const knack = (haspockets && !beastly && d(6)>=3) ? pick(GEAR.pocket) : null;
+  return {cash,picks,armour,wep,stick,knack,beastly,arch:archName,bodies:n};
+}
+function rollLoot(){
+  const sel=document.getElementById('lootArch');
+  const m = sel && MOBS[+sel.value];
+  const arch = m ? m.n : 'Merchant crew';
+  const bodies=+document.getElementById('lootN').value||6;
+  const tier=+document.getElementById('lootTier').value;
+  const L=lootFor(arch,bodies,tier);
+  document.getElementById('lootOut').innerHTML=
+    `<b class="greenc" style="font-size:15px">${L.bodies} × ${arch.toLowerCase()}</b><br>
+     ${L.cash?`<b class="goldc" style="font-size:17px">Cr${L.cash.toLocaleString()}</b> in loose cash between them<br>`
+             :`<span class="hint">No money on them at all.</span><br>`}
+     ${L.stick?`<b class="hotc">Credit stick:</b> ${L.stick}<br>`:''}
+     ${L.armour?`<b class="hotc">Armour:</b> ${L.armour}<br>`:''}
+     ${L.wep?`<b class="hotc">Weapons:</b> ${L.wep}<br>`:''}
+     ${L.picks.length?`<b class="hotc">${L.beastly?'Off the carcass':'Gear'}:</b> ${L.picks.join(' · ')}<br>`:''}
+     ${L.knack?`<span class="hint">In a pocket: ${L.knack}</span>`:''}`;
+  S.rolls=S.rolls||[];
+  S.rolls.unshift(`<b>Loot</b> ${arch} — Cr${L.cash.toLocaleString()}${L.picks.length?' · '+L.picks[0]:''}`);
+  if(S.rolls.length>40) S.rolls.length=40;
+  renderRolls(); queueSave();
+}
+function lootFromMob(id){
+  const c=S.combat.list.find(x=>x.id===id); if(!c) return;
+  const arch=(c.n||'').replace(/^(Defenceless|Rabble|Trained|Veteran|Elite)\s+/i,'');
+  const key=Object.keys(LOOTPROF).find(k=>k.toLowerCase()===arch.toLowerCase())
+        || Object.keys(LOOTPROF).find(k=>arch.toLowerCase().indexOf(k.toLowerCase().replace(/s$/,''))>=0)
+        || 'Merchant crew';
+  const sel=document.getElementById('lootArch');
+  if(sel){ const i=MOBS.findIndex(m=>m.n===key); if(i>=0) sel.value=i; }
+  const n=document.getElementById('lootN'); if(n) n.value=c.pipsMax||1;
+  const t=document.getElementById('lootTier'); if(t) t.value=(c.dm||1);
+  tab('tables'); rollLoot();
+}
+
 /* ==================== CUSTOM TABLES ==================== */
 const CTMODE={d66:36,d6:6,d12:12,d20:20,'2d':11,even:0};
 let ctEditing=null;
@@ -2016,6 +2332,9 @@ const HELP=[
   "<b>Name tables</b> sit at the front of the Tables tab: first names by gender and surnames, as separate D66 "+
   "tables for Vilani, Solomani, Zhodani, Aslan and Vargr. The gold <b>✦ One-off NPC name</b> button rolls species, "+
   "gender and both halves in one go when you just need somebody called something, now.<br><br>"+
+  "<b>Loot</b> rolls what a beaten enemy was carrying &mdash; loose cash scaled to their number, gear drawn "+
+  "from tables that suit the archetype, cheap armour on a 4+, the odd credit stick, and something personal "+
+  "in a pocket. The <b>Loot</b> button on any mob in the fight fills it in from that mob and jumps here.<br><br>"+
   "<b>&#9776; Tables in the books</b> lists every roll table across all four books with its page number, "+
   "grouped by book, so you can find one without hunting. It is a reference, not a roller.<br><br>"+
   "<b>Tables</b> lays each table out in full when you tap it, so you can roll your own dice and read it off. "+
@@ -3185,7 +3504,8 @@ function renderCombat(){
         ${c.t==='mob'
           ? `<button class="mini" onclick="mobBody('${c.id}',-1)" title="One of them is down">&minus;1</button>
              <button class="mini" onclick="mobBody('${c.id}',1)" title="Put one back">+1</button>
-             <button class="mini" onclick="cycleShaken('${c.id}')" title="Override the shaken penalty">Shaken ${c.sh===undefined||c.sh===null?'auto':c.sh}</button>`
+             <button class="mini" onclick="cycleShaken('${c.id}')" title="Override the shaken penalty">Shaken ${c.sh===undefined||c.sh===null?'auto':c.sh}</button>
+             <button class="mini" onclick="lootFromMob('${c.id}')" title="What were they carrying?">Loot</button>`
           : `<button class="mini" onclick="dmg('${c.id}',-1)">&minus;1</button>
              <button class="mini" onclick="dmg('${c.id}',-3)">&minus;3</button>
              <button class="mini" onclick="dmg('${c.id}',3)">+3</button>
@@ -3211,6 +3531,40 @@ function renderMode(){
 
 /* ---- mob generator ---- */
 let lastMob=null;
+
+/* ---- creature descriptors — three rolls give a seemingly endless palette ---- */
+const CRIT={
+ build:["long-limbed","squat and heavy","serpentine","many-legged","bloated","skeletal","broad-backed",
+   "low-slung","spindly","barrel-chested","segmented","hunched"],
+ cover:["matted fur","overlapping plates","wet grey hide","iridescent scales","bristling quills",
+   "cracked chitin","translucent skin","fused bone armour","oily feathers","weeping mucus",
+   "lichen-crusted shell","scarred leather"],
+ colour:["ash grey","rust red","bone white","tar black","mottled ochre","deep violet","sickly yellow",
+   "banded brown","glacial blue","dull copper"],
+ sense:["no eyes at all","a ring of small black eyes","heat pits along the jaw","enormous flat ears",
+   "quivering antennae","eyes that reflect your torch","a lateral line down each flank",
+   "nostrils the size of fists","clusters of stalked eyes","a blind, questing snout"],
+ tell:["it stinks of ammonia","it makes no sound whatsoever","it clicks constantly",
+   "it bleeds something that fizzes","flies follow it in a cloud","it is warm to be near",
+   "it mimics sounds it has heard","the air goes cold around it","it leaves prints that steam",
+   "it will not cross running water"],
+ want:["it is hungry","it is guarding young","it is wounded and cornered","it is defending a kill",
+   "it is following a scent that is not yours","it is migrating and you are in the way",
+   "it is territorial and you crossed a line","it is curious, for now","it is dying and does not care",
+   "something drove it here"],
+ hazard:["its blood is caustic","its bite carries something that festers","it can climb anything",
+   "it burrows faster than you can run","it hunts in complete darkness","it is faster in short bursts than any of you",
+   "killing it calls others","it can hold its breath for an hour","it is not alone",
+   "small arms fire barely troubles it"]
+};
+function describeCreature(){
+  const p=a=>a[Math.floor(Math.random()*a.length)];
+  return {
+    look:`${p(CRIT.build)}, ${p(CRIT.colour)} ${p(CRIT.cover)}, ${p(CRIT.sense)}`,
+    tell:p(CRIT.tell), want:p(CRIT.want), hazard:p(CRIT.hazard)
+  };
+}
+
 function genMob(){
   const a=MOBS[+document.getElementById('gArch').value];
   let t=+document.getElementById('gTier').value;
@@ -3225,25 +3579,29 @@ function genMob(){
   const single=(z===0);
   const psiEach = (a.psi && !helpless) ? a.psi[t] : 0;
   const tname = helpless ? DEFENCELESS : TIERN[t];
-  let foeName=null;
-  if(single){
-    const sp = /aslan/i.test(a.n) ? 'Aslan'
-             : /vespexer/i.test(a.n) ? 'Solomani'
-             : speciesFor('');
-    foeName = makeName(sp);
-  }
-  lastMob={n: single ? foeName : `${tname} ${a.n.toLowerCase()}`,
-    role: single ? `${tname} ${a.n.replace(/s$/,'').toLowerCase()}` : null,
+  const beast = (a.g==='C');
+  const crit  = beast ? describeCreature() : null;
+  /* a lone enemy stays a generic foe — name it yourself, or roll one */
+  const singleLabel = single
+    ? (beast ? `${tname} ${a.n.replace(/s$/,'').toLowerCase()}`
+             : `${tname} ${a.n.replace(/s$/,'').toLowerCase()}`)
+    : null;
+  lastMob={n: single ? singleLabel : `${tname} ${a.n.toLowerCase()}`,
+    role: null, beast, crit,
     pips,dm,arm:(helpless?0:a.arm[t]),weps,trait:a.t[d(3)-1],brk,hitsEach,single,helpless,
     psiEach, psiMax:psiEach*pips};
   document.getElementById('mobOut').innerHTML=
-    `<b class="greenc" style="font-size:15px">${lastMob.n}</b> &mdash; ${lastMob.role||SIZEN[z]}<br>
+    `<b class="greenc" style="font-size:15px">${lastMob.n}</b> &mdash; ${SIZEN[z]}<br>
      ${single ? `<b class="goldc num">1</b> foe &nbsp;·&nbsp; <b>1</b> attack a round`
               : `<b class="goldc num">${pips}</b> bodies &nbsp;·&nbsp; <b>${Math.floor(pips/3)}</b> attacks a round`}
      &nbsp;·&nbsp; skill <b>DM${sgn(dm)}</b> &nbsp;·&nbsp; armour <b>${lastMob.arm}</b><br>
      <b>${hitsEach}</b> hits${single?'':' each'} &mdash; mark damage on the token, remove them here when they drop.<br>
-     Armed with <b>${weps.join('</b> and <b>')}</b>.<br>
-     ${single?`<span class="hint">Reroll the name from the Tables tab if you want a different one.</span><br>`:''}
+     Armed with ${weps.map(wepLine).join(' and ')}.<br>
+     ${crit?`<span class="hint">${crit.look}. ${crit.tell.charAt(0).toUpperCase()+crit.tell.slice(1)}.</span><br>
+       <b class="hotc">Why it is here:</b> ${crit.want}.<br>
+       <b class="hotc">Watch out:</b> ${crit.hazard}.<br>`:''}
+     ${(single&&!beast)?`<span class="hint">A generic foe &mdash; give it a name with
+       <b>Edit</b> in the fight, or roll one on the Tables tab.</span><br>`:''}
      ${psiEach?`<b class="hotc">PSI pool ${psiEach*pips}</b> &mdash; at most <b>${psiEach}</b> points in any single use.<br>`:''}
      ${brk?`Breaks at <b class="hotc">${brk}</b> bodies.`:(single?'A lone foe does not break &mdash; it fights or it runs.':'<b class="redc">Does not break.</b>')}<br>
      ${single?'Set its shaken penalty by hand as it takes damage.'
@@ -3258,7 +3616,8 @@ function addGenMob(){
     arm:lastMob.arm,dm:lastMob.dm,pips:lastMob.pips,pipsMax:lastMob.pips,brk:lastMob.brk,
     hitsEach:lastMob.hitsEach,dmg:0,weps:lastMob.weps,single:lastMob.single,
     psiEach:lastMob.psiEach||0, psiMax:lastMob.psiMax||0, psiSpent:0,
-    note:(lastMob.role?lastMob.role+' · ':'')+lastMob.weps.join(' · ')+' — '+lastMob.trait,
+    note:lastMob.weps.map(wepShort).join(' · ')+' — '+lastMob.trait
+      +(lastMob.crit?' · '+lastMob.crit.look+' · '+lastMob.crit.hazard:''),
     zone:(ZONES[S.combat.mode||'ground'])[0],breach:false});
   renderCombat(); queueSave();
 }
@@ -3358,7 +3717,7 @@ function makeMobFrom(archName,sizeName,tierIdx){
   return {id:uid(),n:`${helpless?DEFENCELESS:TIERN[t]} ${a.n.toLowerCase()}`,t:'mob',init:null,end:0,endMax:0,
     arm:helpless?0:a.arm[t], dm:helpless?-2:[0,1,2,3][t], pips,pipsMax:pips,brk,hitsEach:a.hits||21,
     psiEach, psiMax:psiEach*pips, psiSpent:0,
-    weps, note:weps.join(' · ')+' — '+a.t[d(3)-1],
+    weps, note:weps.map(wepShort).join(' · ')+' — '+a.t[d(3)-1],
     zone:'Lock',breach:false};
 }
 function boardContact(id){
@@ -3673,10 +4032,17 @@ document.getElementById('helpBody').innerHTML=HELP.map(x=>
   `<div class="card"><h2>${x[0]}</h2><div class="hint" style="font-size:14px;line-height:1.7">${x[1]}</div></div>`).join('');
 document.getElementById('gArch').innerHTML=
   '<optgroup label="Standard">'+MOBS.map((m,i)=>m.g==='S'?`<option value="${i}">${m.n}</option>`:'').join('')+'</optgroup>'+
-  '<optgroup label="Trojan Reach">'+MOBS.map((m,i)=>m.g==='R'?`<option value="${i}">${m.n}</option>`:'').join('')+'</optgroup>';
+  '<optgroup label="Trojan Reach">'+MOBS.map((m,i)=>m.g==='R'?`<option value="${i}">${m.n}</option>`:'').join('')+'</optgroup>'+
+  '<optgroup label="Creatures">'+MOBS.map((m,i)=>m.g==='C'?`<option value="${i}">${m.n}</option>`:'').join('')+'</optgroup>';
+document.getElementById('lootArch').innerHTML=
+  '<optgroup label="Standard">'+MOBS.map((m,i)=>m.g==='S'?`<option value="${i}">${m.n}</option>`:'').join('')+'</optgroup>'+
+  '<optgroup label="Trojan Reach">'+MOBS.map((m,i)=>m.g==='R'?`<option value="${i}">${m.n}</option>`:'').join('')+'</optgroup>'+
+  '<optgroup label="Creatures">'+MOBS.map((m,i)=>m.g==='C'?`<option value="${i}">${m.n}</option>`:'').join('')+'</optgroup>';
+document.getElementById('lootArch').value=MOBS.findIndex(m=>m.n==='Merchant crew');
 document.getElementById('bArch').innerHTML=
   '<optgroup label="Standard">'+MOBS.map((m,i)=>m.g==='S'?`<option value="${i}">${m.n}</option>`:'').join('')+'</optgroup>'+
-  '<optgroup label="Trojan Reach">'+MOBS.map((m,i)=>m.g==='R'?`<option value="${i}">${m.n}</option>`:'').join('')+'</optgroup>';
+  '<optgroup label="Trojan Reach">'+MOBS.map((m,i)=>m.g==='R'?`<option value="${i}">${m.n}</option>`:'').join('')+'</optgroup>'+
+  '<optgroup label="Creatures">'+MOBS.map((m,i)=>m.g==='C'?`<option value="${i}">${m.n}</option>`:'').join('')+'</optgroup>';
 document.getElementById('bArch').value=MOBS.findIndex(m=>m.n==='Merchant crew');
 document.getElementById('nmSp').innerHTML=SPECIES.map(s=>`<option>${s}</option>`).join('');
 document.getElementById('sArch').innerHTML=SHIPS.map((s,i)=>`<option value="${i}">${s.n} &mdash; ${s.t}</option>`).join('');
