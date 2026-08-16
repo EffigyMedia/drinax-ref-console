@@ -1965,7 +1965,7 @@ function dlEverything(){
     .then(s=>{ out.characters=s.val()||{}; finish(); })
     .catch(()=>finish());
 }
-function openSheet(id){ window.open(slotLink(id),'_blank','noopener'); }
+function openSheet(id){ window.open(slotLink(id)+'&ref=1','_blank','noopener'); }
 function copySlot(id){ copyText(slotLink(id)); note('Link copied'); }
 function forgetSlot(id,nm){
   askConfirm('Delete the character slot <b>'+(nm||id)+'</b> from the campaign? Their sheet data goes with it.',
