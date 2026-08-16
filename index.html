@@ -156,6 +156,9 @@ textarea{width:100%;min-height:120px;resize:vertical;line-height:1.6;}
 .ch .b button{flex:1;padding:3px 0;min-height:32px;font-size:14px;}
 .dmgbox{width:74px;text-align:center;padding:6px 2px;font-size:15px;
   font-variant-numeric:tabular-nums;}
+.skchips{display:flex;gap:5px;flex-wrap:wrap;margin-top:6px;}
+.skc{border:1px solid var(--line);background:var(--panel2);padding:3px 7px;font-size:12px;color:var(--dim);}
+.skc b{color:var(--ink);}
 .wdbox{width:44px;flex:0 0 44px;text-align:center;padding:3px 0;min-height:32px;
   font-size:14px;font-variant-numeric:tabular-nums;color:var(--dim);}
 .wdbox.on{color:var(--hot);font-weight:700;}
@@ -211,6 +214,9 @@ button.danger{background:var(--green);border-color:var(--green);color:#0c0405;fo
 button.danger:hover{background:var(--red);border-color:var(--red);}
 .log div{border-bottom:1px solid #1e1516;padding:2px 0;}
 </style>
+<script src="https://www.gstatic.com/firebasejs/12.17.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/12.17.1/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/12.17.1/firebase-database-compat.js"></script>
 </head>
 <body>
 
@@ -394,9 +400,29 @@ button.danger:hover{background:var(--red);border-color:var(--red);}
     <div class="row" style="margin-top:8px">
       <button class="mini" onclick="addParty(false)">Send to the fight &mdash; I'll enter initiative</button>
       <button class="mini" onclick="addParty(true)">Send and roll initiative for them</button>
+      <button class="mini" onclick="document.getElementById('shIn').click()"
+              style="border-color:var(--green);color:var(--green)">&#8679; Import a character sheet</button>
+      <input type="file" id="shIn" accept=".json,application/json" style="display:none" onchange="importSheet(event)">
+      <a class="mini" href="./player/" target="_blank" rel="noopener"
+         style="display:inline-flex;align-items:center;padding:6px 11px;border:1px solid var(--line);
+                color:var(--ink);text-decoration:none;min-height:38px">Open a blank sheet &nearr;</a>
       <button class="mini" onclick="fullHeal()">Restore all</button>
       <span class="hint grow">Damage applied in the Combat tab writes back here, and back again. One set of numbers.</span>
     </div>
+  </div>
+  <div class="card">
+    <h2>Live table</h2>
+    <div class="row">
+      <span class="hint">Campaign</span>
+      <input id="campIn" style="width:150px" onchange="syncCamp(this.value)">
+      <button class="mini" onclick="syncStart()">Connect</button>
+      <button class="mini" onclick="syncStop()">Go offline</button>
+      <span id="syncState" class="hint">Offline</span>
+    </div>
+    <div id="tableView" style="margin-top:9px"></div>
+    <p class="hint" style="margin-top:7px">Players open
+      <b>&hellip;/player/</b> and enter the same campaign name. Their sheet edits arrive here;
+      the wounds and ammunition you set here appear on their sheet.</p>
   </div>
   <div id="partyList"></div>
 </section>
@@ -1568,6 +1594,15 @@ const HELP=[
  ["Party",
   "Stat blocks for your Travellers, and the only place their numbers live. "+
   "All six characteristics show current, maximum and the derived DM, so you never work one out again.<br><br>"+
+  "<b>The character sheet supersedes this tab.</b> <b>&#8679; Import a character sheet</b> reads a JSON exported "+
+  "from sheet.html and builds the Traveller here: base characteristics, misc modifiers and injuries map straight "+
+  "onto base, mods and wounds; armour totals from worn plates plus subdermal and misc; every filled weapon row "+
+  "arrives with its damage and magazine; and every skill with a level shows as a chip, best first, so you never "+
+  "have to ask who has Recon. Importing a sheet whose name matches an existing Traveller updates them in place "+
+  "rather than duplicating.<br><br>"+
+  "<b>&#8681; Sheet</b> on a card writes the file back out with whatever the console now holds, so a player can "+
+  "reload it into sheet.html after a session and keep their injuries and spent ammunition. <b>Open a blank sheet</b> "+
+  "opens sheet.html alongside, when it is hosted in the same folder.<br><br>"+
   "<b>Edit</b> on any card changes the name, the role, every maximum and the armour rating, and adds or removes "+
   "<b>PSI</b> for anyone with psionic training &mdash; it only appears on characters who have it. Renaming updates "+
   "their row in the fight too.<br><br>"+
@@ -1667,6 +1702,195 @@ const HELP=[
   "Name one crewman per session and give them one trait. They are your replacement characters."]
 ];
 
+
+
+
+/* ==================== LIVE SYNC ==================== */
+const FBCONF={
+  apiKey:"AIzaSyCGLE8W83vXgwHjBOf6XncbeBCbTZCn1SY",
+  authDomain:"drinax-68663.firebaseapp.com",
+  databaseURL:"https://drinax-68663-default-rtdb.firebaseio.com",
+  projectId:"drinax-68663",
+  storageBucket:"drinax-68663.firebasestorage.app",
+  messagingSenderId:"634715682610",
+  appId:"1:634715682610:web:2ee26a59ffcb71e830492b"
+};
+let FB={db:null,ok:false,camp:null,ref:null,pushT:null};
+
+function campaignId(){ return (S.sync&&S.sync.camp)||'drinax'; }
+function syncStatus(t,cls){ const e=document.getElementById('syncState');
+  if(e){ e.textContent=t; e.className='hint '+(cls||''); } }
+
+async function syncStart(){
+  S.sync=S.sync||{camp:'drinax'};
+  if(typeof firebase==='undefined'){ syncStatus('Firebase did not load — offline','hotc'); return; }
+  try{
+    if(!FB.app){ FB.app=firebase.initializeApp(FBCONF); }
+    try{ await firebase.auth().signInAnonymously(); }catch(e){ /* rules may not need auth */ }
+    FB.db=firebase.database();
+    if(FB.ref) FB.ref.off();
+    FB.camp=campaignId();
+    FB.ref=FB.db.ref('campaigns/'+FB.camp+'/players');
+    FB.ref.on('value', snap=>{ applyRemote(snap.val()||{}); },
+      err=>{ syncStatus('Denied: '+err.code,'redc'); });
+    FB.db.ref('.info/connected').on('value', s=>{
+      FB.ok=!!s.val();
+      syncStatus(FB.ok?('Live · '+FB.camp):'Reconnecting…', FB.ok?'greenc':'hotc');
+    });
+  }catch(e){ syncStatus('Sync failed: '+e.message,'redc'); }
+}
+function syncStop(){ if(FB.ref){FB.ref.off();FB.ref=null;} FB.ok=false; syncStatus('Offline',''); }
+function syncCamp(v){ S.sync=S.sync||{}; S.sync.camp=(v||'drinax').trim()||'drinax'; queueSave(); syncStart(); }
+
+/* ---- incoming: players own their sheets ---- */
+let applying=false;
+function applyRemote(all){
+  applying=true;
+  const seen=[];
+  Object.keys(all).forEach(uid=>{
+    const node=all[uid]||{}; const sheet=node.sheet; if(!sheet) return;
+    seen.push(uid);
+    let p=S.party.find(x=>x.uid===uid);
+    const built=buildFromSheet(sheet);
+    if(!p){ p={id:'rp_'+uid, uid:uid, ablate:true, notes:''}; S.party.push(p); }
+    /* the sheet owns identity, stats, skills and kit; the console owns wounds and ammo */
+    p.uid=uid; p.remote=true; p.n=built.n; p.role=built.role;
+    p.mx=built.mx; p.skl=built.skl; p.skills=built.skills; p.sheet=sheet;
+    p.armMax=built.armMax; if(p.arm===undefined) p.arm=built.armMax;
+    p.md=p.md||built.md; p.wd=p.wd||built.wd;
+    if(!p.wpn||!p.wpn.length) p.wpn=built.wpn;
+    else built.wpn.forEach((w,i)=>{ if(p.wpn[i]){ p.wpn[i].n=w.n; p.wpn[i].d=w.d; p.wpn[i].mag=w.mag; } });
+    p.online=!!(node.meta&&node.meta.online);
+    p.seen=(node.meta&&node.meta.seen)||0;
+    migratePC(p); syncCh(p);
+    S.combat.list.forEach(c=>{ if(c.pcId===p.id) c.n=p.n; });
+  });
+  S.party.forEach(p=>{ if(p.remote && !seen.includes(p.uid)) p.online=false; });
+  applying=false;
+  renderParty(); renderCombat();
+}
+function buildFromSheet(o){
+  const KS=['STR','DEX','END','INT','EDU','SOC'], mx={},md={},wd={};
+  KS.forEach(k=>{ mx[k]=num(o,'b'+k); md[k]=num(o,'m'+k); wd[k]=num(o,'i'+k); });
+  if(o.psiStr!==''&&o.psiStr!==undefined){ mx.PSI=num(o,'psiStr'); md.PSI=0; wd.PSI=num(o,'psiSpent'); }
+  let ap=0; for(let i=0;i<6;i++) if(o['aW'+i]) ap+=num(o,'aP'+i);
+  const armMax=ap+num(o,'subderm')+num(o,'miscProt');
+  const wpn=[];
+  for(let i=0;i<8;i++){ const nm=(o['wN'+i]||'').trim(); if(!nm) continue;
+    wpn.push({id:'w'+i,n:nm,d:(o['wD'+i]||'').trim(),mag:num(o,'wMx'+i),
+      cur:(o['wMn'+i]===''||o['wMn'+i]===undefined)?num(o,'wMx'+i):num(o,'wMn'+i)}); }
+  const skl=[];
+  SHEETSKILLS.forEach((s,n)=>{ const lv=num(o,'skL'+n)+num(o,'skM'+n);
+    if(lv>0) skl.push({n:(o['skN'+n]?s.replace('____',o['skN'+n]):s), l:lv}); });
+  skl.sort((a,b)=>b.l-a.l);
+  return {n:(o.name||'').trim()||'Unnamed', role:[o.species,o.player?'played by '+o.player:''].filter(Boolean).join(' · '),
+    mx,md,wd,armMax,wpn,skl,skills:skl.slice(0,6).map(s=>s.n+' '+s.l).join(' · ')};
+}
+
+/* ---- outgoing: the console owns what happens in play ---- */
+function pushLive(){
+  if(!FB.db||!FB.ok||applying) return;
+  clearTimeout(FB.pushT);
+  FB.pushT=setTimeout(()=>{
+    S.party.filter(p=>p.remote&&p.uid).forEach(p=>{
+      FB.db.ref('campaigns/'+FB.camp+'/players/'+p.uid+'/live').set({
+        wd:p.wd||{}, md:p.md||{}, arm:p.arm===undefined?null:p.arm,
+        ammo:(p.wpn||[]).map(w=>w.cur),
+        by:'console', at:firebase.database.ServerValue.TIMESTAMP
+      }).catch(()=>{});
+    });
+  },500);
+}
+
+/* ==================== CHARACTER SHEET BRIDGE ==================== */
+/* Skill order must match sheet.html exactly — it keys skL{n} / skM{n}. */
+const SHEETSKILLS=[
+ "Admin","Advocate","Animals: Handling","Animals: Training","Animals: Veterinary","Art: ____","Art: ____","Art: ____",
+ "Astrogation","Athletics: Dexterity","Athletics: Endurance","Athletics: Strength","Broker","Carouse","Deception",
+ "Diplomat","Drive: Hovercraft","Drive: Mole","Drive: Tracked","Drive: Walker","Drive: Wheeled","Electronics: Comms",
+ "Electronics: Computers","Electronics: Remote Ops.","Electronics: Sensors","Engineer: J-Drive","Engineer: Life Support",
+ "Engineer: M-Drive","Engineer: Power Plant","Explosives",
+ "Flyer: Airship","Flyer: Grav","Flyer: Ornithopter","Flyer: Rotor","Flyer: Wing","Gambler","Gunner: Capital",
+ "Gunner: Ortillery","Gunner: Screen","Gunner: Turret","Gun Cbt.: Archaic","Gun Cbt.: Energy","Gun Cbt.: Slug",
+ "Gun Cbt.: ____","Gun Cbt.: ____","Heavy Wpns.: Artillery","Heavy Wpns.: Man-Port.","Heavy Wpns.: Vehicle",
+ "Investigate","Jack-of-All-Trades","Language: ____","Language: ____","Language: ____","Leadership","Mechanic",
+ "Medic","Melee: Blade","Melee: Bludgeon","Melee: Natural","Melee: Unarmed",
+ "Navigation","Persuade","Pilot: Capital Ships","Pilot: Small Craft","Pilot: Spacecraft","Profession: ____",
+ "Profession: ____","Profession: ____","Recon","Science: ____","Science: ____","Science: ____",
+ "Seafarer: Ocean Ships","Seafarer: Personal","Seafarer: Sail","Seafarer: Submarine","Stealth","Steward",
+ "Streetwise","Survival","Tactics: Military","Tactics: Naval","Vacc Suit","____","____","____"];
+const SHEET_URL='./sheet.html';
+
+function importSheet(ev){
+  const f=ev.target.files&&ev.target.files[0]; if(!f) return;
+  const r=new FileReader();
+  r.onload=()=>{ try{ sheetToParty(JSON.parse(r.result)); }
+                 catch(e){ note('That is not a character sheet file'); } };
+  r.readAsText(f); ev.target.value='';
+}
+function num(o,k){ const v=o[k]; return (v===''||v===undefined||v===null)?0:(+v||0); }
+
+function sheetToParty(o){
+  const KS=['STR','DEX','END','INT','EDU','SOC'];
+  const mx={}, md={}, wd={}, ch={};
+  KS.forEach(k=>{ mx[k]=num(o,'b'+k); md[k]=num(o,'m'+k); wd[k]=num(o,'i'+k); });
+  if(o.psiStr!==''&&o.psiStr!==undefined){ mx.PSI=num(o,'psiStr'); md.PSI=0; wd.PSI=num(o,'psiSpent'); }
+
+  /* armour: worn plates plus subdermal and misc */
+  let ap=0;
+  for(let i=0;i<6;i++) if(o['aW'+i]) ap+=num(o,'aP'+i);
+  const armour=ap+num(o,'subderm')+num(o,'miscProt');
+
+  /* weapons that were actually filled in */
+  const wpn=[];
+  for(let i=0;i<8;i++){
+    const nm=(o['wN'+i]||'').trim(); if(!nm) continue;
+    wpn.push({id:uid(),n:nm,d:(o['wD'+i]||'').trim(),
+      mag:num(o,'wMx'+i), cur:(o['wMn'+i]===''||o['wMn'+i]===undefined)?num(o,'wMx'+i):num(o,'wMn'+i)});
+  }
+
+  /* skills with a level, best first */
+  const skl=[];
+  SHEETSKILLS.forEach((s,n)=>{
+    const lv=num(o,'skL'+n)+num(o,'skM'+n);
+    if(lv>0||o['skL'+n]==='0') skl.push({n:(o['skN'+n]?s.replace('____',o['skN'+n]):s), l:lv});
+  });
+  skl.sort((a,b)=>b.l-a.l);
+
+  const name=(o.name||'').trim()||'Unnamed Traveller';
+  const role=[o.species,o.player?'played by '+o.player:''].filter(Boolean).join(' · ');
+
+  const existing=S.party.find(p=>p.n.toLowerCase()===name.toLowerCase());
+  const rec={id:existing?existing.id:uid(), n:name, role,
+    ch,mx,md,wd, arm:armour, armMax:armour, ablate:existing?existing.ablate:true,
+    wpn, skl, skills:skl.slice(0,6).map(s=>s.n+' '+s.l).join(' · '),
+    sheet:o, notes:existing?existing.notes:''};
+  if(existing) Object.assign(existing, rec); else S.party.push(rec);
+  migratePC(rec); syncCh(rec);
+  S.combat.list.forEach(c=>{ if(c.pcId===rec.id) c.n=rec.n; });
+  renderParty(); renderCombat(); queueSave();
+  note((existing?'Updated ':'Imported ')+name);
+  logEvent(`Sheet imported for <b>${name}</b>`);
+}
+
+function partyToSheet(id){
+  const p=S.party.find(x=>x.id===id); if(!p) return;
+  const o=Object.assign({}, p.sheet||{});         /* keep everything the sheet had */
+  o.name=p.n;
+  ['STR','DEX','END','INT','EDU','SOC','PSI'].forEach(k=>{
+    if(p.mx[k]===undefined) return;
+    if(k==='PSI'){ o.psiStr=p.mx.PSI; o.psiSpent=p.wd.PSI||0; return; }
+    o['b'+k]=p.mx[k]; o['m'+k]=p.md[k]||0; o['i'+k]=p.wd[k]||0;
+  });
+  (p.wpn||[]).forEach((w,i)=>{ if(i>7) return;
+    o['wN'+i]=w.n; o['wD'+i]=w.d||''; o['wMx'+i]=w.mag||''; o['wMn'+i]=w.cur; });
+  const nm=(p.n||'traveller').replace(/[^\w-]+/g,'_').toLowerCase();
+  const blob=new Blob([JSON.stringify(o,null,1)],{type:'application/json'});
+  const u=URL.createObjectURL(blob), a=document.createElement('a');
+  a.href=u; a.download=nm+'-sheet.json'; document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(()=>URL.revokeObjectURL(u),3000);
+  note('Sheet written for '+p.n);
+}
 
 /* ==================== PARTY ==================== */
 const CHK=["STR","DEX","END","INT","EDU","SOC"];
@@ -1805,8 +2029,25 @@ function delWpn(pid,wid){ const p=S.party.find(x=>x.id===pid), w=p&&p.wpn.find(x
 function delWpnNow(pid,wid){ const p=S.party.find(x=>x.id===pid);
   p.wpn=p.wpn.filter(x=>x.id!==wid); renderParty(); queueSave(); }
 
+function renderTable(){
+  const el=document.getElementById('tableView'); if(!el) return;
+  const rem=S.party.filter(p=>p.remote);
+  const ci=document.getElementById('campIn');
+  if(ci && ci.value!==campaignId()) ci.value=campaignId();
+  if(!rem.length){ el.innerHTML='<p class="hint">Nobody connected yet.</p>'; return; }
+  el.innerHTML='<table><tr><th>Traveller</th><th>END</th><th>Armour</th><th>Rounds</th><th>Status</th></tr>'+
+    rem.map(p=>{
+      const st=pcStatus(p);
+      return `<tr><td><b>${p.n}</b> <span class="hint">${p.role||''}</span></td>
+        <td class="num">${curOf(p,'END')}<span class="hint">/${p.mx.END||0}</span></td>
+        <td class="num">${p.arm}<span class="hint">/${p.armMax}</span></td>
+        <td class="hint">${(p.wpn||[]).filter(w=>w.mag).map(w=>w.n+' '+w.cur+'/'+w.mag).join(' · ')||'—'}</td>
+        <td>${st[0]} ${p.online?'<span class="greenc">●</span>':'<span class="hint">○</span>'}</td></tr>`;
+    }).join('')+'</table>';
+}
 function renderParty(){
   S.party.forEach(migratePC);
+  renderTable();
   const el=document.getElementById('partyList');
   if(!S.party.length){ el.innerHTML='<div class="card"><p class="hint">No Travellers yet.</p></div>'; return; }
   el.innerHTML=S.party.map(p=>{
@@ -1886,6 +2127,7 @@ function renderParty(){
         <button class="mini" onclick="armAdj('${p.id}',99)">Patch up</button>
         <button class="mini ${p.ablate?'on2':''}" onclick="ablate('${p.id}')">Ablates on a hit</button>
         <button class="mini" onclick="clearMisc('${p.id}')">Clear mods</button>
+        <button class="mini" onclick="partyToSheet('${p.id}')" title="Write a sheet file with current values">&#8681; Sheet</button>
         <div class="grow"></div>
         <button class="mini" onclick="pcHit('${p.id}',1)">Take 1</button>
         <button class="mini" onclick="pcHit('${p.id}',3)">Take 3</button>
@@ -1898,6 +2140,8 @@ function renderParty(){
                placeholder="Recon 2, Gun Combat (slug) 1, Vacc Suit 0 …"
                onchange="setSkills('${p.id}',this.value)">
       </div>
+      ${(p.skl&&p.skl.length)?`<h2 style="margin-top:12px">Skills <span class="hint" style="letter-spacing:0;text-transform:none;font-weight:400">from the imported sheet</span></h2>
+        <div class="skchips">${p.skl.map(s=>`<span class="skc">${s.n} <b>${s.l}</b></span>`).join('')}</div>`:''}
       <h2 style="margin-top:12px">Weapons &amp; ammunition</h2>
       ${wpns||'<p class="hint">Nothing loaded.</p>'}
       <div class="row" style="margin-top:7px">
@@ -2100,7 +2344,7 @@ function copyEvents(){
 }
 function note(t){ const el=document.getElementById('saveState');
   el.textContent=t; el.classList.toggle('dirty',dirty); }
-function queueSave(){ pushUndo(); dirty=true; note('Saving…'); clearTimeout(saveTimer);
+function queueSave(){ pushUndo(); pushLive(); dirty=true; note('Saving…'); clearTimeout(saveTimer);
   saveTimer=setTimeout(()=>saveAll(false),600); }
 
 /* ---- Files, clipboard ---- */
@@ -2834,7 +3078,7 @@ document.getElementById('gArch').innerHTML=
   '<optgroup label="Standard">'+MOBS.map((m,i)=>m.g==='S'?`<option value="${i}">${m.n}</option>`:'').join('')+'</optgroup>'+
   '<optgroup label="Trojan Reach">'+MOBS.map((m,i)=>m.g==='R'?`<option value="${i}">${m.n}</option>`:'').join('')+'</optgroup>';
 document.getElementById('sArch').innerHTML=SHIPS.map((s,i)=>`<option value="${i}">${s.n} &mdash; ${s.t}</option>`).join('');
-typeChanged(); loadAll();
+typeChanged(); loadAll(); setTimeout(syncStart,700);
 </script>
 </body>
 </html>
