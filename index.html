@@ -38,6 +38,15 @@ button:hover{border-color:var(--green);}
   background:var(--panel);border:1px solid var(--green);padding:11px;
   box-shadow:0 14px 40px rgba(0,0,0,.65);max-height:60vh;overflow:auto;}
 #undoPanel.on{display:block;}
+#dicePanel{display:none;position:fixed;right:calc(12px + env(safe-area-inset-right,0px));
+  top:calc(66px + env(safe-area-inset-top,0px));z-index:130;width:280px;
+  background:var(--panel);border:1px solid var(--green);padding:12px;
+  box-shadow:0 14px 40px rgba(0,0,0,.7);}
+#dicePanel.on{display:block;}
+.dtotal{font-size:34px;font-weight:700;line-height:1;font-variant-numeric:tabular-nums;}
+.dpips{font-size:12px;color:var(--dim);margin-top:4px;letter-spacing:.06em;}
+.dpips b{color:var(--ink);}
+.dpips s{color:#5a4448;text-decoration:line-through;opacity:.7;}
 button:disabled{opacity:.35;cursor:default;}
 button:disabled:hover{border-color:var(--line);}
 button:active{background:#241618;}
@@ -217,11 +226,45 @@ button.danger:hover{background:var(--red);border-color:var(--red);}
     <button id="t-help" onclick="tab('help')">Help</button>
   </nav>
   <div class="save" id="saveState">—</div>
+  <button class="mini" onclick="toggleDice()" title="Dice roller">&#9860; Dice</button>
   <button class="mini" id="undoBtn" onclick="undo()" title="Undo the last change" disabled>&#8630; Undo</button>
   <button class="mini" id="histBtn" onclick="toggleHistory()" title="Undo history" disabled>&#9662;</button>
   <button class="mini" onclick="downloadSave()" title="Save a copy to Files">&#8681; Files</button>
 </header>
 <div id="undoPanel"></div>
+<div id="dicePanel">
+  <div class="row" style="margin-bottom:8px">
+    <b style="letter-spacing:.16em;font-size:12px">DICE</b>
+    <div class="grow"></div>
+    <button class="mini" onclick="toggleDice()">&times;</button>
+  </div>
+  <div class="row">
+    <input id="dExpr" class="grow" placeholder="2D+2, 3D, 1D20, D66" style="min-width:110px"
+           onkeyup="if(event.key==='Enter')rollExpr()">
+    <button onclick="rollExpr()">Roll</button>
+  </div>
+  <div class="row" style="margin-top:6px">
+    <button class="mini" onclick="quickRoll('1D')">1D</button>
+    <button class="mini" onclick="quickRoll('2D')">2D</button>
+    <button class="mini" onclick="quickRoll('3D')">3D</button>
+    <button class="mini" onclick="quickRoll('4D')">4D</button>
+    <button class="mini" onclick="quickRoll('D66')">D66</button>
+  </div>
+  <div class="row" style="margin-top:6px">
+    <span class="hint">DM</span>
+    <button class="mini" onclick="bumpDM(-1)">&minus;</button>
+    <b class="num" id="dDM">0</b>
+    <button class="mini" onclick="bumpDM(1)">+</button>
+    <button class="mini" id="dBoon" onclick="setBB(1)" title="3D keep the best two">Boon</button>
+    <button class="mini" id="dBane" onclick="setBB(-1)" title="3D keep the worst two">Bane</button>
+  </div>
+  <div class="row" style="margin-top:6px">
+    <span class="hint">Target</span>
+    <input id="dTgt" type="number" placeholder="8" style="width:74px">
+    <button class="mini" onclick="clearTarget()" title="Clear the target — does not roll">Clear</button>
+  </div>
+  <div id="dOut" style="margin-top:10px;min-height:54px"></div>
+</div>
 
 <datalist id="condlist"><option value="Stunned"><option value="Prone"><option value="Suppressed"><option value="Dazed"><option value="Bleeding"><option value="Drugged"><option value="Suit breached"><option value="Drifting"><option value="Aiming"><option value="In cover"><option value="Grappled"><option value="Burning"><option value="Blinded"><option value="Deafened"></datalist>
 <main>
@@ -1603,6 +1646,12 @@ const HELP=[
   "<b>Rules</b> has three panes: Traveller core mechanics, the Drinax campaign subsystems, and "+
   "<b>Where to look</b> &mdash; a page index for all four books, so you can turn straight to anything "+
   "this console only summarises. Page cites also sit in the corner of each rules card.<br><br>"+
+  "<b>&#9860; Dice</b> in the header opens a roller that works on every tab. Type <b>2D</b>, <b>3D+1</b>, "+
+  "<b>1D20</b> or <b>D66</b>, or use the quick buttons. The <b>DM</b> stepper adds to every roll until you change "+
+  "it, and <b>Boon</b> and <b>Bane</b> do the proper thing &mdash; three dice, keep the best or worst two, with the "+
+  "discarded die shown struck through.<br><br>"+
+  "Put a number in <b>Target</b> and it works out the <b>Effect</b> and names the band, which is the part you "+
+  "actually need at speed. Every roll drops into the session log.<br><br>"+
   "<b>Name tables</b> sit at the front of the Tables tab: first names by gender and surnames, as separate D66 "+
   "tables for Vilani, Solomani, Zhodani, Aslan and Vargr. The gold <b>✦ One-off NPC name</b> button rolls species, "+
   "gender and both halves in one go when you just need somebody called something, now.<br><br>"+
@@ -1917,6 +1966,83 @@ function refreshUndoUI(){
   const p=document.getElementById('undoPanel');
   if(p&&p.classList.contains('on')) renderHistory();
 }
+/* ==================== DICE ==================== */
+let dDM=0, dBB=0, dLastBase='';
+function toggleDice(){ const p=document.getElementById('dicePanel');
+  p.classList.toggle('on');
+  if(p.classList.contains('on')) document.getElementById('dExpr').focus(); }
+function bumpDM(v){ dDM+=v; document.getElementById('dDM').textContent=sgn(dDM); }
+function setBB(v){ dBB=(dBB===v?0:v);
+  document.getElementById('dBoon').classList.toggle('on2',dBB===1);
+  document.getElementById('dBane').classList.toggle('on2',dBB===-1); }
+function quickRoll(e){ document.getElementById('dExpr').value=e; rollExpr(); }
+
+function rollExpr(){
+  const raw=(document.getElementById('dExpr').value||'2D').trim();
+  const tgtRaw=document.getElementById('dTgt').value;
+  const tgt=tgtRaw===''?null:+tgtRaw;
+  const out=document.getElementById('dOut');
+  const e=raw.toLowerCase().replace(/\s+/g,'');
+
+  if(e==='d66'||e==='66'){
+    const a=d(6),b=d(6);
+    out.innerHTML=`<div class="dtotal goldc">${a}${b}</div>
+      <div class="dpips">D66 &mdash; first die <b>${a}</b>, second <b>${b}</b></div>`;
+    logRoll(`D66 — ${a}${b}`); return;
+  }
+
+  const m=e.match(/^(\d*)d(\d*)([+-]\d+)?$/) || e.match(/^(\d*)dd?([+-]\d+)?$/);
+  let n=2, sides=6, mod=0;
+  if(m){
+    n = m[1]==='' ? 1 : +m[1];
+    sides = (m[2]===undefined||m[2]==='') ? 6 : +m[2];
+    mod = m[3] ? +m[3] : 0;
+  } else if(/^[+-]?\d+$/.test(e)) { n=2; sides=6; mod=+e; }
+  else { out.innerHTML='<div class="hint">Try 2D, 3D+1, 1D20 or D66.</div>'; return; }
+
+  n=Math.max(1,Math.min(20,n)); sides=Math.max(2,Math.min(100,sides));
+  mod += dDM;
+
+  let rolls=[], dropped=null;
+  const bb = (dBB!==0 && sides===6 && n===2);
+  if(bb){
+    const three=[d(6),d(6),d(6)].sort((a,b)=>a-b);
+    if(dBB===1){ dropped=three[0]; rolls=[three[1],three[2]]; }
+    else       { dropped=three[2]; rolls=[three[0],three[1]]; }
+  } else {
+    for(let i=0;i<n;i++) rolls.push(d(sides));
+  }
+  const sum=rolls.reduce((a,b)=>a+b,0), total=sum+mod;
+
+  const base=`<div class="dtotal goldc">${total}</div>
+    <div class="dpips">${bb?(dBB===1?'Boon':'Bane')+' ':''}${n}D${sides===6?'':sides}${mod?sgn(mod):''}
+      &mdash; ${rolls.map(r=>'<b>'+r+'</b>').join(' ')}${dropped!==null?' <s>'+dropped+'</s> <span style="font-size:10px">dropped</span>':''}</div>`;
+  dLastBase=base;
+  let line=base;
+
+  if(tgt!==null){
+    const eff=total-tgt;
+    const band = eff>=6?'Exceptional success' : eff>=1?'Average success' : eff===0?'Marginal success'
+               : eff===-1?'Marginal failure' : eff>=-5?'Average failure' : 'Exceptional failure';
+    const cls = eff>=0?'greenc':'hotc';
+    line+=`<div style="margin-top:7px;font-size:15px">vs <b>${tgt}+</b> &mdash;
+      <b class="${cls}">Effect ${sgn(eff)}</b></div>
+      <div class="hint">${band}</div>`;
+  }
+  out.innerHTML=line;
+  logRoll(`${bb?(dBB===1?'Boon ':'Bane '):''}${n}D${sides===6?'':sides}${mod?sgn(mod):''} — <b>${total}</b>`
+    + (tgt!==null?` vs ${tgt}+ · Effect ${sgn(total-tgt)}`:''));
+}
+function clearTarget(){
+  document.getElementById('dTgt').value='';
+  document.getElementById('dOut').innerHTML=dLastBase;   /* keep the roll, drop the effect */
+}
+function logRoll(txt){
+  S.rolls=S.rolls||[]; S.rolls.unshift('<b>Dice</b> '+txt);
+  if(S.rolls.length>40) S.rolls.length=40;
+  renderRolls(); queueSave();
+}
+
 function toggleHistory(){
   const p=document.getElementById('undoPanel');
   p.classList.toggle('on'); if(p.classList.contains('on')) renderHistory();
