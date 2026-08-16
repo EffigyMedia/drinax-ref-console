@@ -419,7 +419,15 @@ button.danger:hover{background:var(--red);border-color:var(--red);}
       <button class="mini" onclick="syncStop()">Go offline</button>
       <span id="syncState" class="hint">Offline</span>
     </div>
+    <div class="row" style="margin-top:8px">
+      <input id="slotName" class="grow" placeholder="Character name" style="min-width:150px">
+      <button onclick="makeSlot()">Create a character slot</button>
+      <span class="hint grow" id="slotNote">Make one per player, then send them the link.</span>
+    </div>
     <div id="tableView" style="margin-top:9px"></div>
+    <p class="hint" style="margin-top:7px">Each character is a <b>slot</b> with its own link. One per player, or several
+      if somebody runs two. A player opens their link once and their browser remembers it &mdash; no login, no password.
+      Lose the link and you can copy it again from here.</p>
     <p class="hint" style="margin-top:7px">Players open
       <b>&hellip;/player/</b> and enter the same campaign name. Their sheet edits arrive here;
       the wounds and ammunition you set here appear on their sheet.</p>
@@ -1742,11 +1750,48 @@ async function syncStart(){
 function syncStop(){ if(FB.ref){FB.ref.off();FB.ref=null;} FB.ok=false; syncStatus('Offline',''); }
 function syncCamp(v){ S.sync=S.sync||{}; S.sync.camp=(v||'drinax').trim()||'drinax'; queueSave(); syncStart(); }
 
+/* ---- character slots: the referee makes them, players open the link ---- */
+function playerBase(){
+  const u=location.href.split('?')[0].split('#')[0];
+  return u.replace(/[^/]*$/,'') + 'player/';
+}
+function slotLink(id){
+  return playerBase()+'?c='+encodeURIComponent(campaignId())+'&id='+encodeURIComponent(id);
+}
+function makeSlot(){
+  const nm=(document.getElementById('slotName').value||'').trim();
+  if(!nm){ document.getElementById('slotNote').textContent='Give the character a name first.'; return; }
+  const id=nm.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'').slice(0,24)
+    +'-'+Math.random().toString(36).slice(2,6);
+  if(!FB.db||!FB.ok){ document.getElementById('slotNote').textContent='Connect first — the slot lives in the campaign.'; return; }
+  FB.db.ref('campaigns/'+campaignId()+'/players/'+id+'/meta').update({name:nm,created:Date.now()})
+    .then(()=>{ document.getElementById('slotName').value='';
+      copyText(slotLink(id));
+      document.getElementById('slotNote').innerHTML='Created <b>'+nm+'</b> — link copied. Send it to the player.'; })
+    .catch(e=>{ document.getElementById('slotNote').textContent='Refused: '+e.code; });
+}
+function copyText(t){
+  if(navigator.clipboard) navigator.clipboard.writeText(t).catch(()=>promptCopy(t));
+  else promptCopy(t);
+}
+function promptCopy(t){
+  askConfirm('Copy this link and send it to the player:<br><br><span style="word-break:break-all;font-size:12px">'
+    +t+'</span>', ()=>{}, 'Done');
+}
+function copySlot(id){ copyText(slotLink(id)); note('Link copied'); }
+function forgetSlot(id,nm){
+  askConfirm('Delete the character slot <b>'+(nm||id)+'</b> from the campaign? Their sheet data goes with it.',
+    ()=>{ if(FB.db) FB.db.ref('campaigns/'+campaignId()+'/players/'+id).remove();
+          S.party=S.party.filter(p=>p.uid!==id); renderParty(); queueSave(); });
+}
+
 /* ---- incoming: players own their sheets ---- */
 let applying=false;
 function applyRemote(all){
   applying=true;
   const seen=[];
+  S.slots=Object.keys(all).map(k=>({id:k,name:(all[k].meta&&all[k].meta.name)||k,
+    filled:!!all[k].sheet, online:!!(all[k].meta&&all[k].meta.online)}));
   Object.keys(all).forEach(uid=>{
     const node=all[uid]||{}; const sheet=node.sheet; if(!sheet) return;
     seen.push(uid);
@@ -2034,15 +2079,23 @@ function renderTable(){
   const rem=S.party.filter(p=>p.remote);
   const ci=document.getElementById('campIn');
   if(ci && ci.value!==campaignId()) ci.value=campaignId();
-  if(!rem.length){ el.innerHTML='<p class="hint">Nobody connected yet.</p>'; return; }
-  el.innerHTML='<table><tr><th>Traveller</th><th>END</th><th>Armour</th><th>Rounds</th><th>Status</th></tr>'+
+  const slots=S.slots||[];
+  const empty=slots.filter(s=>!s.filled);
+  const emptyHtml = empty.length ? '<table><tr><th>Slot waiting for a player</th><th style="width:150px"></th></tr>'+
+    empty.map(s=>`<tr><td><b>${s.name}</b> <span class="hint">${s.id}</span></td>
+      <td><button class="mini" onclick="copySlot('${s.id}')">Copy link</button>
+          <button class="mini x" onclick="forgetSlot('${s.id}','${s.name}')">&times;</button></td></tr>`).join('')+'</table>' : '';
+  if(!rem.length){ el.innerHTML=emptyHtml||'<p class="hint">No character slots yet. Make one above.</p>'; return; }
+  el.innerHTML=emptyHtml+'<table><tr><th>Traveller</th><th>END</th><th>Armour</th><th>Rounds</th><th>Status</th><th></th></tr>'+
     rem.map(p=>{
       const st=pcStatus(p);
       return `<tr><td><b>${p.n}</b> <span class="hint">${p.role||''}</span></td>
         <td class="num">${curOf(p,'END')}<span class="hint">/${p.mx.END||0}</span></td>
         <td class="num">${p.arm}<span class="hint">/${p.armMax}</span></td>
         <td class="hint">${(p.wpn||[]).filter(w=>w.mag).map(w=>w.n+' '+w.cur+'/'+w.mag).join(' · ')||'—'}</td>
-        <td>${st[0]} ${p.online?'<span class="greenc">●</span>':'<span class="hint">○</span>'}</td></tr>`;
+        <td>${st[0]} ${p.online?'<span class="greenc">●</span>':'<span class="hint">○</span>'}</td>
+        <td><button class="mini" onclick="copySlot('${p.uid}')">Link</button>
+            <button class="mini x" onclick="forgetSlot('${p.uid}','${p.n}')">&times;</button></td></tr>`;
     }).join('')+'</table>';
 }
 function renderParty(){
