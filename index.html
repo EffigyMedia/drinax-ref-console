@@ -423,6 +423,8 @@ button.danger:hover{background:var(--red);border-color:var(--red);}
     <div class="row" style="margin-top:8px">
       <input id="slotName" class="grow" placeholder="Character name" style="min-width:150px">
       <button onclick="makeSlot()">Create a character slot</button>
+      <button class="mini" onclick="dlTable()" title="Every character in the campaign, one file">&#8681; All characters</button>
+      <button class="mini" onclick="dlEverything()" title="Console state and every character together">&#8681; Everything</button>
       <button class="mini x" onclick="purgeEmpty()" title="Delete slots with no character in them">Purge empty slots</button>
       <span class="hint grow" id="slotNote">Make one per player, then send them the link.</span>
     </div>
@@ -1613,6 +1615,12 @@ const HELP=[
   "arrives with its damage and magazine; and every skill with a level shows as a chip, best first, so you never "+
   "have to ask who has Recon. Importing a sheet whose name matches an existing Traveller updates them in place "+
   "rather than duplicating.<br><br>"+
+  "<b>Exports.</b> Each row in the Live table has <b>&#8681;</b> to download that character in the sheet's own "+
+  "format &mdash; it loads straight back into sheet.html. <b>&#8681; All characters</b> writes every character in "+
+  "the campaign to one file, and <b>&#8681; Everything</b> adds the console's own state to that: party, campaign, "+
+  "tables, log, the lot. That last one is the backup worth taking at the end of a session.<br><br>"+
+  "<b>Open</b> beside each link launches that player's sheet in a new tab, which is the quickest way to check "+
+  "what they can actually see.<br><br>"+
   "<b>&#8681; Sheet</b> on a card writes the file back out with whatever the console now holds, so a player can "+
   "reload it into sheet.html after a session and keep their injuries and spent ammunition. <b>Open a blank sheet</b> "+
   "opens sheet.html alongside, when it is hosted in the same folder.<br><br>"+
@@ -1824,6 +1832,56 @@ function purgeEmpty(){
         .catch(e=>slotMsg('Refused: '+e.code+' — your rules do not allow deleting here','redc'));
     },'Delete');
 }
+
+/* ---- exports ---- */
+function dlJSON(obj,name){
+  const blob=new Blob([JSON.stringify(obj,null,1)],{type:'application/json'});
+  const u=URL.createObjectURL(blob), a=document.createElement('a');
+  a.href=u; a.download=name; document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(()=>URL.revokeObjectURL(u),3000);
+}
+function fileStamp(){ return new Date().toISOString().slice(0,10); }
+function safeName(s){ return (s||'traveller').replace(/[^\w-]+/g,'_').toLowerCase().slice(0,40); }
+
+/* one player, in the sheet's own format so it loads straight into sheet.html */
+function dlPlayer(id){
+  const p=S.party.find(x=>x.uid===id||x.id===id);
+  if(p&&p.sheet){ dlJSON(p.sheet, safeName(p.n)+'-sheet.json'); note('Saved '+p.n); return; }
+  if(!FB.db||!FB.ok){ slotMsg('Not connected, and no local copy of that sheet.','redc'); return; }
+  FB.db.ref('campaigns/'+campaignId()+'/players/'+id+'/sheet').once('value')
+    .then(s=>{ const v=s.val();
+      if(!v){ slotMsg('That slot has no character in it yet.','hotc'); return; }
+      dlJSON(v, safeName(v.name||id)+'-sheet.json'); slotMsg('Saved '+(v.name||id),'greenc'); })
+    .catch(e=>slotMsg('Refused: '+e.code,'redc'));
+}
+
+/* every character in the campaign, one file */
+function dlTable(){
+  if(!FB.db||!FB.ok){ slotMsg('Connect first.','redc'); return; }
+  FB.db.ref('campaigns/'+campaignId()+'/players').once('value')
+    .then(s=>{
+      const all=s.val()||{};
+      const out={campaign:campaignId(), exported:new Date().toISOString(), characters:{}};
+      Object.keys(all).forEach(k=>{
+        out.characters[k]={ name:(all[k].meta&&all[k].meta.name)||(all[k].sheet&&all[k].sheet.name)||k,
+          sheet:all[k].sheet||null, live:all[k].live||null };
+      });
+      dlJSON(out,'drinax-table-'+fileStamp()+'.json');
+      slotMsg('Saved '+Object.keys(out.characters).length+' character files','greenc');
+    })
+    .catch(e=>slotMsg('Refused: '+e.code,'redc'));
+}
+
+/* the console state and the whole table together — the real backup */
+function dlEverything(){
+  const out={ exported:new Date().toISOString(), campaign:campaignId(), console:S, characters:null };
+  const finish=()=>{ dlJSON(out,'drinax-everything-'+fileStamp()+'.json'); note('Full backup written'); };
+  if(!FB.db||!FB.ok){ finish(); return; }
+  FB.db.ref('campaigns/'+campaignId()+'/players').once('value')
+    .then(s=>{ out.characters=s.val()||{}; finish(); })
+    .catch(()=>finish());
+}
+function openSheet(id){ window.open(slotLink(id),'_blank','noopener'); }
 function copySlot(id){ copyText(slotLink(id)); note('Link copied'); }
 function forgetSlot(id,nm){
   askConfirm('Delete the character slot <b>'+(nm||id)+'</b> from the campaign? Their sheet data goes with it.',
@@ -2136,6 +2194,7 @@ function renderTable(){
   const emptyHtml = empty.length ? '<table><tr><th>Slot waiting for a player</th><th style="width:150px"></th></tr>'+
     empty.map(s=>`<tr><td><b>${s.name}</b> <span class="hint">${s.id}</span></td>
       <td><button class="mini" onclick="copySlot('${s.id}')">Copy link</button>
+          <button class="mini" onclick="openSheet('${s.id}')">Open</button>
           <button class="mini x" onclick="forgetSlot('${s.id}','${s.name}')">&times;</button></td></tr>`).join('')+'</table>' : '';
   if(!rem.length){ el.innerHTML=emptyHtml||'<p class="hint">No character slots yet. Make one above.</p>'; return; }
   el.innerHTML=emptyHtml+'<table><tr><th>Traveller</th><th>END</th><th>Armour</th><th>Rounds</th><th>Status</th><th></th></tr>'+
@@ -2147,6 +2206,8 @@ function renderTable(){
         <td class="hint">${(p.wpn||[]).filter(w=>w.mag).map(w=>w.n+' '+w.cur+'/'+w.mag).join(' · ')||'—'}</td>
         <td>${st[0]} ${p.online?'<span class="greenc">●</span>':'<span class="hint">○</span>'}</td>
         <td><button class="mini" onclick="copySlot('${p.uid}')">Link</button>
+            <button class="mini" onclick="openSheet('${p.uid}')">Open</button>
+            <button class="mini" onclick="dlPlayer('${p.uid}')" title="Download this character's sheet">&#8681;</button>
             <button class="mini x" onclick="forgetSlot('${p.uid}','${p.n}')">&times;</button></td></tr>`;
     }).join('')+'</table>';
 }
