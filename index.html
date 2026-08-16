@@ -422,6 +422,7 @@ button.danger:hover{background:var(--red);border-color:var(--red);}
     <div class="row" style="margin-top:8px">
       <input id="slotName" class="grow" placeholder="Character name" style="min-width:150px">
       <button onclick="makeSlot()">Create a character slot</button>
+      <button class="mini x" onclick="purgeEmpty()" title="Delete slots with no character in them">Purge empty slots</button>
       <span class="hint grow" id="slotNote">Make one per player, then send them the link.</span>
     </div>
     <div id="tableView" style="margin-top:9px"></div>
@@ -1778,6 +1779,15 @@ function promptCopy(t){
   askConfirm('Copy this link and send it to the player:<br><br><span style="word-break:break-all;font-size:12px">'
     +t+'</span>', ()=>{}, 'Done');
 }
+function purgeEmpty(){
+  const empty=(S.slots||[]).filter(s=>!s.filled);
+  if(!empty.length){ document.getElementById('slotNote').textContent='Nothing empty to clear.'; return; }
+  askConfirm('Delete <b>'+empty.length+'</b> empty slot'+(empty.length===1?'':'s')+
+    ' from the campaign? Slots with a character in them are left alone.',
+    ()=>{ if(!FB.db) return;
+      empty.forEach(s=>FB.db.ref('campaigns/'+campaignId()+'/players/'+s.id).remove());
+      note('Cleared '+empty.length); },'Delete');
+}
 function copySlot(id){ copyText(slotLink(id)); note('Link copied'); }
 function forgetSlot(id,nm){
   askConfirm('Delete the character slot <b>'+(nm||id)+'</b> from the campaign? Their sheet data goes with it.',
@@ -1790,10 +1800,11 @@ let applying=false;
 function applyRemote(all){
   applying=true;
   const seen=[];
-  S.slots=Object.keys(all).map(k=>({id:k,name:(all[k].meta&&all[k].meta.name)||k,
-    filled:!!all[k].sheet, online:!!(all[k].meta&&all[k].meta.online)}));
+  const real=s=>!!(s && (String(s.name||'').trim() || s.bSTR!=='' && s.bSTR!==undefined));
+  S.slots=Object.keys(all).map(k=>({id:k,name:(all[k].meta&&all[k].meta.name)||(all[k].sheet&&all[k].sheet.name)||k,
+    filled:real(all[k].sheet), online:!!(all[k].meta&&all[k].meta.online)}));
   Object.keys(all).forEach(uid=>{
-    const node=all[uid]||{}; const sheet=node.sheet; if(!sheet) return;
+    const node=all[uid]||{}; const sheet=node.sheet; if(!real(sheet)) return;
     seen.push(uid);
     let p=S.party.find(x=>x.uid===uid);
     const built=buildFromSheet(sheet);
