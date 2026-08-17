@@ -2565,6 +2565,10 @@ const HELP=[
   "<b>Conditions</b> live on the player's own sheet, so what you write appears in their hands and what they "+
   "write appears on their row here. Four slots each, with an optional round count that ticks itself down as "+
   "the round rolls over and clears when it reaches zero.<br><br>"+
+  "<b>Your console travels with the campaign.</b> Everything on these tabs is kept alongside it, so a "+
+  "reload or a different device picks up where you left off &mdash; and if the copy up there is newer than "+
+  "the one in front of you, it asks before replacing anything. The campaign name is remembered separately, "+
+  "so changing it sticks.<br><br>"+
   "<b>Clocks</b> on the Campaign tab are for the pressures that never surface in a single session and decide "+
   "the campaign anyway &mdash; Imperial attention, the Aslan grudge, Rao's plan, Wrax's ambition, Drinax "+
   "restored. Tap a segment to fill to it, tap a filled one to pull back. They are yours alone; nothing about "+
@@ -2675,7 +2679,19 @@ const FBCONF={
 };
 let FB={db:null,ok:false,camp:null,ref:null,pushT:null};
 
-function campaignId(){ return (S.sync&&S.sync.camp)||'drinax'; }
+function ck(k){ const m=document.cookie.match(new RegExp('(?:^|;\\s*)'+k+'=([^;]+)'));
+  return m?decodeURIComponent(m[1]):null; }
+function setCk(k,v){ try{ document.cookie=k+'='+encodeURIComponent(v)+';path=/;max-age=31536000'; }catch(e){} }
+/* The campaign name is remembered in a cookie as well as in state, because state
+   itself only survives a reload once we are connected — and we need the name to
+   connect in the first place. */
+function campaignId(){
+  const s=(S.sync&&S.sync.camp);
+  if(s) return s;
+  const c=ck('drinaxCamp');
+  if(c){ S.sync=S.sync||{}; S.sync.camp=c; return c; }
+  return 'drinax';
+}
 function syncStatus(t,cls){ const e=document.getElementById('syncState');
   if(e){ e.textContent=t; e.className='hint '+(cls||''); } }
 
@@ -2695,6 +2711,7 @@ async function syncStart(){
     FB.camp=campaignId();
     FB.ref=FB.db.ref('campaigns/'+FB.camp+'/players');
     shipWatchConsole();
+    setTimeout(pullConsole, 1200);
     FB.ref.on('value', snap=>{ applyRemote(snap.val()||{}); },
       err=>{ syncStatus('Cannot see the table — sign in as referee','hotc'); });
     showRef();
@@ -2764,7 +2781,12 @@ function showRef(){
   else { b.textContent='Referee sign-in'; b.classList.remove('on2'); }
 }
 function syncStop(){ if(FB.ref){FB.ref.off();FB.ref=null;} FB.ok=false; syncStatus('Offline',''); }
-function syncCamp(v){ S.sync=S.sync||{}; S.sync.camp=(v||'drinax').trim()||'drinax'; queueSave(); syncStart(); }
+function syncCamp(v){
+  S.sync=S.sync||{};
+  S.sync.camp=(v||'drinax').trim()||'drinax';
+  setCk('drinaxCamp', S.sync.camp);
+  queueSave(); syncStart();
+}
 
 /* ---- character slots: the referee makes them, players open the link ---- */
 function playerBase(){
@@ -3242,7 +3264,7 @@ function renderLiveTable(){
   const el=document.getElementById('tableView'); if(!el) return;
   const rem=S.party.filter(p=>p.remote);
   const ci=document.getElementById('campIn');
-  if(ci && ci.value!==campaignId()) ci.value=campaignId();
+  if(ci && document.activeElement!==ci && ci.value!==campaignId()) ci.value=campaignId();
   const slots=S.slots||[];
   const empty=slots.filter(s=>!s.filled);
   const emptyHtml = empty.length ? '<table><tr><th>Slot waiting for a player</th><th style="width:150px"></th></tr>'+
@@ -3543,12 +3565,49 @@ function undo(){
 }
 const stamp=()=>new Date().toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'});
 async function saveAll(loud){
+  S.savedAt = Date.now();
   const json=JSON.stringify(S);
+  let where='';
   try{
-    if(window.storage&&window.storage.set){ await window.storage.set('drinax:console',json); }
-    else{ memory=json; }
-    dirty=false; note('Saved '+stamp());
-  }catch(e){ memory=json; dirty=false; note('Held '+stamp()); }
+    if(window.storage&&window.storage.set){ await window.storage.set('drinax:console',json); where='Saved'; }
+    else{ memory=json; where='Saved'; }
+  }catch(e){ memory=json; where='Held'; }
+  dirty=false;
+  pushConsole();                       /* and up to the campaign, if we are connected */
+  note(where+' '+stamp());
+}
+
+/* ---------------------------------------------------------------
+   The console's own state lives with the campaign as well as on the
+   device. Without this a reload on a hosted site loses everything,
+   because the device store only exists inside the Claude app.
+   Referee-only: the rules put this out of players' reach.
+   --------------------------------------------------------------- */
+let consolePushT=null;
+function consolePath(){ return 'campaigns/'+campaignId()+'/console'; }
+function pushConsole(){
+  if(!FB.db||!FB.ok) return;
+  const u=(typeof firebase!=='undefined'&&firebase.auth) ? firebase.auth().currentUser : null;
+  if(!u||!u.email) return;             /* only the referee keeps a copy up there */
+  clearTimeout(consolePushT);
+  consolePushT=setTimeout(()=>{
+    FB.db.ref(consolePath()).set({at:S.savedAt||Date.now(), json:JSON.stringify(S)})
+      .catch(e=>syncStatus('Console not saved: '+e.code,'redc'));
+  },1500);
+}
+function pullConsole(){
+  if(!FB.db) return;
+  const u=(typeof firebase!=='undefined'&&firebase.auth) ? firebase.auth().currentUser : null;
+  if(!u||!u.email) return;
+  FB.db.ref(consolePath()).once('value').then(s=>{
+    const v=s.val(); if(!v||!v.json) return;
+    const mine=S.savedAt||0;
+    if((v.at||0) <= mine) return;      /* what is here is newer — keep it */
+    askConfirm('The campaign has a <b>newer</b> copy of your console, saved '+
+      new Date(v.at).toLocaleString()+'.<br><br>Load it? Anything unsaved here is replaced.',
+      ()=>{ try{ S=JSON.parse(v.json); renderAll(); saveAll(false); note('Restored from the campaign'); }
+            catch(e){ note('That copy is unreadable'); } }, 'Load it');
+  }).catch(()=>{});
 }
 function logEvent(txt){
   S.events=S.events||[];
