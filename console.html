@@ -187,6 +187,10 @@ textarea{width:100%;min-height:120px;resize:vertical;line-height:1.6;}
 .cchip{display:inline-flex;align-items:center;gap:4px;border:1px solid var(--hot);color:var(--ink);
   background:#241417;padding:2px 4px 2px 8px;font-size:12px;margin-right:4px;}
 .cchip b{color:var(--hot);}
+.cbt.ev{border-left:3px solid var(--gold);background:#151009;}
+.cbt.ev.held{border-left-color:#4a4045;background:#121011;}
+.evname{color:var(--gold);letter-spacing:.03em;}
+.cbt.ev.held .evname{color:#9a8d90;}
 .pill{display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:999px;
   font-size:12px;letter-spacing:.04em;border:1px solid var(--line);background:var(--panel2);
   color:var(--dim);white-space:nowrap;}
@@ -332,7 +336,8 @@ button.danger:hover{background:var(--red);border-color:var(--red);}
   <div class="brand">DRINAX <span>REFEREE CONSOLE</span></div>
   <nav>
     <button id="t-combat" class="on" onclick="tab('combat')">Combat</button>
-    <button id="t-party" onclick="tab('party')">Party</button>
+    <button id="t-party" onclick="tab('party')">PCs</button>
+    <button id="t-npcs" onclick="tab('npcs')">NPCs</button>
     <button id="t-ship" onclick="tab('ship')">Ship</button>
     <button id="t-space" onclick="tab('space')">Space</button>
     <button id="t-camp" onclick="tab('camp')">Campaign</button>
@@ -426,6 +431,80 @@ button.danger:hover{background:var(--red);border-color:var(--red);}
 
   <div class="cols">
     <div>
+
+
+      <div class="card" id="refCard">
+        <h2 id="refTitle">Reference</h2>
+        <div class="hint" id="refBody"></div>
+        <div class="row" style="margin-top:9px">
+          <button class="mini" onclick="dice(1,'1D')">1D</button>
+          <button class="mini" onclick="dice(2,'2D')">2D</button>
+          <button class="mini" onclick="dice(3,'3D')">3D</button>
+          <span class="hint grow" id="diceOut"></span>
+        </div>
+      </div>
+    </div>
+
+    <div>
+      <div class="card">
+        <h2>Events <span class="hint" style="letter-spacing:0;text-transform:none;font-weight:400">
+          things that happen on a count</span></h2>
+        <div class="row">
+          <input class="grow" id="evName" placeholder="Fire spreads, gas clears, reinforcements arrive"
+                 style="min-width:150px">
+          <input id="evInit" type="number" placeholder="Init" style="width:78px" title="Where it falls in the order">
+          <input id="evTurns" type="number" placeholder="Rounds" style="width:88px"
+                 title="How many rounds until it fires. Leave blank or −1 to keep it until you clear it">
+          <button onclick="addEvent()">Add</button>
+        </div>
+        <p class="hint" style="margin-top:6px">Counts down one each round when its turn comes.
+          At <b>0</b> it fires and clears itself; <b>&minus;1</b> stays until you remove it.</p>
+      </div>
+
+      <div class="card">
+        <h2>Order of battle</h2>
+        <div id="cbtList"></div>
+        <p class="hint" id="cbtEmpty">Nobody in the fight yet.</p>
+      </div>
+
+
+    </div>
+  </div>
+  <div class="pgfoot">&copy; 2026 Effigy Media. All rights reserved.
+    <span>Traveller is a trademark of Far Future Enterprises. Contains material &copy; Mongoose Publishing,
+    used under the Community Content Agreement for The Travellers' Aid Society.</span></div>
+</section>
+
+<!-- ============================ NPCS ============================ -->
+<section class="tab" id="tab-npcs">
+  <div class="cols">
+    <div>
+      <div class="card">
+        <h2>Mob generator</h2>
+        <div class="row">
+          <select id="gArch" class="grow"></select>
+        </div>
+        <div class="row" style="margin-top:6px">
+          <select id="gTier">
+            <option value="-1">Defenceless</option>
+            <option value="0">Rabble</option><option value="1" selected>Trained</option>
+            <option value="2">Veteran</option><option value="3">Elite</option>
+          </select>
+          <select id="gSize">
+            <option value="0">Single foe</option><option value="1">Handful</option>
+            <option value="2" selected>Squad</option><option value="3">Crowd</option>
+          </select>
+          <button onclick="genMob()">Roll a mob</button>
+          <button class="mini" onclick="namedFromArchetype()"
+                  title="The same archetype as one named individual, kept on the party list">&#9733; Named NPC</button>
+        </div>
+        <div id="mobOut" class="hint" style="margin-top:9px">&mdash;</div>
+        <div class="row" id="mobAddRow" style="display:none;margin-top:8px">
+          <button onclick="addGenMob()">Add to order of battle</button>
+          <button class="mini" onclick="genMob()">Re-roll</button>
+        </div>
+      </div>
+
       <div class="card">
         <h2>Add combatant</h2>
         <div class="row">
@@ -446,50 +525,8 @@ button.danger:hover{background:var(--red);border-color:var(--red);}
           <button onclick="addCbt()">Add</button>
         </div>
       </div>
-
-      <div class="card">
-        <h2>Mob generator</h2>
-        <div class="row">
-          <select id="gArch" class="grow"></select>
-        </div>
-        <div class="row" style="margin-top:6px">
-          <select id="gTier">
-            <option value="-1">Defenceless</option>
-            <option value="0">Rabble</option><option value="1" selected>Trained</option>
-            <option value="2">Veteran</option><option value="3">Elite</option>
-          </select>
-          <select id="gSize">
-            <option value="0">Single foe</option><option value="1">Handful</option>
-            <option value="2" selected>Squad</option><option value="3">Crowd</option>
-          </select>
-          <button onclick="genMob()">Roll a mob</button>
-        </div>
-        <div id="mobOut" class="hint" style="margin-top:9px">&mdash;</div>
-        <div class="row" id="mobAddRow" style="display:none;margin-top:8px">
-          <button onclick="addGenMob()">Add to order of battle</button>
-          <button class="mini" onclick="genMob()">Re-roll</button>
-        </div>
-      </div>
-
-      <div class="card" id="refCard">
-        <h2 id="refTitle">Reference</h2>
-        <div class="hint" id="refBody"></div>
-        <div class="row" style="margin-top:9px">
-          <button class="mini" onclick="dice(1,'1D')">1D</button>
-          <button class="mini" onclick="dice(2,'2D')">2D</button>
-          <button class="mini" onclick="dice(3,'3D')">3D</button>
-          <span class="hint grow" id="diceOut"></span>
-        </div>
-      </div>
     </div>
-
     <div>
-      <div class="card">
-        <h2>Order of battle</h2>
-        <div id="cbtList"></div>
-        <p class="hint" id="cbtEmpty">Nobody in the fight yet.</p>
-      </div>
-
       <div class="card">
         <h2>Saved NPCs</h2>
         <div id="npcList" class="hint">None saved.</div>
@@ -2273,6 +2310,132 @@ function lootFromMob(id){
 
 
 
+
+/* ---------------------------------------------------------------
+   One generator, two outcomes. The same archetype and tier that
+   makes a faceless mob will make a named individual with real
+   characteristics — because "the leader of those corsairs" is the
+   one the players will actually talk to.
+   --------------------------------------------------------------- */
+const TIER_CHAR={'-1':[-2,5],'0':[-1,6],'1':[0,7],'2':[1,8],'3':[2,9]};
+const ROLE_HINT={
+  'Marines':'Marine','Mercenaries':'Mercenary','Regular soldiers':'Soldier','Police':'Officer',
+  'Bodyguards':'Bodyguard','Assassins':'Assassin','Smugglers':'Smuggler','Corsairs':'Corsair',
+  'Merchant crew':'Crewman','Naval ratings':'Rating','Aslan warriors':'Warrior','Psions':'Psion',
+  'Scavengers':'Scavenger','Bandits':'Bandit','Street thugs':'Thug','Cultists':'Cultist',
+  'Starport security':'Guard','Corporate guards':'Guard','Planetary militia':'Militiaman',
+  'Dock gang':'Dockhand','Station workers':'Technician','Insurgents':'Insurgent',
+  "Ship's passengers":'Passenger','Civilians':'Civilian','Prisoners rioting':'Prisoner',
+  'Vespexer tribe':'Tribesman','Security drones':'Drone','Wild beasts':'Beast'
+};
+function namedFromArchetype(){
+  const a=MOBS[+document.getElementById('gArch').value];
+  const t=+document.getElementById('gTier').value;
+  const [dm, base]=TIER_CHAR[String(t)]||[0,7];
+  const roll=()=>Math.max(1, base + d(3) - 2);      /* clusters around the tier's competence */
+  const beast=(a.g==='C');
+  const sp = /aslan/i.test(a.n)?'Aslan' : /vargr/i.test(a.n)?'Vargr' : speciesFor('');
+  const name = beast ? (TIERN[Math.max(0,t)]+' '+a.n.replace(/s$/,'').toLowerCase()) : makeName(sp);
+  const weps=(a.w[Math.max(0,t)]||[]).slice(0,2);
+  const pc={
+    id:uid(), n:name,
+    role:(beast?'Creature':(ROLE_HINT[a.n]||a.n.replace(/s$/,''))) + ' · ' + TIERN[Math.max(0,t)].toLowerCase(),
+    mx:{STR:roll(),DEX:roll(),END:roll(),INT:roll(),EDU:roll(),SOC:roll()},
+    wd:{STR:0,DEX:0,END:0,INT:0,EDU:0,SOC:0}, md:{},
+    arm:a.arm[Math.max(0,t)], armMax:a.arm[Math.max(0,t)], ablate:true,
+    wpn:weps.map((w,i)=>{ const info=wepInfo(w);
+      return {id:'w'+i, n:info.n, d:info.w?info.w.d:'', rng:info.w?info.w.r:'', tr:info.w?info.w.t:'',
+              atk:(dm>=0?'+':'')+dm, mag:/pistol|rifle|gun|carbine|shotgun|autogun/i.test(w)?6:0,
+              cur:/pistol|rifle|gun|carbine|shotgun|autogun/i.test(w)?6:0}; }),
+    skl:[], cnd:[], remote:false,
+    note:a.t[d(3)-1]
+  };
+  if(a.psi && a.psi[Math.max(0,t)]) pc.mx.PSI=6+a.psi[Math.max(0,t)];
+  migratePC(pc);
+  S.party.push(pc);
+  renderParty(); queueSave();
+  /* stay put — you may want three of them — and say who turned up */
+  const out=document.getElementById('mobOut');
+  if(out) out.innerHTML=`<b class="greenc" style="font-size:15px">${name}</b>
+    <span class="hint">${pc.role}</span><br>
+    <span class="hint">${['STR','DEX','END','INT','EDU','SOC'].map(k=>k+' '+pc.mx[k]).join(' · ')}
+      · armour ${pc.arm}</span><br>
+    ${pc.wpn.map(w=>`<b>${w.n}</b> <span class="wstat">${[w.d,w.rng,w.tr].filter(Boolean).join(' · ')}</span>`).join(' and ')}
+    <br><span class="hint">${pc.note||''}</span>
+    <br><span class="hint">Filed on the Party tab as a local Traveller.</span>`;
+  note('Added '+name);
+}
+
+
+/* ---------------------------------------------------------------
+   Events in the turn order. A named thing that happens at a number,
+   counting down a round at a time. Zero fires it; minus one means
+   it waits for you.
+   --------------------------------------------------------------- */
+function addEvent(){
+  const n=(document.getElementById('evName').value||'').trim();
+  if(!n){ note('Give the event a name'); return; }
+  const initEl=document.getElementById('evInit');
+  const turnsEl=document.getElementById('evTurns');
+  const init = initEl.value===''? null : +initEl.value;
+  const turns = turnsEl.value===''? -1 : +turnsEl.value;
+  S.combat.list.push({id:uid(), t:'event', n, init, left:turns, start:turns,
+                      zone:(ZONES[S.combat.mode||'ground'])[0]});
+  document.getElementById('evName').value='';
+  document.getElementById('evInit').value='';
+  document.getElementById('evTurns').value='';
+  renderCombat(); queueSave();
+  logEvent('Event set — <b>'+n+'</b>'+(turns>=0?(' in '+turns+' round'+(turns===1?'':'s')):''));
+}
+function eventStep(id,v){
+  const e=S.combat.list.find(x=>x.id===id); if(!e) return;
+  if(e.left===undefined||e.left<0) return;
+  e.left=Math.max(0,e.left+v);
+  renderCombat(); queueSave();
+}
+function eventHold(id){
+  const e=S.combat.list.find(x=>x.id===id); if(!e) return;
+  e.left = (e.left===undefined||e.left<0) ? (e.start>=0?e.start:1) : -1;
+  renderCombat(); queueSave();
+}
+/* called as each round rolls over */
+function tickEvents(){
+  const fired=[];
+  (S.combat.list||[]).filter(x=>x.t==='event').forEach(e=>{
+    if(e.left===undefined||e.left<0) return;      /* held until cleared */
+    e.left-=1;
+    if(e.left<=0) fired.push(e);
+  });
+  fired.forEach(e=>{
+    logEvent('<b class="hotc">'+e.n+'</b> — now.');
+    note(e.n+' — now');
+    S.combat.list=S.combat.list.filter(x=>x.id!==e.id);
+  });
+  if(fired.length){
+    askConfirm(fired.map(e=>'<b>'+e.n+'</b>').join('<br>')+
+      '<br><br>'+(fired.length===1?'This happens now.':'These happen now.'),
+      ()=>{}, 'Right');
+  }
+}
+function eventRow(c){
+  const held = (c.left===undefined||c.left<0);
+  return `<div class="cbt ev${held?' held':''}" id="cb-${c.id}">
+    <div class="row">
+      <input class="init" value="${c.init===null||c.init===undefined?'':c.init}"
+             onchange="setInit('${c.id}',this.value)" title="Where it falls in the order">
+      <b class="grow evname">&#9873; ${c.n}</b>
+      ${held ? `<span class="tag local">held</span>`
+             : `<button class="mini" onclick="eventStep('${c.id}',-1)">&minus;</button>
+                <b class="num">${c.left}</b>
+                <button class="mini" onclick="eventStep('${c.id}',1)">+</button>
+                <span class="hint">round${c.left===1?'':'s'}</span>`}
+      <button class="mini" onclick="eventHold('${c.id}')" title="${held?'Give it a countdown':'Hold it until you clear it'}">
+        ${held?'count':'hold'}</button>
+      <button class="mini x" onclick="delC('${c.id}')">&times;</button>
+    </div>
+  </div>`;
+}
+
 /* ==================== SESSIONS ==================== */
 function sessionAdd(){
   S.sessions=S.sessions||[];
@@ -2706,10 +2869,10 @@ const HELP=[
 
 
 /* ==================== THE SHIP ==================== */
-const SHIPSEED = {"shName": "Dragon Alliance", "shClass": "Harrier-class commerce raider", "shTL": "15", "shHull": "200 tons \u00b7 streamlined, reinforced", "shPrev": "V'Hurg", "shArmour": "4", "shArmourType": "Bonded superdense", "shThrust": "6", "shJump": "2", "shPower": "260", "shPowerNow": "195", "shHullPts": "88", "shHullNow": "72", "shFuel": "42", "shFuelNow": "42", "shFuelNote": "J-2 and four weeks of operation", "shBridge": "Holographic controls", "shComputer": "Computer/20", "shSensors": "Advanced \u00b7 DM+1", "shCM": "Military countermeasures suite", "shCargo": "29.7", "shCargoNow": "0", "shStater": "8", "shLow": "8", "shBerthsNow": "", "shMaint": "2657", "shMaintNow": "10000", "shCost": "318.94875", "shSoftware": "Evade/1 \u00b7 Fire Control/2 \u00b7 Jump Control/2 \u00b7 Library \u00b7 Manoeuvre/0", "shSystems": "Armoury \u00b7 Cargo scoop \u00b7 Fuel processor, 40 tons a day \u00b7 Holographic hull \u00b7 Superior stealth", "shCrewList": "Captain \u00b7 Pilot \u00b7 Astrogator \u00b7 Engineer \u00b7 Maintenance \u00b7 Gunner \u00d72 \u00b7 Medic \u00b7 Marines \u00d73", "shW0n": "Particle barbette", "shW0m": "Dorsal", "shW0d": "4D", "shW0t": "Accurate, high yield \u00b7 Power 15", "shW1n": "Single turret, missile rack", "shW1m": "Ventral", "shW1d": "by missile", "shW1t": "12 missiles stored \u00b7 Power 1 \u00b7 DAMAGED", "shD0": "1", "shD0n": "Keel microfractures", "shD0e": "Hull 72 of 88. One Ship Share restores 8, up to 88", "shD1": "1", "shD1n": "Damaged ventral turret", "shD1e": "Turret and ammo feed hit by a fusion bay. 1 Ship Share", "shD2": "1", "shD2n": "Holographic hull", "shD2e": "Only the port wing and nose projectors work, and it draws full power. 1 Ship Share", "shD3": "1", "shD3n": "Countermeasures suite", "shD3e": "Reduced to a plain countermeasures suite. DM+1 per Ship Share, max DM+6 for 2", "shD4": "1", "shD4n": "Power plant", "shD4e": "75% efficiency \u2014 Power 195 of 260. 1 Ship Share", "shD5": "1", "shD5n": "Unreliable jump drive", "shD5e": "DM\u22122 to Engineer (J-drive) checks to jump. Each Ship Share removes 1", "shD6": "1", "shD6n": "Unreliable manoeuvre drive", "shD6e": "Double 1 on any Pilot check and all Thrust is lost for a round. 2 Ship Shares", "shD7": "1", "shD7n": "Maintenance", "shD7e": "Cr10,000 a month instead of Cr2,657. Each Ship Share cuts Cr2,000, floor Cr2,657", "shNotes": "Built at TL15, far above anything in the Reach. The exotic components no longer exist, which is\nwhy repairs cost what they cost. Upgrades run 1 Ship Share to MCr5 once the campaign is underway."};
+const SHIPSEED = {"shName": "Dragon Alliance", "shClass": "Harrier-class commerce raider", "shTL": "15", "shHull": "200 tons \u00b7 streamlined, reinforced", "shArmour": "4", "shArmourType": "Bonded superdense", "shThrust": "6", "shJump": "2", "shPower": "260", "shPowerNow": "195", "shHullPts": "88", "shHullNow": "72", "shFuel": "42", "shFuelNow": "42", "shFuelNote": "J-2 and four weeks of operation", "shBridge": "Holographic controls", "shComputer": "Computer/20", "shSensors": "Advanced \u00b7 DM+1", "shCM": "Military countermeasures suite", "shCargo": "29.7", "shCargoNow": "0", "shStater": "8", "shLow": "8", "shMaint": "2657", "shMaintNow": "10000", "shCost": "318.94875", "shSoftware": "Evade/1 \u00b7 Fire Control/2 \u00b7 Jump Control/2 \u00b7 Library \u00b7 Manoeuvre/0", "shSystems": "Armoury \u00b7 Cargo scoop \u00b7 Fuel processor, 40 tons a day \u00b7 Holographic hull \u00b7 Superior stealth", "shW0n": "Particle barbette", "shW0m": "Dorsal", "shW0d": "4D", "shW0t": "Accurate, high yield \u00b7 Power 15", "shW1n": "Single turret, missile rack", "shW1m": "Ventral", "shW1d": "by missile", "shW1t": "12 missiles stored \u00b7 Power 1 \u00b7 DAMAGED", "shD0": "1", "shD0n": "Keel microfractures", "shD0e": "Hull 72 of 88. One Ship Share restores 8, up to 88", "shD1": "1", "shD1n": "Damaged ventral turret", "shD1e": "Turret and ammo feed hit by a fusion bay. 1 Ship Share", "shD2": "1", "shD2n": "Holographic hull", "shD2e": "Only the port wing and nose projectors work, and it draws full power. 1 Ship Share", "shD3": "1", "shD3n": "Countermeasures suite", "shD3e": "Reduced to a plain countermeasures suite. DM+1 per Ship Share, max DM+6 for 2", "shD4": "1", "shD4n": "Power plant", "shD4e": "75% efficiency \u2014 Power 195 of 260. 1 Ship Share", "shD5": "1", "shD5n": "Unreliable jump drive", "shD5e": "DM\u22122 to Engineer (J-drive) checks to jump. Each Ship Share removes 1", "shD6": "1", "shD6n": "Unreliable manoeuvre drive", "shD6e": "Double 1 on any Pilot check and all Thrust is lost for a round. 2 Ship Shares", "shD7": "1", "shD7n": "Maintenance", "shD7e": "Cr10,000 a month instead of Cr2,657. Each Ship Share cuts Cr2,000, floor Cr2,657", "shNotes": "Built at TL15, far above anything in the Reach. The exotic components no longer exist, which is\nwhy repairs cost what they cost. Upgrades run 1 Ship Share to MCr5 once the campaign is underway."};
 const SHIPFIELDS=[
- ['Identity',[['shName','Name',2],['shClass','Class',2],['shPrev','Formerly',1],['shTL','TL',1]]],
- ['Hull',[['shHull','Hull',3],['shArmour','Armour',1],['shArmourType','Armour type',2],['shCost','Cost MCr',1]]],
+ ['Identity',[['shName','Name',2],['shClass','Class',2],['shTL','TL',1],['shCost','Cost MCr',1]]],
+ ['Hull',[['shHull','Hull',3],['shArmour','Armour',1],['shArmourType','Armour type',2]]],
  ['Drives and power',[['shThrust','Thrust',1],['shThrustNow','Thrust now',1],['shJump','Jump',1],['shJumpNow','Jump now',1],
    ['shPower','Power',1],['shPowerNow','Power now',1],['shHullPts','Hull points',1],['shHullNow','Hull now',1],
    ['shFuel','Fuel tons',1],['shFuelNow','Fuel now',1],['shFuelNote','Fuel note',2]]],
@@ -2717,13 +2880,123 @@ const SHIPFIELDS=[
    ['shW1n','Mount 2',2],['shW1m','Position',1],['shW1d','Damage',1],['shW1t','Notes',4]]],
  ['Fit',[['shBridge','Bridge',2],['shComputer','Computer',1],['shSensors','Sensors',2],['shCM','Countermeasures',2],
    ['shSoftware','Software',4],['shSystems','Systems',4]]],
- ['Astrogation',[['shAstSec','Sector',2],['shAstHex','Hex',1],['shAstName','World',2],
-   ['shAstUWP','UWP',1],['shAstRem','Trade codes',3],['shAstBase','Bases',1],
-   ['shAstZone','Zone',1],['shAstPBG','PBG',1],['shAstAll','Allegiance',1],['shAstStar','Stars',2]]],
  ['Accommodation, hold and upkeep',[['shStater','Staterooms',1],['shLow','Low berths',1],
    ['shCargo','Cargo tons',1],['shCargoNow','In the hold',1],
-   ['shMaint','Upkeep normal',1],['shMaintNow','Upkeep actual',1],['shCrewList','Crew posts',4]]]
+   ['shMaint','Upkeep normal',1],['shMaintNow','Upkeep actual',1]]],
+ ['Astrogation',[['shAstSec','Sector',2],['shAstHex','Hex',1],['shAstName','World',2],['shAstUWP','UWP',1],
+   ['shAstRem','Trade codes',3],['shAstBase','Bases',1],['shAstZone','Zone',1],['shAstPBG','PBG',1],
+   ['shAstAll','Allegiance',1],['shAstStar','Stars',2],
+   ['shNextSec','Bound for',2],['shNextHex','Hex',1],['shPar','Parsecs',1],['shDays','Days out',1]]]
 ];
+
+const PWDRAW=[['shPwM','Manoeuvre drive',120],['shPwJ','Jump drive',40],['shPwB','Basic systems',40],
+  ['shPwS','Sensors',8],['shPwP','Particle barbette',15],['shPwT','Missile turret',1],
+  ['shPwH','Holographic hull',100],['shPwL','Low berths',1]];
+function shipPowerCard(){
+  let used=0; PWDRAW.forEach(([k,,p])=>{ if(shipVal(k)) used+=p; });
+  const avail=+(shipVal('shPowerNow')||shipVal('shPower')||0);
+  return `<div class="card"><h2>Power draw
+    <span class="hint" style="letter-spacing:0;text-transform:none;font-weight:400">
+      ${used} drawn${avail?` of ${avail}`:''}${avail&&used>avail?' — <b class="redc">over</b>':''}</span></h2>
+    <div class="row">${PWDRAW.map(([k,n,p])=>
+      `<button class="mini ${shipVal(k)?'on2':''}" onclick="shipSet('${k}', shipVal('${k}')?'':'1'); renderShip()">
+         ${n} <span class="hint">${p}</span></button>`).join('')}</div></div>`;
+}
+function shipHoldCard(){
+  let tot=0; for(let i=0;i<12;i++) tot+=+(shipVal('shM'+i+'v')||0);
+  const rows=[...Array(12)].map((_,i)=>
+    `<tr><td><input value="${String(shipVal('shM'+i+'i')).replace(/"/g,'&quot;')}"
+       onchange="shipSet('shM${i}i',this.value)" placeholder="—"></td>
+     <td style="width:70px"><input value="${shipVal('shM'+i+'q')}" onchange="shipSet('shM${i}q',this.value)"></td>
+     <td style="width:96px"><input value="${shipVal('shM'+i+'v')}" onchange="shipSet('shM${i}v',this.value)"></td>
+     <td style="width:110px"><input value="${String(shipVal('shM'+i+'w')).replace(/"/g,'&quot;')}"
+       onchange="shipSet('shM${i}w',this.value)"></td></tr>`).join('');
+  return `<div class="card"><h2>Hold and stash
+    <span class="hint" style="letter-spacing:0;text-transform:none;font-weight:400">
+      Cr${tot.toLocaleString()} between them</span></h2>
+    <table><tr><th>Item</th><th>Qty</th><th>Value</th><th>Where</th></tr>${rows}</table></div>`;
+}
+function shipJumpCard(){
+  let log=[]; try{ log=JSON.parse(shipVal('shLog')||'[]'); }catch(e){}
+  let route=null; try{ route=JSON.parse(shipVal('shRoute')||'null'); }catch(e){}
+  const legs = route&&route.stops&&route.stops.length>1
+    ? `<div class="hint" style="margin-bottom:6px"><b>${route.stops.length-1}</b> jumps plotted at J-${route.j}:
+        ${route.stops.map(s=>s.n+' <span class="dim">'+s.h+'</span>').join(' → ')}</div>` : '';
+  const rows = log.length
+    ? `<div class="log" style="max-height:200px;overflow-y:auto">`+log.map(e=>
+        `<div><span class="hint">${e.d||''}</span> ${e.from||'?'} → <b>${e.to||e.toHex||'?'}</b>
+         ${e.eff===''||e.eff===undefined?'':`<span class="${+e.eff<0?'redc':'greenc'}">Effect ${e.eff>=0?'+':''}${e.eff}</span>`}
+         ${e.n?'<span class="hint">— '+e.n+'</span>':''}</div>`).join('')+`</div>`
+    : '<p class="hint">No jumps logged. The crew fills this in from their sheets.</p>';
+  return `<div class="card"><h2>Course and jump log</h2>${legs}${rows}</div>`;
+}
+function shipPortraitCard(){
+  const p=shipVal('shPortrait');
+  if(!p) return '';
+  return `<div class="card" style="padding:9px"><img src="${p}" alt=""
+    style="max-width:100%;max-height:190px;display:block;margin:auto"></div>`;
+}
+/* ---- the garage ---- */
+const VEHFIELDS=[
+ ['Identity',[['vhName','Name',2],['vhType','Type',2],['vhTL','TL',1],['vhCost','Cost',1]]],
+ ['Profile',[['vhSkill','Skill',2],['vhAgility','Agility',1],['vhSpeed','Speed',2],['vhRange','Range',2],
+   ['vhCrew','Crew',1],['vhPax','Passengers',1],['vhCargo','Cargo tons',1],['vhShip','Shipping',1]]],
+ ['Hull and armour',[['vhHull','Hull',1],['vhHullNow','Hull now',1],
+   ['vhArmF','Front',1],['vhArmR','Rear',1],['vhArmS','Sides',1]]],
+ ['Where and whose',[['vhWhere','Where it is',2],['vhOwner','Whose it is',2],
+   ['vhFuel','Fuel',1],['vhCond','Condition',2]]]
+];
+function vehVal(k){ S.veh=S.veh||{}; return S.veh[k]===undefined?'':S.veh[k]; }
+function vehSet(k,v){
+  S.veh=S.veh||{}; S.veh[k]=v;
+  S.garage=S.garage||{vehicles:{},active:''};
+  S.garage.vehicles[activeVehC()]=Object.assign(S.garage.vehicles[activeVehC()]||{}, S.veh);
+  if(FB.db&&FB.ok){ const up={}; up[k]=v;
+    FB.db.ref('campaigns/'+campaignId()+'/garage/vehicles/'+activeVehC()).update(up).catch(()=>{}); }
+  queueSave(); if(k==='vhName') renderShip();
+}
+function activeVehC(){ S.garage=S.garage||{vehicles:{},active:''};
+  return S.garage.active || Object.keys(S.garage.vehicles||{})[0] || 'veh1'; }
+function pickVehC(id){ if(!id) return; S.garage.active=id;
+  S.veh=Object.assign({},S.garage.vehicles[id]||{}); renderShip(); queueSave();
+  if(FB.db&&FB.ok) FB.db.ref('campaigns/'+campaignId()+'/garage/active').set(id).catch(()=>{}); }
+function newVehC(){
+  S.garage=S.garage||{vehicles:{},active:''};
+  const id='veh'+Math.random().toString(36).slice(2,8);
+  S.garage.vehicles[id]={vhName:'New vehicle'}; S.garage.active=id; S.veh={vhName:'New vehicle'};
+  renderShip(); queueSave();
+  if(FB.db&&FB.ok){
+    FB.db.ref('campaigns/'+campaignId()+'/garage/vehicles/'+id).set(S.veh).catch(()=>{});
+    FB.db.ref('campaigns/'+campaignId()+'/garage/active').set(id).catch(()=>{});
+  }
+}
+function garageWatchC(){
+  if(!FB.db) return;
+  if(FB.garRef) FB.garRef.off();
+  FB.garRef=FB.db.ref('campaigns/'+campaignId()+'/garage');
+  FB.garRef.on('value', s=>{
+    const v=s.val()||{};
+    S.garage={vehicles:v.vehicles||{}, active:v.active||Object.keys(v.vehicles||{})[0]||''};
+    S.veh=Object.assign({}, (S.garage.vehicles||{})[activeVehC()]||{});
+    renderShip();
+  }, ()=>{});
+}
+function vehCard(){
+  S.garage=S.garage||{vehicles:{},active:''};
+  const ids=Object.keys(S.garage.vehicles||{});
+  const pick = ids.length
+    ? `<select onchange="pickVehC(this.value)" style="width:auto;min-width:160px">${
+        ids.map(id=>`<option value="${id}"${id===activeVehC()?' selected':''}>${(S.garage.vehicles[id]||{}).vhName||'Unnamed'}</option>`).join('')}</select>`
+    : '<span class="hint">No vehicles yet.</span>';
+  const body = ids.length ? VEHFIELDS.map(([t,fs])=>
+    `<div class="card" style="padding:10px"><h2>${t}</h2><div class="row">`+
+    fs.map(([k,l,w])=>`<label class="hint" style="display:flex;flex-direction:column;gap:3px;flex:${w} 1 ${w*70}px;min-width:${w*70}px">${l}
+      <input value="${String(vehVal(k)).replace(/"/g,'&quot;')}" onchange="vehSet('${k}',this.value)"></label>`).join('')+
+    `</div></div>`).join('') : '';
+  return `<div class="card"><h2>Vehicles</h2><div class="row">${pick}
+    <button class="mini" onclick="newVehC()">New vehicle</button></div></div>${body}`;
+}
+
 function shipVal(k){ S.ship=S.ship||{}; return S.ship[k]===undefined?'':S.ship[k]; }
 function shipSet(k,v){
   S.ship=S.ship||{}; S.ship[k]=v;
@@ -2790,7 +3063,8 @@ function renderShip(){
           onchange="shipSet('shD${i}e',this.value)">
       </div>`).join('') + `</div>` +
     `<div class="card"><h2>Ship's log</h2>
-      <textarea style="min-height:90px" onchange="shipSet('shNotes',this.value)">${String(shipVal('shNotes'))}</textarea></div>`;
+      <textarea style="min-height:90px" onchange="shipSet('shNotes',this.value)">${String(shipVal('shNotes'))}</textarea></div>` +
+    shipPowerCard() + shipJumpCard() + shipHoldCard() + shipPortraitCard() + vehCard();
 }
 /* the shared record */
 /* the fleet, and whichever ship the crew is aboard */
@@ -2901,6 +3175,7 @@ async function syncStart(){
     FB.camp=campaignId();
     FB.ref=FB.db.ref('campaigns/'+FB.camp+'/players');
     shipWatchConsole();
+    garageWatchC();
     setTimeout(pullConsole, 1200);
     FB.ref.on('value', snap=>{ applyRemote(snap.val()||{}); },
       err=>{ syncStatus('Cannot see the table — sign in as referee','hotc'); });
@@ -3902,7 +4177,7 @@ function wipeNow(){
 }
 
 /* ---------------- tabs ---------------- */
-const TABS=['combat','party','ship','space','camp','rules','tables','help'];
+const TABS=['combat','party','npcs','ship','space','camp','rules','tables','help'];
 function tab(n){
   TABS.forEach(k=>{
     document.getElementById('tab-'+k).classList.toggle('on',k===n);
@@ -4004,6 +4279,7 @@ function moveOrder(id,dir){
 function rollInit(){ S.combat.list.forEach(c=>c.init=d(6)+d(6)); sortC(); S.combat.turn=0; renderCombat(); queueSave(); }
 function nextTurn(){
   if(S.combat.turn>=S.combat.list.length-1){        /* a new round begins */
+    tickEvents();
     S.party.filter(p=>p.cnd&&p.cnd.length).forEach(p=>{
       p.cnd.slice().forEach(c=>{ if(c.r) tickCondition(p.id,c.i,-1); });
     });
@@ -4136,6 +4412,7 @@ function renderCombat(){
   document.getElementById('cTurn').textContent=L.length?L[S.combat.turn].n:'—';
   document.getElementById('cbtEmpty').style.display=L.length?'none':'';
   document.getElementById('cbtList').innerHTML=L.map((c,i)=>{
+    if(c.t==='event') return eventRow(c);
     if(c.pcId){ const p=S.party.find(x=>x.id===c.pcId);
       if(p){ c.end=p.ch.END; c.endMax=p.mx.END; c.arm=p.arm; c.n=p.n; } }
     const down=(c.t==='mob'?c.pips<=0:c.end<=0&&c.endMax>0);
@@ -4735,6 +5012,7 @@ function wrapTables(root){
 }
 function renderAll(){ S.party=S.party||[]; S.rolls=S.rolls||[]; S.custom=S.custom||[]; S.npcs=S.npcs||[]; S.events=S.events||[]; S.ship=S.ship||{}; S.fleet=S.fleet||{ships:{},active:''};
   S.clocks=S.clocks||[]; S.sessions=S.sessions||[];
+  S.veh=S.veh||{}; S.garage=S.garage||{vehicles:{},active:''};
   renderMode(); renderParty(); renderCombat(); renderSpace(); renderCamp();
   rules(S.rulePane||0); renderRolls(); renderCustom(); renderTableBtns(); renderTable();
   renderEvents(); renderShip(); renderClocks(); renderSessions(); refreshUndoUI(); wrapTables(); }
