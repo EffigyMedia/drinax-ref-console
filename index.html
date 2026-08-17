@@ -536,8 +536,8 @@ button.danger:hover{background:var(--red);border-color:var(--red);}
       <span class="hint grow" id="refNote">Only this account can see the whole table.</span>
     </div>
     <div class="row" style="margin-top:8px">
-      <input id="slotName" class="grow" placeholder="Character name" style="min-width:150px">
-      <button onclick="makeSlot()">Create a character slot</button>
+      <input id="slotName" class="grow" placeholder="Player's name" style="min-width:150px">
+      <button onclick="makeSlot()">Create a sheet for them</button>
       <button class="mini" id="tfBtn" onclick="cycleTrainFail()"
               title="What a failed training check costs">Training: lose all</button>
       <button class="mini" onclick="dlTable()" title="Every character in the campaign, one file">&#8681; All characters</button>
@@ -549,7 +549,10 @@ button.danger:hover{background:var(--red);border-color:var(--red);}
     <p class="hint" style="margin-top:7px"><b>Claim as referee</b> once, from the browser you run games on.
       Sign in from any device. Players can only reach their own character, and only via the link you send them.
       A player running two characters opens each link in its own tab.</p>
-    <p class="hint" style="margin-top:7px">Each character is a <b>slot</b> with its own link. One per player, or several
+    <p class="hint" style="margin-top:7px">Make the sheet in the player's name &mdash; the table shows their
+      character's name instead as soon as they write one. Two players with the same name is fine; every sheet
+      gets its own unguessable link regardless.</p>
+    <p class="hint" style="margin-top:7px">Each sheet is a <b>slot</b> with its own link. One per player, or several
       if somebody runs two. A player opens their link once and their browser remembers it &mdash; no login, no password.
       Lose the link and you can copy it again from here.</p>
     <p class="hint" style="margin-top:7px">Players open
@@ -2464,6 +2467,10 @@ const HELP=[
   "arrives with its damage and magazine; and every skill with a level shows as a chip, best first, so you never "+
   "have to ask who has Recon. Importing a sheet whose name matches an existing Traveller updates them in place "+
   "rather than duplicating.<br><br>"+
+  "<b>Making sheets.</b> Name the slot after the <b>player</b>, not the character &mdash; you will usually be "+
+  "handing these out before anybody knows who they are playing. The Live table shows the character's name as "+
+  "soon as one is written, with the player's name beside it. Two players called the same thing is harmless: "+
+  "every sheet has its own unguessable link.<br><br>"+
   "<b>Exports.</b> Each row in the Live table has <b>&#8681;</b> to download that character in the sheet's own "+
   "format &mdash; it loads straight back into sheet.html. <b>&#8681; All characters</b> writes every character in "+
   "the campaign to one file, and <b>&#8681; Everything</b> adds the console's own state to that: party, campaign, "+
@@ -2798,14 +2805,14 @@ function slotLink(id){
 }
 function makeSlot(){
   const nm=(document.getElementById('slotName').value||'').trim();
-  if(!nm){ document.getElementById('slotNote').textContent='Give the character a name first.'; return; }
+  if(!nm){ document.getElementById('slotNote').textContent="Whose sheet is it? A player's name will do."; return; }
   const id=nm.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'').slice(0,24)
     +'-'+Math.random().toString(36).slice(2,8)+Math.random().toString(36).slice(2,6);
   if(!FB.db||!FB.ok){ document.getElementById('slotNote').textContent='Connect first — the slot lives in the campaign.'; return; }
-  FB.db.ref('campaigns/'+campaignId()+'/players/'+id+'/meta').update({name:nm,created:Date.now()})
+  FB.db.ref('campaigns/'+campaignId()+'/players/'+id+'/meta').update({name:nm,player:nm,created:Date.now()})
     .then(()=>{ document.getElementById('slotName').value='';
       copyText(slotLink(id));
-      document.getElementById('slotNote').innerHTML='Created <b>'+nm+'</b> — link copied. Send it to the player.'; })
+      document.getElementById('slotNote').innerHTML='Sheet made for <b>'+nm+'</b> — link copied. Send it to them.'; })
     .catch(e=>{ document.getElementById('slotNote').textContent='Refused: '+e.code; });
 }
 function copyText(t){
@@ -2898,8 +2905,13 @@ function applyRemote(all){
   applying=true;
   const seen=[];
   const real=s=>!!(s && (String(s.name||'').trim() || s.bSTR!=='' && s.bSTR!==undefined));
-  S.slots=Object.keys(all).map(k=>({id:k,name:(all[k].meta&&all[k].meta.name)||(all[k].sheet&&all[k].sheet.name)||k,
-    filled:real(all[k].sheet), online:!!(all[k].meta&&all[k].meta.online)}));
+  S.slots=Object.keys(all).map(k=>{
+    const meta=all[k].meta||{}, sheet=all[k].sheet||{};
+    const character=String(sheet.name||'').trim();
+    const player=String(sheet.player||meta.player||meta.name||'').trim();
+    return {id:k, name:character||player||k, player, character,
+      filled:real(all[k].sheet), online:!!meta.online};
+  });
   Object.keys(all).forEach(uid=>{
     const node=all[uid]||{}; const sheet=node.sheet; if(!real(sheet)) return;
     seen.push(uid);
@@ -3267,7 +3279,7 @@ function renderLiveTable(){
   if(ci && document.activeElement!==ci && ci.value!==campaignId()) ci.value=campaignId();
   const slots=S.slots||[];
   const empty=slots.filter(s=>!s.filled);
-  const emptyHtml = empty.length ? '<table><tr><th>Slot waiting for a player</th><th style="width:150px"></th></tr>'+
+  const emptyHtml = empty.length ? '<table><tr><th>Sheet sent, nothing written yet</th><th style="width:150px"></th></tr>'+
     empty.map(s=>`<tr><td><b>${s.name}</b> <span class="hint">${s.id}</span></td>
       <td><button class="mini" onclick="copySlot('${s.id}')">Copy link</button>
           <button class="mini" onclick="openSheet('${s.id}')">Open</button>
