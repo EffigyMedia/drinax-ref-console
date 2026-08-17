@@ -17,6 +17,44 @@
   --red:#e03127; --paper:#ffffff; --page:#8d9aa6;
   --calc:#f2f7fb; --over:#fff6e0;
 }
+/* dark: the console's palette. Screen only — paper is always paper. */
+html.dark{
+  --ink:#ece5e3; --dim:#8a7a7b; --line:#2b1f21; --hair:#241a1c;
+  --band:#c9bcbd; --band2:#1a1416; --row:#141011; --row2:#100c0d;
+  --red:#ff2f3f; --paper:#0d0a0b; --page:#080607;
+  --calc:#181314; --over:#2a2214;
+}
+html.dark .banner{background:#140f10;}
+html.dark .banner h1{color:var(--red);}
+html.dark h2.sec{background:var(--band2);color:var(--band);}
+html.dark h3.sub{background:var(--band2);color:var(--band);}
+html.dark th{background:#1a1416;color:#c9bcbd;}
+html.dark input,html.dark select,html.dark textarea{background:var(--row2);color:var(--ink);
+  border-color:var(--line);}
+html.dark input.calc{background:var(--calc);color:var(--band);}
+html.dark td{border-color:var(--hair);}
+html.dark tr:nth-child(odd) td{background:var(--row);}
+html.dark .note{background:var(--band2);color:var(--dim);}
+html.dark .foot{color:var(--dim);}
+html.dark .astrobox,html.dark .routebox .legs,html.dark .jumplog{background:var(--row2);}
+html.dark .stop{background:var(--band2);}
+html.dark .stop.first{background:var(--band);color:#0d0a0b;}
+html.dark .findhit{background:var(--row2);}
+html.dark .portrait{background:#161112;}
+html.dark .xfer,html.dark .addrow button,html.dark .info,html.dark .trainbar .stp{
+  background:var(--band2);color:var(--band);border-color:var(--line);}
+@media print{
+  html.dark{
+    --ink:#14202b; --dim:#5d7182; --line:#b9c8d5; --hair:#d5e0e9;
+    --band:#1f3a4d; --band2:#dce6ef; --row:#eef4f9; --row2:#ffffff;
+    --red:#e03127; --paper:#ffffff; --page:#8d9aa6; --calc:#f2f7fb;
+  }
+  html.dark .banner{background:#12222e;}
+  html.dark th{background:#dce6ef;color:#1f3a4d;}
+  html.dark input,html.dark select,html.dark textarea{background:#fff;color:#14202b;}
+  html.dark input.calc{background:#eef4f9!important;color:#14202b!important;}
+  html.dark .note{background:#dce6ef;color:#5d7182;}
+}
 *{box-sizing:border-box;margin:0;padding:0;}
 body{background:var(--page);color:var(--ink);font-family:"Hv","Helvetica Neue",Arial,sans-serif;
   font-size:11px;-webkit-text-size-adjust:100%;padding-bottom:40px;}
@@ -150,6 +188,17 @@ body.over input.calc:focus{outline-color:#c98a00;}
 .stationbar .hint{font-size:10px;}
 .hiddenpane{display:none;}
 @media print{ .hiddenpane{display:block!important;} }
+.addrow{display:flex;gap:9px;align-items:center;margin-top:4px;}
+.addrow button{padding:3px 10px;min-height:26px;font-size:11px;background:var(--band2);
+  border:1px solid var(--line);color:var(--band);cursor:pointer;}
+.addrow button:hover{border-color:var(--red);color:var(--red);}
+.addrow .hint{font-size:10px;}
+tr.xtrarow td{background:#f4f8fb;}
+.xcell{width:30px;text-align:center;padding:0!important;}
+.xfer{width:24px;height:22px;min-height:22px;padding:0;line-height:1;font-size:13px;
+  background:var(--band2);border:1px solid var(--line);color:var(--band);cursor:pointer;}
+.xfer:hover{border-color:var(--red);color:var(--red);}
+@media print{ .xcell{display:none;} }
 .info{flex:0 0 auto;padding:2px 7px;min-height:24px;font-size:10px;letter-spacing:.06em;
   background:var(--band2);border:1px solid var(--line);color:var(--band);cursor:pointer;white-space:nowrap;}
 .info:hover{border-color:var(--red);color:var(--red);}
@@ -298,6 +347,45 @@ td.trn input:checked{outline-color:var(--red);}
   .page{padding:12px 9px 20px;}
 }
 
+
+/* checkboxes: a red edge, and a red cross when set */
+input[type="checkbox"]{
+  -webkit-appearance:none;appearance:none;
+  width:16px;height:16px;min-height:16px;flex:0 0 16px;
+  border:1px solid var(--line);background:transparent;
+  border-radius:0;cursor:pointer;position:relative;vertical-align:middle;
+  margin:0;padding:0;box-sizing:border-box;transition:border-color .12s;
+}
+input[type="checkbox"]:hover{border-color:var(--red);}
+input[type="checkbox"]:checked{
+  border-color:var(--red);
+  background-image:
+    linear-gradient(45deg,transparent 44%,var(--red) 44%,var(--red) 56%,transparent 56%),
+    linear-gradient(-45deg,transparent 44%,var(--red) 44%,var(--red) 56%,transparent 56%);
+}
+input[type="checkbox"]:focus-visible{outline:1px solid var(--red);outline-offset:1px;}
+
+/* screen only — the printed sheet keeps its own metrics */
+.cap-hint{margin-left:6px;letter-spacing:0;text-transform:none;color:var(--red);font-weight:400;}
+@media screen{
+  :root{ --ctl:26px; --gap:6px; }
+  /* every caption on the sheet reads the same way */
+  .f > label{font-size:8px;letter-spacing:.13em;text-transform:uppercase;color:var(--dim);
+    font-weight:700;margin-bottom:1px;line-height:1.25;}
+  input,select,button,textarea{box-sizing:border-box;font-family:inherit;}
+  .f input,.f select,.row > input,.row > select,.row > button{
+    height:var(--ctl);min-height:var(--ctl);}
+  .f{display:flex;flex-direction:column;gap:0;}
+  .f label{line-height:1.2;}
+  .row{display:flex;gap:var(--gap);align-items:center;flex-wrap:wrap;}
+  td input,td select{height:22px;min-height:22px;box-sizing:border-box;}
+  td.trn input[type="checkbox"],td input[type="checkbox"]{height:16px;min-height:16px;}
+  h2.sec{display:flex;align-items:center;gap:8px;}
+  h2.sec span{margin-left:auto;}
+  .addrow{margin-top:6px;}
+  .addrow button{height:26px;min-height:26px;}
+}
+
 @page{size:Letter;margin:.3in;}
 @media print{
   body{background:#fff;padding:0;}
@@ -346,6 +434,7 @@ td.trn input:checked{outline-color:var(--red);}
   <a id="backBtn" href="./console.html" style="display:none;align-items:center;background:#22384a;color:#e8eef4;
      border:1px solid #35526a;padding:7px 11px;text-decoration:none;border-radius:2px;min-height:36px;
      font-size:12px">&lsaquo; Console</a>
+  <button id="themeBtn" onclick="toggleTheme()" title="Light or dark">&#9789;</button>
   <button id="hlpBtn" onclick="toggleHelp()" title="Explain each field as you tap it">? Help</button>
   <button onclick="switchChar()" title="Use a different character">Switch</button>
   <button onclick="wipe()">Clear</button>
@@ -391,7 +480,7 @@ td.trn input:checked{outline-color:var(--red);}
 
   <h2 class="sec">CHARACTER <span>Basic profile</span></h2>
   <div class="grid" style="grid-template-columns:1fr 3.75fr">
-    <div class="f"><label>Portrait <span class="noprint" style="letter-spacing:0;text-transform:none;color:var(--red)">tap to add</span></label>
+    <div class="f"><label>Portrait<span class="cap-hint noprint" style="letter-spacing:0;text-transform:none;color:var(--red)">tap to add</span></label>
       <div class="portrait" id="portBox" onclick="document.getElementById('portIn').click()">
         <span id="portHint" class="noprint">Tap to choose a picture</span>
         <button type="button" id="portDel" class="noprint" onclick="event.stopPropagation();clearPortrait()">&times;</button>
@@ -399,6 +488,9 @@ td.trn input:checked{outline-color:var(--red);}
       <input type="file" id="portIn" accept="image/*" style="display:none" onchange="loadPortrait(event)">
       <input type="hidden" data-k="portrait">
       <input type="hidden" data-k="trPrev">
+      <input type="hidden" data-k="eqX"><input type="hidden" data-k="stX">
+      <input type="hidden" data-k="wpnX"><input type="hidden" data-k="armX">
+      <input type="hidden" data-k="holdX">
       <input type="hidden" data-k="trFailMode" id="trFailMode">
     </div>
     <div>
@@ -508,9 +600,9 @@ td.trn input:checked{outline-color:var(--red);}
       </div>
     </div>
   </div>
-  <div class="note"><b>Tot</b> is what you roll with. Blank means untrained &mdash; <b>&minus;3</b>, improved by
-    Jack-of-All-Trades; a trained specialisation gives its siblings <b>0</b>. Spare rows at the bottom are yours to fill in however you like.
-    <b>Train</b> one skill at a time: <b>4</b> weeks to reach level 0, otherwise <b>(level + 1) &times; 8</b>.
+  <div class="note"><b>Tot</b> = what you roll with. Untrained <b>&minus;3</b>, improved by Jack-of-All-Trades.
+    A trained specialisation gives its siblings <b>0</b>.
+    <b>Train</b> one skill at a time: <b>4</b> weeks to level 0, otherwise <b>(level + 1) &times; 8</b>.
     A mentor banks two a week.</div>
   <div class="grid" style="grid-template-columns:1fr 1fr 1fr;gap:9px" id="skCols"></div>
   <div class="foot"><div>Created under license · Community Content Agreement for The Travellers' Aid Society</div>
@@ -523,15 +615,19 @@ td.trn input:checked{outline-color:var(--red);}
   <h2 class="sec">WEAPONS</h2>
   <table><thead><tr><th>Weapon</th><th style="width:34px">TL</th><th style="width:74px">Range</th>
     <th style="width:130px">Skill used</th><th style="width:52px">Atk DM</th><th style="width:92px">Damage</th>
-    <th style="width:86px">Mag now / max</th><th style="width:40px">Kg</th><th style="width:120px">Traits</th></tr></thead>
+    <th style="width:86px">Mag now / max</th><th style="width:40px">Kg</th><th style="width:120px">Traits</th>
+    <th style="width:30px" class="noprint"></th></tr></thead>
     <tbody id="wpnBody"></tbody></table>
+  <div class="addrow noprint"><button type="button" onclick="addRow('wpn')">+ another weapon</button></div>
 
   <div class="grid" style="grid-template-columns:1.5fr 1fr;align-items:start">
     <div>
       <h2 class="sec">ARMOR</h2>
       <table><thead><tr><th style="width:44px">Worn</th><th>Armor type</th><th style="width:34px">TL</th>
-        <th style="width:44px">Prot.</th><th style="width:40px">Rad</th><th style="width:38px">Kg</th><th style="width:110px">Traits</th></tr></thead>
+        <th style="width:44px">Prot.</th><th style="width:40px">Rad</th><th style="width:38px">Kg</th><th style="width:110px">Traits</th>
+        <th style="width:30px" class="noprint"></th></tr></thead>
         <tbody id="armBody"></tbody></table>
+  <div class="addrow noprint"><button type="button" onclick="addRow('arm')">+ another suit</button></div>
       <div class="grid" style="grid-template-columns:1fr 1fr 1.2fr">
         <div class="f"><label>Subdermal prot.</label><input data-k="subderm" type="number" oninput="calc()"></div>
         <div class="f"><label>Misc prot.</label><input data-k="miscProt" type="number" oninput="calc()"></div>
@@ -540,11 +636,11 @@ td.trn input:checked{outline-color:var(--red);}
     </div>
     <div>
       <h2 class="sec">COMBAT REFERENCE</h2>
-      <div class="grid" style="grid-template-columns:1.4fr 1fr">
-        <div class="f" style="align-self:center">Initiative DM</div><div><input data-k="initDM" class="calc" readonly></div>
-        <div class="f" style="align-self:center">Tactics DM</div><div><input data-k="tacDM"></div>
-        <div class="f" style="align-self:center">Leadership DM</div><div><input data-k="ldrDM"></div>
-        <div class="f" style="align-self:center">Opp. dodge penalty</div><div><input data-k="dodge"></div>
+      <div class="grid" style="grid-template-columns:1fr 1fr">
+        <div class="f"><label>Initiative DM</label><input data-k="initDM" class="calc" readonly></div>
+        <div class="f"><label>Tactics DM</label><input data-k="tacDM"></div>
+        <div class="f"><label>Leadership DM</label><input data-k="ldrDM"></div>
+        <div class="f"><label>Opp. dodge penalty</label><input data-k="dodge"></div>
       </div>
       <h3 class="sub">ENCUMBRANCE</h3>
       <div class="grid" style="grid-template-columns:1fr 1fr 1fr">
@@ -570,19 +666,23 @@ td.trn input:checked{outline-color:var(--red);}
   <div class="banner plain"><div><h1>EQUIPMENT</h1></div><div class="use">FOR USE WITH<br>MONGOOSE 2E</div></div>
   <h2 class="sec">EQUIPMENT ON PERSON <span>counts toward encumbrance</span></h2>
   <table><thead><tr><th style="width:190px">Item</th><th>Notes</th><th style="width:34px">TL</th>
-    <th style="width:44px">Qty</th><th style="width:48px">Kg</th><th style="width:82px">Cost (Cr)</th></tr></thead>
+    <th style="width:44px">Qty</th><th style="width:48px">Kg</th><th style="width:82px">Cost (Cr)</th>
+    <th style="width:30px" class="noprint"></th></tr></thead>
     <tbody id="eqBody"></tbody>
     <tfoot><tr><th colspan="4" style="text-align:left">TOTALS</th>
       <th style="padding:0"><input data-k="eqKg" class="calc" readonly style="text-align:center"></th>
       <th style="padding:0"><input data-k="eqCr" class="calc" readonly style="text-align:center"></th></tr></tfoot></table>
+  <div class="addrow noprint"><button type="button" onclick="addRow('eq')">+ another line of kit</button></div>
 
   <h2 class="sec">EQUIPMENT STASHED <span>ship locker, storage, vehicle — not carried</span></h2>
   <table><thead><tr><th style="width:150px">Location / stash</th><th style="width:170px">Item</th><th>Notes</th>
-    <th style="width:34px">TL</th><th style="width:44px">Qty</th><th style="width:48px">Kg</th><th style="width:82px">Cost (Cr)</th></tr></thead>
+    <th style="width:34px">TL</th><th style="width:44px">Qty</th><th style="width:48px">Kg</th><th style="width:82px">Cost (Cr)</th>
+    <th style="width:30px" class="noprint"></th></tr></thead>
     <tbody id="stBody"></tbody>
     <tfoot><tr><th colspan="5" style="text-align:left">TOTALS</th>
       <th style="padding:0"><input data-k="stKg" class="calc" readonly style="text-align:center"></th>
       <th style="padding:0"><input data-k="stCr" class="calc" readonly style="text-align:center"></th></tr></tfoot></table>
+  <div class="addrow noprint"><button type="button" onclick="addRow('st')">+ another stashed line</button></div>
   <div class="foot"><div>Created under license · Community Content Agreement for The Travellers' Aid Society</div>
     <div class="r">Sheet layout &copy; Effigy Media<br>Page 4 of 15</div></div>
 </section>
@@ -760,7 +860,7 @@ td.trn input:checked{outline-color:var(--red);}
     <button type="button" onclick="dropShip()">&times;</button>
   </div>
   <div class="grid" style="grid-template-columns:auto 1.5fr 2fr .5fr .9fr;margin-top:4px;align-items:start">
-    <div class="f"><label>Ship <span class="noprint" style="letter-spacing:0;text-transform:none;color:var(--red)">tap</span></label>
+    <div class="f"><label>Ship<span class="cap-hint noprint">tap</span></label>
       <div class="portrait shipport" id="shipPortBox" onclick="document.getElementById('shipPortIn').click()">
         <span id="shipPortHint" class="noprint">Tap to add</span>
         <button type="button" id="shipPortDel" class="noprint"
@@ -807,7 +907,7 @@ td.trn input:checked{outline-color:var(--red);}
       <tfoot><tr><th style="text-align:left">DRAWN / SPARE</th>
         <th style="padding:0"><input data-k="shPwUsed" class="calc" readonly style="text-align:center"></th>
         <th style="padding:0"><input data-k="shPwFree" class="calc" readonly style="text-align:center"></th></tr></tfoot></table>
-      <div class="note" style="margin-top:3px">The plant cannot run everything at once.</div>
+    
     </div>
 
     <div>
@@ -885,8 +985,7 @@ td.trn input:checked{outline-color:var(--red);}
     <div class="f"><label>Days out</label><input data-k="shDays"></div>
   </div>
   <div class="note">Jump fuel is <b>10% of hull tonnage per parsec</b> &mdash; 20 tons a parsec for a 200 ton hull.
-    A jump takes about a week either way. Skimming a gas giant fills the tanks for nothing and leaves no record
-    at a starport, which is the whole reason the Harrier carries a fuel processor.</div>
+    A jump takes about a week either way.</div>
 
   <h2 class="sec">ASTROGATION <span class="noprint">looked up on Traveller Map</span></h2>
   <div class="grid" style="grid-template-columns:1.6fr .8fr auto;align-items:end">
@@ -953,7 +1052,7 @@ td.trn input:checked{outline-color:var(--red);}
   <h2 class="sec">HOLD &amp; STASH <span>everything the crew owns between them</span></h2>
   <table><thead><tr><th>Item</th><th style="width:64px">Qty / tons</th><th style="width:80px">Value (Cr)</th>
     <th style="width:90px">Where</th><th style="width:190px">Notes</th></tr></thead>
-    <tbody><tr><td><input data-k="shM0i"></td><td class="mid"><input data-k="shM0q"></td>
+    <tbody id="holdBody"><tr><td><input data-k="shM0i"></td><td class="mid"><input data-k="shM0q"></td>
       <td class="mid"><input data-k="shM0v"></td><td class="mid"><input data-k="shM0w"></td>
       <td><input data-k="shM0n"></td></tr>
       <tr><td><input data-k="shM1i"></td><td class="mid"><input data-k="shM1q"></td>
@@ -993,8 +1092,9 @@ td.trn input:checked{outline-color:var(--red);}
     <tfoot><tr><th colspan="2" style="text-align:left">TOTAL VALUE</th>
       <th style="padding:0"><input data-k="shMTot" class="calc" readonly style="text-align:center"></th>
       <th colspan="2"></th></tr></tfoot></table>
+  <div class="addrow noprint"><button type="button" onclick="addRow('hold')">+ another line in the hold</button></div>
   <div class="note"><b>Where</b> — hold, ship's locker, armoury, low berth, a bank on Drinax, buried on Marduk.
-    Anyone can write here and everyone sees it, so keep it honest.</div>
+   </div>
 
   <div class="foot"><div>Created under license · Community Content Agreement for The Travellers' Aid Society</div>
     <div class="r">Sheet layout &copy; Effigy Media<br>Hold and stash<br>Page 10 of 15</div></div>
@@ -1011,7 +1111,7 @@ td.trn input:checked{outline-color:var(--red);}
     <button type="button" onclick="dropVeh()">&times;</button>
   </div>
   <div class="grid" style="grid-template-columns:auto 1.5fr 1.9fr .5fr 1.1fr;margin-top:4px;align-items:start">
-    <div class="f"><label>Vehicle <span class="noprint" style="letter-spacing:0;text-transform:none;color:var(--red)">tap</span></label>
+    <div class="f"><label>Vehicle<span class="cap-hint noprint">tap</span></label>
       <div class="portrait shipport" id="vehPortBox" onclick="document.getElementById('vehPortIn').click()">
         <span id="vehPortHint" class="noprint">Tap to add</span>
         <button type="button" id="vehPortDel" class="noprint"
@@ -1491,7 +1591,7 @@ td.trn input:checked{outline-color:var(--red);}
     <b>Switch</b> changes to a different character in the same campaign.<br>
     <b>⇩ Files</b> saves a copy to your device, and <b>⇧ Load</b> reads one back. Keep one after each session —
     it is your insurance if the network is down.<br><br>
-    <b>Print</b> gives you the seven-page paper sheet with everything filled in, on US Letter. This How To page
+    <b>Print</b> gives you the paper sheet with everything filled in, on US Letter. This How To page
     does not print. If your printer dialog offers a scale setting, leave it on <b>100%</b> or <b>Auto</b> —
     the sheet already leaves itself room.
   </div>
@@ -1584,14 +1684,16 @@ document.getElementById('wpnBody').innerHTML=
   <td>${inp('wS'+i)}</td><td class="mid">${inp('wA'+i)}</td><td class="mid">${inp('wD'+i)}</td>
   <td class="mid" style="display:flex"><input data-k="wMn${i}" style="text-align:right">
    <span style="align-self:center;color:var(--dim)">/</span><input data-k="wMx${i}"></td>
-  <td class="mid"><input data-k="wKg${i}" type="number" oninput="calc()"></td><td>${inp('wT'+i)}</td></tr>`);
+  <td class="mid"><input data-k="wKg${i}" type="number" oninput="calc()"></td><td>${inp('wT'+i)}</td>
+  <td class="xcell">${xBtn('wpn',i)}</td></tr>`);
 
 document.getElementById('armBody').innerHTML=rows(6,i=>`<tr>
   <td class="mid" style="text-align:center"><input type="checkbox" data-k="aW${i}" onchange="calc()"></td>
   <td>${inp('aN'+i)}</td><td class="mid">${inp('aTL'+i)}</td>
   <td class="mid"><input data-k="aP${i}" type="number" oninput="calc()"></td>
   <td class="mid">${inp('aR'+i)}</td>
-  <td class="mid"><input data-k="aKg${i}" type="number" oninput="calc()"></td><td>${inp('aT'+i)}</td></tr>`);
+  <td class="mid"><input data-k="aKg${i}" type="number" oninput="calc()"></td><td>${inp('aT'+i)}</td>
+  <td class="xcell">${xBtn('arm',i)}</td></tr>`);
 
 document.getElementById('augBody').innerHTML=rows(7,i=>`<tr><td>${inp('gN'+i)}</td><td>${inp('gI'+i)}</td>
   <td class="mid">${inp('gTL'+i)}</td><td class="mid">${inp('gC'+i)}</td></tr>`);
@@ -1599,13 +1701,15 @@ document.getElementById('augBody').innerHTML=rows(7,i=>`<tr><td>${inp('gN'+i)}</
 document.getElementById('eqBody').innerHTML=rows(14,i=>`<tr><td>${inp('eN'+i)}</td><td>${inp('eI'+i)}</td>
   <td class="mid">${inp('eTL'+i)}</td><td class="mid"><input data-k="eQ${i}" type="number" oninput="calc()"></td>
   <td class="mid"><input data-k="eK${i}" type="number" oninput="calc()"></td>
-  <td class="mid"><input data-k="eC${i}" type="number" oninput="calc()"></td></tr>`);
+  <td class="mid"><input data-k="eC${i}" type="number" oninput="calc()"></td>
+  <td class="xcell">${xBtn('eq',i)}</td></tr>`);
 
 document.getElementById('stBody').innerHTML=rows(12,i=>`<tr><td>${inp('sL'+i)}</td><td>${inp('sN'+i)}</td>
   <td>${inp('sI'+i)}</td><td class="mid">${inp('sTL'+i)}</td>
   <td class="mid"><input data-k="sQ${i}" type="number" oninput="calc()"></td>
   <td class="mid"><input data-k="sK${i}" type="number" oninput="calc()"></td>
-  <td class="mid"><input data-k="sC${i}" type="number" oninput="calc()"></td></tr>`);
+  <td class="mid"><input data-k="sC${i}" type="number" oninput="calc()"></td>
+  <td class="xcell">${xBtn('st',i)}</td></tr>`);
 
 document.getElementById('lpBody').innerHTML=rows(12,i=>`<tr>
   <td class="mid" style="text-align:center;color:var(--dim);padding:4px">${i+1}</td>
@@ -1863,8 +1967,7 @@ function logWrite(a){ const e=$('shLog'); if(!e) return;
 function renderJumpLog(){
   const el=document.getElementById('jumpLog'); if(!el) return;
   const a=logRead();
-  if(!a.length){ el.innerHTML='<p class="hint" style="padding:6px">Nothing logged yet. '+
-    'Set where you are, set where you are bound, then press Jump.</p>'; return; }
+  if(!a.length){ el.innerHTML='<p class="hint" style="padding:6px">Nothing logged.</p>'; return; }
   el.innerHTML=a.map((e,i)=>`<div class="jrow">
       <span class="jwhen">${e.d||''}</span>
       <span class="jfrom"><b>${e.from||'?'}</b>${e.fromHex?' <span class="hint">'+e.fromHex+'</span>':''}</span>
@@ -2239,8 +2342,7 @@ function applyStation(){
   });
   const n=document.getElementById('stationNote');
   if(n) n.textContent = want.length
-    ? 'Showing what the '+v.toLowerCase()+' needs. Printing still gives you everything.'
-    : 'Showing every panel.';
+    ? '' : '';
 }
 function bootStations(){
   wrapPanes();
@@ -2250,6 +2352,234 @@ function bootStations(){
     const saved=ck('tstation'); if(saved && STATIONS[saved]) sel.value=saved;
   }
   applyStation();
+}
+
+
+/* ---------------------------------------------------------------
+   Moving an item from one hand to another.
+
+   Transfers MOVE, never copy — a copy quietly doubles the party's
+   gear and nobody notices until the quartermaster does. Only sheets
+   can do it; if the referee needs to shift something they open the
+   sheet. Every move writes one line into the console's log, so the
+   table can see who gave what to whom.
+
+   A weapon sent to a person lands in their weapons table and armour
+   in their armour table, so kit arrives where it is used rather
+   than in a general list.
+   --------------------------------------------------------------- */
+const XKIND={
+  eq:   {n:()=>14+xtraCount('eq'), keys:i=>({name:'eN'+i, cols:['eN'+i,'eI'+i,'eTL'+i,'eQ'+i,'eK'+i,'eC'+i]}), label:'carried'},
+  st:   {n:()=>12+xtraCount('st'), keys:i=>({name:'sN'+i, cols:['sL'+i,'sN'+i,'sI'+i,'sTL'+i,'sQ'+i,'sK'+i,'sC'+i]}), label:'stashed'},
+  wpn:  {n:()=>8+xtraCount('wpn'), keys:i=>({name:'wN'+i, cols:['wN'+i,'wTL'+i,'wR'+i,'wS'+i,'wA'+i,'wD'+i,'wMn'+i,'wMx'+i,'wKg'+i,'wT'+i]}), label:'weapon'},
+  arm:  {n:()=>6+xtraCount('arm'), keys:i=>({name:'aN'+i, cols:['aN'+i,'aTL'+i,'aP'+i,'aR'+i,'aKg'+i,'aT'+i]}), label:'armour'},
+  hold: {n:()=>12+xtraCount('hold'), keys:i=>({name:'shM'+i+'i', cols:['shM'+i+'i','shM'+i+'q','shM'+i+'v','shM'+i+'w','shM'+i+'n']}), label:'in the hold'}
+};
+/* what a row means once it is out of its table */
+function xRead(kind,i){
+  const k=XKIND[kind].keys(i), o={};
+  k.cols.forEach(c=>{ const e=$(c); o[c]= e ? (e.type==='checkbox'?(e.checked?'1':''):e.value) : ''; });
+  return {kind, i, name:(o[k.name]||'').trim(), data:o, cols:k.cols};
+}
+function xClear(kind,i){
+  XKIND[kind].keys(i).cols.forEach(c=>{ const e=$(c); if(!e) return;
+    if(e.type==='checkbox') e.checked=false; else e.value='';
+    if(c.indexOf('sh')===0) shipPush(c); else markDirty(c);
+  });
+  const w=$('aW'+i); if(kind==='arm' && w){ w.checked=false; markDirty('aW'+i); }
+  calc(); queue();
+}
+/* the same row, translated into whatever table it is going into */
+function xTranslate(row, toKind){
+  const d=row.data, g=k=>d[Object.keys(d).find(x=>x.indexOf(k)===0 && /\d/.test(x))]||'';
+  const pick=(pfx)=>{ const key=Object.keys(d).find(x=>x.replace(/\d+/g,'')===pfx); return key?d[key]:''; };
+  const name=row.name;
+  if(toKind==='wpn') return {wN:name, wTL:pick('wTL')||pick('eTL')||pick('sTL'), wR:pick('wR'),
+      wS:pick('wS'), wA:pick('wA'), wD:pick('wD'), wMn:pick('wMn'), wMx:pick('wMx'),
+      wKg:pick('wKg')||pick('eK')||pick('sK'), wT:pick('wT')};
+  if(toKind==='arm') return {aN:name, aTL:pick('aTL')||pick('eTL')||pick('sTL'), aP:pick('aP'),
+      aR:pick('aR'), aKg:pick('aKg')||pick('eK')||pick('sK'), aT:pick('aT')};
+  if(toKind==='hold') return {i:name, q:pick('eQ')||pick('sQ')||pick('shMq')||'1',
+      v:pick('eC')||pick('sC')||pick('shMv'), w:'', n:[pick('eI'),pick('sI'),pick('wT'),pick('aT')].filter(Boolean)[0]||''};
+  /* into a person's carried equipment */
+  return {eN:name, eI:[pick('eI'),pick('sI'),pick('wT'),pick('aT')].filter(Boolean)[0]||'',
+    eTL:pick('eTL')||pick('sTL')||pick('wTL')||pick('aTL'),
+    eQ:pick('eQ')||pick('sQ')||'1',
+    eK:pick('eK')||pick('sK')||pick('wKg')||pick('aKg'),
+    eC:pick('eC')||pick('sC')};
+}
+/* where does it belong on the far side */
+function xTargetKind(row){
+  if(row.kind==='wpn') return 'wpn';
+  if(row.kind==='arm') return 'arm';
+  return 'eq';
+}
+let XPEND=null;
+function openTransfer(kind,i){
+  const row=xRead(kind,i);
+  if(!row.name){ say('Nothing there','That row is empty.'); return; }
+  XPEND=row;
+  const roster=(FB.roster||[]).filter(p=>p.id!==CHAR);
+  const opts=[`<option value="__hold__">The ship's hold</option>`]
+    .concat(kind!=='st' ? [`<option value="__stash__">My own stash</option>`] : [])
+    .concat(kind==='st' ? [`<option value="__self__">My carried equipment</option>`] : [])
+    .concat(roster.map(p=>`<option value="${p.id}">${p.n}</option>`));
+  ask(`Move <b>${row.name}</b> to&hellip;<br><br>
+      <select id="xTo" style="width:100%">${opts.join('')}</select>
+      <div class="hint" style="margin-top:7px">It leaves this sheet. Nothing is copied.</div>
+      ${roster.length?'':'<div class="hint" style="margin-top:5px">No other characters are listed yet — '+
+        'your referee\'s console supplies that list once it is connected.</div>'}`,
+    doTransfer, null, 'Move it');
+}
+function doTransfer(){
+  const row=XPEND; if(!row) return;
+  const to=(document.getElementById('xTo')||{}).value;
+  if(!to) return;
+  if(to==='__hold__')  return xToHold(row);
+  if(to==='__stash__') return xToOwn(row,'st');
+  if(to==='__self__')  return xToOwn(row,'eq');
+  return xToPerson(row,to);
+}
+/* --- into my own other table --- */
+function xToOwn(row, toKind){
+  const free=xFreeLocal(toKind);
+  if(free<0){ say('No room',(toKind==='st'?'Your stash':'Your equipment')+' has no free line.'); return; }
+  const v=xTranslate(row, toKind==='st'?'eq':'eq');
+  const map = toKind==='st'
+    ? {['sN'+free]:v.eN, ['sI'+free]:v.eI, ['sTL'+free]:v.eTL, ['sQ'+free]:v.eQ, ['sK'+free]:v.eK, ['sC'+free]:v.eC}
+    : {['eN'+free]:v.eN, ['eI'+free]:v.eI, ['eTL'+free]:v.eTL, ['eQ'+free]:v.eQ, ['eK'+free]:v.eK, ['eC'+free]:v.eC};
+  Object.entries(map).forEach(([k,val])=>{ const e=$(k); if(e){ e.value=val; markDirty(k); } });
+  xClear(row.kind,row.i);
+  say('Moved', `<b>${row.name}</b> is now ${toKind==='st'?'in your stash':'on you'}.`);
+}
+function xFreeLocal(kind){
+  const spec=XKIND[kind];
+  const n=(typeof spec.n==='function')?spec.n():spec.n;
+  for(let i=0;i<n;i++){ const e=$(spec.keys(i).name); if(e && !e.value.trim()) return i; }
+  return -1;
+}
+/* --- into the ship's hold, which everyone shares --- */
+function xToHold(row){
+  let free=-1;
+  for(let i=0;i<12;i++){ const e=$('shM'+i+'i'); if(e && !e.value.trim()){ free=i; break; } }
+  if(free<0){ say('No room','The hold has no free line.'); return; }
+  const v=xTranslate(row,'hold');
+  const map={['shM'+free+'i']:v.i, ['shM'+free+'q']:v.q, ['shM'+free+'v']:v.v,
+             ['shM'+free+'w']:v.w, ['shM'+free+'n']:v.n};
+  Object.entries(map).forEach(([k,val])=>{ const e=$(k); if(e){ e.value=val; shipPush(k); } });
+  xClear(row.kind,row.i);
+  xLog(row.name,'the hold');
+  say('Moved', `<b>${row.name}</b> is in the hold. Everyone can see it.`);
+}
+/* --- into somebody else's sheet --- */
+function xToPerson(row, id){
+  if(!FB.db||!FB.ok){ say('Not connected','You need to be connected to hand something to somebody.'); return; }
+  const toKind=xTargetKind(row);
+  const who=((FB.roster||[]).find(p=>p.id===id)||{}).n||'them';
+  FB.db.ref('campaigns/'+FB.camp+'/players/'+id+'/sheet').once('value').then(s=>{
+    const t=s.val()||{};
+    const spec=XKIND[toKind];
+    const n=(typeof spec.n==='function')?spec.n():spec.n;
+    let free=-1;
+    for(let i=0;i<n;i++){ const k=spec.keys(i).name;
+      if(!String(t[k]||'').trim()){ free=i; break; } }
+    if(free<0){ say('No room', `${who} has no free ${spec.label} line.`); return; }
+    const v=xTranslate(row,toKind);
+    const up={};
+    Object.entries(v).forEach(([k,val])=>{ up[k+free]=val; });
+    return FB.db.ref('campaigns/'+FB.camp+'/players/'+id+'/sheet').update(up).then(()=>{
+      xClear(row.kind,row.i);
+      xLog(row.name, who);
+      say('Handed over', `<b>${row.name}</b> is now ${who}'s.`);
+    });
+  }).catch(e=>say('It did not go', 'The campaign refused that — '+(e.code||e.message)+'.'));
+}
+/* the console picks this up and writes it into the session log */
+function xLog(what, to){
+  if(!FB.db||!FB.ok||!CHAR) return;
+  FB.db.ref('campaigns/'+FB.camp+'/players/'+CHAR+'/live/lastTransfer')
+    .set({what, to, from:(T('name')||T('player')||'Someone'), at:Date.now()}).catch(()=>{});
+}
+function xBtn(kind,i){
+  return `<button type="button" class="xfer noprint" title="Move this to somebody else"
+    onclick="openTransfer('${kind}',${i})">&rarr;</button>`;
+}
+
+
+/* ---------------------------------------------------------------
+   Extra rows.
+
+   The printed sheet keeps its fixed grid — that is the layout, and
+   a page that grows would either shrink to unreadable or clip. The
+   live sheet has no such limit, so every table can be extended.
+   Extra lines are screen only, and say so.
+
+   Rows are appended rather than re-rendered, so nothing already
+   typed is disturbed. The count lives in a synced field, so the
+   rows come back on any device.
+   --------------------------------------------------------------- */
+const XTRA={
+  eq:  {body:'eqBody',  base:14, count:'eqX',
+        row:i=>`<td>${inp('eN'+i)}</td><td>${inp('eI'+i)}</td>
+          <td class="mid">${inp('eTL'+i)}</td>
+          <td class="mid"><input data-k="eQ${i}" type="number" oninput="calc()"></td>
+          <td class="mid"><input data-k="eK${i}" type="number" oninput="calc()"></td>
+          <td class="mid"><input data-k="eC${i}" type="number" oninput="calc()"></td>
+          <td class="xcell">${xBtn('eq',i)}</td>`},
+  st:  {body:'stBody',  base:12, count:'stX',
+        row:i=>`<td>${inp('sL'+i)}</td><td>${inp('sN'+i)}</td><td>${inp('sI'+i)}</td>
+          <td class="mid">${inp('sTL'+i)}</td>
+          <td class="mid"><input data-k="sQ${i}" type="number" oninput="calc()"></td>
+          <td class="mid"><input data-k="sK${i}" type="number" oninput="calc()"></td>
+          <td class="mid"><input data-k="sC${i}" type="number" oninput="calc()"></td>
+          <td class="xcell">${xBtn('st',i)}</td>`},
+  wpn: {body:'wpnBody', base:8,  count:'wpnX',
+        row:i=>`<td>${inp('wN'+i)}</td><td class="mid">${inp('wTL'+i)}</td><td>${inp('wR'+i)}</td>
+          <td>${inp('wS'+i)}</td><td class="mid">${inp('wA'+i)}</td><td class="mid">${inp('wD'+i)}</td>
+          <td class="mid" style="display:flex"><input data-k="wMn${i}" style="text-align:right">
+            <span style="align-self:center;color:var(--dim)">/</span><input data-k="wMx${i}"></td>
+          <td class="mid"><input data-k="wKg${i}" type="number" oninput="calc()"></td>
+          <td>${inp('wT'+i)}</td><td class="xcell">${xBtn('wpn',i)}</td>`},
+  arm: {body:'armBody', base:6,  count:'armX',
+        row:i=>`<td class="mid" style="text-align:center"><input type="checkbox" data-k="aW${i}" onchange="calc()"></td>
+          <td>${inp('aN'+i)}</td><td class="mid">${inp('aTL'+i)}</td>
+          <td class="mid"><input data-k="aP${i}" type="number" oninput="calc()"></td>
+          <td class="mid">${inp('aR'+i)}</td>
+          <td class="mid"><input data-k="aKg${i}" type="number" oninput="calc()"></td>
+          <td>${inp('aT'+i)}</td><td class="xcell">${xBtn('arm',i)}</td>`},
+  hold:{body:'holdBody',base:12, count:'holdX',
+        row:i=>`<td>${inp('shM'+i+'i')}</td><td class="mid">${inp('shM'+i+'q')}</td>
+          <td class="mid">${inp('shM'+i+'v')}</td><td class="mid">${inp('shM'+i+'w')}</td>
+          <td>${inp('shM'+i+'n')}</td>`}
+};
+function xtraCount(kind){ const e=$(XTRA[kind].count); return e ? Math.max(0,Math.min(60,+e.value||0)) : 0; }
+function addRow(kind, silent){
+  const spec=XTRA[kind];
+  const body=document.getElementById(spec.body); if(!body) return;
+  const n=xtraCount(kind);
+  const i=spec.base+n;
+  body.insertAdjacentHTML('beforeend', `<tr class="xtrarow noprint">${spec.row(i)}</tr>`);
+  const c=$(spec.count);
+  if(c){ c.value=n+1; if(spec.count.indexOf('hold')===0) shipPush(spec.count); else markDirty(spec.count); }
+  applyTips(body);
+  if(!silent){ queue(); const first=body.querySelector('tr:last-child input'); if(first) first.focus(); }
+}
+/* rebuild however many extra rows this character has, on load or on a device change */
+function restoreRows(){
+  Object.keys(XTRA).forEach(kind=>{
+    const spec=XTRA[kind];
+    const body=document.getElementById(spec.body); if(!body) return;
+    const want=xtraCount(kind);
+    let have=body.querySelectorAll('tr.xtrarow').length;
+    while(have<want){ const i=spec.base+have;
+      body.insertAdjacentHTML('beforeend', `<tr class="xtrarow noprint">${spec.row(i)}</tr>`); have++; }
+    while(have>want){ const last=body.querySelector('tr.xtrarow:last-child');
+      if(!last) break; last.remove(); have--; }
+  });
+  applyTips();
+}
+function addRowBtn(kind,label){
+  return `<div class="addrow noprint"><button type="button" onclick="addRow('${kind}')">+ ${label}</button></div>`;
 }
 
 /* ================= field help ================= */
@@ -2634,20 +2964,27 @@ function calcTraining(){
 
 function calcGear(cur, athl){
   let ap=0, akg=0;
-  for(let i=0;i<6;i++){ if($('aW'+i).checked) ap+=V('aP'+i); akg+=V('aKg'+i); }
+  const armN=6+(typeof xtraCount==='function'?xtraCount('arm'):0);
+  for(let i=0;i<armN;i++){ const w=$('aW'+i); if(!w) continue;
+    if(w.checked) ap+=V('aP'+i); akg+=V('aKg'+i); }
   set('armTotal', ap+V('subderm')+V('miscProt'));
 
-  let wkg=0; for(let i=0;i<8;i++) wkg+=V('wKg'+i);
+  let wkg=0; const wpnN=8+(typeof xtraCount==='function'?xtraCount('wpn'):0);
+  for(let i=0;i<wpnN;i++) wkg+=V('wKg'+i);
 
   let ekg=0, ecr=0;
-  for(let i=0;i<14;i++){
+  const eqN=14+(typeof xtraCount==='function'?xtraCount('eq'):0);
+  for(let i=0;i<eqN;i++){
+    if(!$('eN'+i)) continue;
     const q=V('eQ'+i) || (($('eN'+i).value||$('eK'+i).value) ? 1 : 0);
     ekg+=q*V('eK'+i); ecr+=q*V('eC'+i);
   }
   set('eqKg', ekg?round1(ekg):''); set('eqCr', ecr?ecr.toLocaleString():'');
 
   let skg=0, scr=0;
-  for(let i=0;i<12;i++){
+  const stN=12+(typeof xtraCount==='function'?xtraCount('st'):0);
+  for(let i=0;i<stN;i++){
+    if(!$('sN'+i)) continue;
     const q=V('sQ'+i) || (($('sN'+i).value||$('sK'+i).value) ? 1 : 0);
     skg+=q*V('sK'+i); scr+=q*V('sC'+i);
   }
@@ -2686,7 +3023,8 @@ function calcShip(){
   if(af) af.style.color = (af.value!=='' && +af.value<0) ? '#c0392b' : '';
 
   /* the hold and stash */
-  let mtot=0; for(let n=0;n<12;n++) mtot+=V('shM'+n+'v');
+  let mtot=0; const holdN=12+(typeof xtraCount==='function'?xtraCount('hold'):0);
+  for(let n=0;n<holdN;n++) mtot+=V('shM'+n+'v');
   set('shMTot', mtot?mtot.toLocaleString():'');
 
   /* the power budget */
@@ -2789,6 +3127,16 @@ function refJump(id){
   if(!id) return;
   if(id===CHAR){ document.getElementById('chooser').classList.remove('on'); return; }
   location.href=location.pathname+'?c='+encodeURIComponent(FB.camp)+'&id='+encodeURIComponent(id)+'&ref=1';
+}
+function applyTheme(){
+  const dark = ck('tTheme')==='dark';
+  document.documentElement.classList.toggle('dark', dark);
+  const b=document.getElementById('themeBtn');
+  if(b){ b.innerHTML = dark ? '&#9788;' : '&#9789;'; b.title = dark ? 'Dark' : 'Light'; }
+}
+function toggleTheme(){
+  setCk('tTheme', ck('tTheme')==='dark' ? 'light' : 'dark');
+  applyTheme();
 }
 function isStandalone(){
   return (window.navigator&&window.navigator.standalone===true) ||
@@ -3011,6 +3359,7 @@ function applyLive(v){
   if(v.md){ KS.forEach(k=>{ if(v.md[k]!==undefined && $('m'+k)) $('m'+k).value=v.md[k]||''; }); }
   if(Array.isArray(v.ammo)) v.ammo.forEach((n,i)=>{ if($('wMn'+i)&&n!==null) $('wMn'+i).value=n; });
   if(v.trainFail && $('trFailMode')) $('trFailMode').value=v.trainFail;
+  if(Array.isArray(v.roster)) FB.roster=v.roster;
   if(Array.isArray(v.party)){
     const mt=document.getElementById('trMentor');
     if(mt){
@@ -3193,6 +3542,9 @@ function collect(){ const o={};
     o[e.dataset.k] = (e.type==='checkbox'||e.type==='radio') ? e.checked : e.value; });
   return o; }
 function apply(o){
+  /* the counters decide how many rows exist, so set them and build before filling */
+  ['eqX','stX','wpnX','armX','holdX'].forEach(k=>{ const e=$(k); if(e && o[k]!==undefined) e.value=o[k]; });
+  if(typeof restoreRows==='function') restoreRows();
   document.querySelectorAll('[data-k]').forEach(e=>{
     const v=o[e.dataset.k]; if(v===undefined) return;
     if(e.type==='checkbox'||e.type==='radio') e.checked=!!v; else e.value=v; });
@@ -3200,6 +3552,7 @@ function apply(o){
   showShipPortrait(($('shPortrait')||{}).value);
   showVehPortrait(($('vhPortrait')||{}).value);
   renderVehPicker();
+  restoreRows();
   calc(); }
 async function save(){
   const j=JSON.stringify(collect());
@@ -3242,7 +3595,9 @@ document.addEventListener('input',e=>{ const k=e.target.dataset.k; if(k===undefi
 document.addEventListener('change',e=>{ const k=e.target.dataset.k; if(k===undefined) return;
   calc(); queue();
   if(k.indexOf('sh')===0) shipPush(k); else if(k.indexOf('vh')===0) vehPush(k); else markDirty(k); });
+applyTheme();
 wrapTables();
+restoreRows();
 bootStations();
 applyTips();
 setTimeout(bootFleetLocal,400);

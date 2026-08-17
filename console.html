@@ -22,6 +22,38 @@
   --red:#ff2f3f;     /* critical */
   --gold:#e9d8c8;    /* numerals */
 }
+/* light: the palette the character sheet uses, so the two feel like one tool */
+html.light{
+  --bg:#8d9aa6; --panel:#ffffff; --panel2:#eef4f9; --line:#b9c8d5;
+  --ink:#14202b; --dim:#5d7182;
+  --green:#1f6b3f;
+  --hot:#a2600f;
+  --red:#c1271c;
+  --gold:#7a5a2e;
+}
+html.light body{background:var(--bg);}
+html.light .card{background:var(--panel);border-color:var(--line);}
+html.light header{background:#12222e;color:#e8eef4;}
+html.light header .brand,html.light header b{color:#fff;}
+html.light nav button{background:var(--panel);color:var(--ink);border-color:var(--line);}
+html.light nav button.on{background:var(--red);color:#fff;border-color:var(--red);}
+html.light button,html.light input,html.light select,html.light textarea{
+  background:#fff;color:var(--ink);border-color:var(--line);}
+html.light button:hover{border-color:var(--red);}
+html.light button.on2{background:var(--red);color:#fff;border-color:var(--red);}
+html.light .hint,html.light .state{color:var(--dim);}
+html.light h2{color:var(--band,#1f3a4d);}
+html.light .cbt{background:var(--panel2);}
+html.light .pill.off{color:#5d7182;background:#e7eef4;border-color:var(--line);}
+html.light .pill.live{color:#1f6b3f;background:#e8f3ec;border-color:#8fc0a3;}
+html.light .pill.warn{color:#8a5a10;background:#fbf1de;border-color:#d9b36a;}
+html.light .pill.bad{color:#a3211a;background:#fbe9e7;border-color:#d98a84;}
+html.light .clock{background:var(--panel2);}
+html.light .sess,html.light .jumplog,html.light .legs{background:var(--panel2);}
+html.light tr:nth-child(odd) td{background:var(--panel2);}
+html.light .pgfoot{color:var(--red);}
+html.light .tag.local{color:#5d7182;background:#e7eef4;border-color:var(--line);}
+html.light tr.localrow td{background:#e9eef2;}
 *{box-sizing:border-box;margin:0;padding:0;}
 body{background:var(--bg);color:var(--ink);
   font-family:"Cn","Helvetica Neue",Arial,sans-serif;font-size:15px;line-height:1.4;
@@ -187,6 +219,40 @@ textarea{width:100%;min-height:120px;resize:vertical;line-height:1.6;}
 .cchip{display:inline-flex;align-items:center;gap:4px;border:1px solid var(--hot);color:var(--ink);
   background:#241417;padding:2px 4px 2px 8px;font-size:12px;margin-right:4px;}
 .cchip b{color:var(--hot);}
+.clocks{display:flex;gap:10px;flex-wrap:wrap;}
+.clock{flex:1 1 190px;min-width:170px;border:1px solid var(--line);background:var(--panel2);padding:9px 11px;}
+.clock .cl{display:block;font-size:9px;letter-spacing:.18em;text-transform:uppercase;color:var(--dim);}
+.clock .big{display:block;font-size:23px;letter-spacing:.06em;margin:2px 0 1px;}
+.clock .sub{font-size:11px;color:var(--dim);}
+.clock.imp{border-color:#6e2a2a;} .clock.imp .big{color:var(--red);}
+.clock.sol .big{color:#7fb5d4;}
+.clock.asl{border-color:#6a5330;} .clock.asl .big{color:var(--gold);}
+.clock.ship .big{color:#cfd8de;} .clock.local{border-color:#2f6a48;}
+.clock.local .big{color:#7fd4a8;}
+.clock.local.injump{border-color:#4a3b6a;}
+.clock.local.injump .big{color:#9b8cc4;letter-spacing:.1em;}
+.herecard.injump{border-color:#4a3b6a;background:#141020;}
+.clock.ship.injump{border-color:#4a3b6a;}
+.clock.ship.injump .big{color:#9b8cc4;letter-spacing:.1em;}
+.locpair{display:flex;gap:26px;flex-wrap:wrap;width:100%;}
+.locpair > div{display:flex;flex-direction:column;gap:1px;}
+.locpair .cl{font-size:9px;letter-spacing:.18em;text-transform:uppercase;color:var(--dim);}
+.locpair b{font-size:17px;}
+.locpair .nanv{color:#9b8cc4;letter-spacing:.1em;}
+.sysname{display:flex;gap:9px;align-items:center;flex-wrap:wrap;margin-bottom:9px;}
+.sysname > b{font-size:19px;}
+.uwpbig{font-size:15px;letter-spacing:.16em;color:var(--gold);font-weight:700;}
+.sysname a{text-decoration:none;}
+.sysgrid{display:grid;grid-template-columns:1fr 1fr;gap:3px 22px;}
+.sysrow{display:flex;gap:9px;align-items:baseline;border-bottom:1px solid #1a1213;padding:3px 0;}
+.sysrow span{flex:0 0 116px;font-size:8.5px;letter-spacing:.13em;text-transform:uppercase;color:var(--dim);}
+.sysrow b{font-weight:500;font-size:13px;}
+@media (max-width:760px){ .sysgrid{grid-template-columns:1fr;} }
+.jumpon{background:#3a2d5c;border-color:#6a5aa0;color:#cfc4ee;}
+.herecard{margin-top:9px;padding:8px 11px;border:1px solid var(--line);background:var(--panel2);
+  display:flex;gap:9px;align-items:center;flex-wrap:wrap;}
+.herecard .cl{font-size:9px;letter-spacing:.18em;text-transform:uppercase;color:var(--dim);}
+.herecard a{text-decoration:none;}
 .cbt.ev{border-left:3px solid var(--gold);background:#151009;}
 .cbt.ev.held{border-left-color:#4a4045;background:#121011;}
 .evname{color:var(--gold);letter-spacing:.03em;}
@@ -325,6 +391,54 @@ button.danger:hover{background:var(--red);border-color:var(--red);}
   header b{font-size:11px;letter-spacing:.14em;}
   .pgfoot{font-size:9px;}
 }
+
+/* checkboxes: a red edge, and a red cross when set */
+input[type="checkbox"]{
+  -webkit-appearance:none;appearance:none;
+  width:16px;height:16px;min-height:16px;flex:0 0 16px;
+  border:1px solid var(--line);background:transparent;
+  border-radius:0;cursor:pointer;position:relative;vertical-align:middle;
+  margin:0;padding:0;box-sizing:border-box;transition:border-color .12s;
+}
+input[type="checkbox"]:hover{border-color:var(--red);}
+input[type="checkbox"]:checked{
+  border-color:var(--red);
+  background-image:
+    linear-gradient(45deg,transparent 44%,var(--red) 44%,var(--red) 56%,transparent 56%),
+    linear-gradient(-45deg,transparent 44%,var(--red) 44%,var(--red) 56%,transparent 56%);
+}
+input[type="checkbox"]:focus-visible{outline:1px solid var(--red);outline-offset:1px;}
+
+/* one control height everywhere, so nothing sits proud of its neighbour */
+:root{ --ctl:38px; --ctl-sm:30px; --gap:8px; --pad:14px; }
+button,input,select,textarea{box-sizing:border-box;font-family:inherit;}
+button,input,select{height:var(--ctl);min-height:var(--ctl);line-height:1.1;}
+textarea{min-height:calc(var(--ctl)*2);}
+button.mini,.mini{height:var(--ctl-sm);min-height:var(--ctl-sm);padding:0 10px;}
+input[type="checkbox"]{height:16px;min-height:16px;}
+.pill{height:var(--ctl-sm);}
+
+.row{display:flex;flex-wrap:wrap;gap:var(--gap);align-items:center;}
+.row > label.hint{display:flex;align-items:center;gap:6px;height:var(--ctl);}
+.row > label.hint input,.row > label.hint select{height:var(--ctl);}
+
+.card{padding:var(--pad);}
+.card > h2{margin:0 0 10px;display:flex;align-items:center;gap:9px;flex-wrap:wrap;}
+.card > h2 + .row{margin-top:0;}
+
+header{align-items:center;row-gap:8px;}
+nav{gap:6px;align-items:center;}
+
+/* numbers and their steppers line up on a common baseline */
+.num{display:inline-flex;align-items:center;height:var(--ctl-sm);}
+
+/* a labelled value: caption above, figure below, on one baseline with its neighbours */
+.stat{display:flex;flex-direction:column;justify-content:center;gap:1px;
+  min-height:var(--ctl);margin-right:16px;}
+.stat .state{font-size:9px;letter-spacing:.16em;text-transform:uppercase;color:var(--dim);line-height:1;}
+.stat .big{font-size:22px;line-height:1.05;font-weight:700;}
+.pips{display:flex;flex-wrap:wrap;gap:4px;align-items:center;}
+.pip{width:20px;height:20px;min-height:20px;padding:0;}
 </style>
 <script src="https://www.gstatic.com/firebasejs/12.17.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/12.17.1/firebase-auth-compat.js"></script>
@@ -346,6 +460,7 @@ button.danger:hover{background:var(--red);border-color:var(--red);}
     <button id="t-help" onclick="tab('help')">Help</button>
   </nav>
   <div class="save" id="saveState">—</div>
+  <button class="mini" id="themeBtn" onclick="toggleTheme()" title="Light or dark">&#9789;</button>
   <button class="mini" onclick="refSignOut()" title="Sign out">Lock</button>
   <button class="mini" onclick="toggleDice()" title="Dice roller">&#9860; Dice</button>
   <button class="mini" id="undoBtn" onclick="undo()" title="Undo the last change" disabled>&#8630; Undo</button>
@@ -412,9 +527,9 @@ button.danger:hover{background:var(--red);border-color:var(--red);}
 <section class="tab on" id="tab-combat">
   <div class="card">
     <div class="row">
-      <div><div class="state">Round</div><div class="big goldc num" id="cRound">1</div></div>
-      <div style="margin-left:14px"><div class="state">Acting now</div>
-        <div class="big greenc" id="cTurn" style="font-size:20px">&mdash;</div></div>
+      <div class="stat"><span class="state">Round</span><b class="big goldc" id="cRound">1</b></div>
+      <div class="stat"><span class="state">Acting now</span>
+        <b class="big greenc" id="cTurn" style="font-size:19px">&mdash;</b></div>
       <div class="grow"></div>
       <button onclick="nextTurn()">Next turn &rsaquo;</button>
       <button onclick="addParty(false)">Add party</button>
@@ -447,8 +562,7 @@ button.danger:hover{background:var(--red);border-color:var(--red);}
 
     <div>
       <div class="card">
-        <h2>Events <span class="hint" style="letter-spacing:0;text-transform:none;font-weight:400">
-          things that happen on a count</span></h2>
+        <h2>Events </h2>
         <div class="row">
           <input class="grow" id="evName" placeholder="Fire spreads, gas clears, reinforcements arrive"
                  style="min-width:150px">
@@ -457,8 +571,6 @@ button.danger:hover{background:var(--red);border-color:var(--red);}
                  title="How many rounds until it fires. Leave blank or −1 to keep it until you clear it">
           <button onclick="addEvent()">Add</button>
         </div>
-        <p class="hint" style="margin-top:6px">Counts down one each round when its turn comes.
-          At <b>0</b> it fires and clears itself; <b>&minus;1</b> stays until you remove it.</p>
       </div>
 
       <div class="card">
@@ -530,8 +642,7 @@ button.danger:hover{background:var(--red);border-color:var(--red);}
       <div class="card">
         <h2>Saved NPCs</h2>
         <div id="npcList" class="hint">None saved.</div>
-        <p class="hint" style="margin-top:7px">Save any named NPC or mob out of the fight and drop them back in
-        next session. Recurring enemies keep their stats.</p>
+
       </div>
 
       <div class="card">
@@ -550,8 +661,7 @@ button.danger:hover{background:var(--red);border-color:var(--red);}
 <section class="tab" id="tab-party">
   <div class="card">
     <h2>Add a Traveller by hand
-      <button class="mini" onclick="toggleManual()" id="manBtn" style="margin-left:9px">Show</button>
-      <span class="hint" style="letter-spacing:0;text-transform:none;font-weight:400">for recurring NPCs, or a guest with no link</span></h2>
+      <button class="mini" onclick="toggleManual()" id="manBtn" style="margin-left:9px">Show</button></h2>
     <div id="manualAdd" style="display:none">
     <div class="row">
       <input id="pcName" placeholder="Name" class="grow" style="min-width:140px">
@@ -617,18 +727,6 @@ button.danger:hover{background:var(--red);border-color:var(--red);}
     <p class="hint" style="margin-top:7px"><b>Claim as referee</b> once, from the browser you run games on.
       Sign in from any device. Players can only reach their own character, and only via the link you send them.
       A player running two characters opens each link in its own tab.</p>
-    <p class="hint" style="margin-top:7px"><b>Linked</b> Travellers have a player's sheet behind them and sync
-      both ways; <b>local</b> ones live in this console alone, which makes them useful for recurring NPCs and
-      for anyone who turns up without a link.</p>
-    <p class="hint" style="margin-top:7px">Make the sheet in the player's name &mdash; the table shows their
-      character's name instead as soon as they write one. Two players with the same name is fine; every sheet
-      gets its own unguessable link regardless.</p>
-    <p class="hint" style="margin-top:7px">Each sheet is a <b>slot</b> with its own link. One per player, or several
-      if somebody runs two. A player opens their link once and their browser remembers it &mdash; no login, no password.
-      Lose the link and you can copy it again from here.</p>
-    <p class="hint" style="margin-top:7px">Players open
-      <b>&hellip;/sheet.html</b> and enter the same campaign name. Their sheet edits arrive here;
-      the wounds and ammunition you set here appear on their sheet.</p>
   </div>
   <div id="partyList"></div>
   <div class="pgfoot">&copy; 2026 Effigy Media. All rights reserved.
@@ -814,6 +912,16 @@ button.danger:hover{background:var(--red);border-color:var(--red);}
 
 <!-- ============================ CAMPAIGN ============================ -->
 <section class="tab" id="tab-camp">
+  <div class="card">
+    <h2>Date</h2>
+    <div id="dateBox"></div>
+  </div>
+
+  <div class="card">
+    <h2>The system </h2>
+    <div id="sysBox"></div>
+  </div>
+
   <div class="cols3">
     <div class="card">
       <h2>Standing &mdash; Imperium</h2>
@@ -928,6 +1036,8 @@ button.danger:hover{background:var(--red);border-color:var(--red);}
     <div id="clockList" style="margin-top:9px"></div>
   </div>
 
+
+
   <div class="card">
     <h2>Sessions</h2>
     <div class="row">
@@ -937,7 +1047,7 @@ button.danger:hover{background:var(--red);border-color:var(--red);}
     </div>
     <div id="sessionList" style="margin-top:10px"></div>
 
-    <h2 style="margin-top:16px">Campaign notes <span class="hint" style="letter-spacing:0;text-transform:none;font-weight:400">standing facts, not session by session</span></h2>
+    <h2 style="margin-top:16px">Campaign notes </h2>
     <textarea id="notes" placeholder="Who owes them, who is hunting them, what is coming."></textarea>
     <div class="row" style="margin-top:8px">
       <button onclick="downloadSave()">&#8681; Save to Files</button>
@@ -948,10 +1058,7 @@ button.danger:hover{background:var(--red);border-color:var(--red);}
     </div>
     <input type="file" id="loadFile" accept=".json,application/json,text/plain"
            style="display:none" onchange="loadFile(event)">
-    <p class="hint" style="margin-top:7px" id="wipeNote">
-      Saves itself as you play. <b>Save to Files</b> writes a dated copy into iCloud Drive &mdash;
-      do that at the end of a session and you can reopen it anywhere.
-    </p>
+    <p class="hint" style="margin-top:7px" id="wipeNote"></p>
     <textarea id="io" style="display:none;min-height:80px;margin-top:8px;font-size:14px"
       placeholder="Paste a saved state here, then press Restore."></textarea>
     <div class="row" id="ioRow" style="display:none;margin-top:6px">
@@ -974,7 +1081,7 @@ button.danger:hover{background:var(--red);border-color:var(--red);}
       <button id="rb2" onclick="rules(2)">Where to look</button>
       <button id="rb3" onclick="rules(3)">Psionics</button>
       <div class="grow"></div>
-      <span class="hint">A summary for mid-session recall. Core page numbers are for the 2022 update &mdash; the books are the authority.</span>
+      <span class="hint">Core page numbers are for the 2022 update.</span>
     </div>
   </div>
   <div id="rulesBody"></div>
@@ -997,9 +1104,7 @@ button.danger:hover{background:var(--red);border-color:var(--red);}
       <button class="mini" style="border-color:var(--green);color:var(--green)"
               onclick="rollAnyName()">✦ One-off NPC name</button>
     </div>
-    <p class="hint" style="margin-top:7px">Fifteen D66 tables &mdash; first names by gender and
-      surnames, for Vilani, Solomani, Zhodani, Aslan and Vargr. The gold button rolls species,
-      gender and both halves at once.</p>
+
   </div>
 
   <div class="card">
@@ -1034,16 +1139,11 @@ button.danger:hover{background:var(--red);border-color:var(--red);}
           <button onclick="rollLoot()">What did they have?</button>
         </div>
         <div id="lootOut" class="hint" style="margin-top:9px;font-size:14px;line-height:1.7">&mdash;</div>
-        <p class="hint" style="margin-top:7px">Cash scales with the number of bodies. Better-equipped
-          archetypes carry better gear, and armour only turns up on a 4+. The <b>Loot</b> button on a
-          defeated mob fills this in from that mob.</p>
       </div>
 
       <div class="card">
         <h2>Your own tables</h2>
-        <p class="hint" style="margin-bottom:8px">Type or paste any table &mdash; one entry per line &mdash; and it joins the
-        buttons above, displayed and rollable the same way.</p>
-        <p class="hint" style="margin-bottom:8px">The ones worth entering first:
+        <p class="hint">Worth entering first:
         <b>Crewman Names</b> and <b>Crewman Quirks</b>, PoD p.11 ·
         <b>Prey Quirks</b>, PoD p.18&ndash;19 ·
         <b>Prey Complications</b>, PoD p.20. All D66, 36 lines each.</p>
@@ -2137,8 +2237,7 @@ function showBookTables(){
       b[1].map(r=>`<div class="trow"><span>${r[0]}</span>
         <span style="margin-left:auto;color:var(--green);font-weight:700;white-space:nowrap">${r[1]}</span></div>`).join('')+
       `</div>`).join('')+
-    '<p class="hint">Bold entries are the roll tables worth entering into <b>Your own tables</b> below, '+
-    'so you never have to open the book mid-session.</p>';
+    '';
   renderTableBtns();
 }
 
@@ -2361,8 +2460,7 @@ function namedFromArchetype(){
     <span class="hint">${['STR','DEX','END','INT','EDU','SOC'].map(k=>k+' '+pc.mx[k]).join(' · ')}
       · armour ${pc.arm}</span><br>
     ${pc.wpn.map(w=>`<b>${w.n}</b> <span class="wstat">${[w.d,w.rng,w.tr].filter(Boolean).join(' · ')}</span>`).join(' and ')}
-    <br><span class="hint">${pc.note||''}</span>
-    <br><span class="hint">Filed on the Party tab as a local Traveller.</span>`;
+    <br><span class="hint">${pc.note||''}</span>`;
   note('Added '+name);
 }
 
@@ -2436,6 +2534,359 @@ function eventRow(c){
   </div>`;
 }
 
+
+/* ---------------------------------------------------------------
+   The calendar. Three clocks, from the books:
+
+   IMPERIAL — Third Imperium p.3: 365 days of 24 hours, the first
+   called Holiday, the rest in seven-day weeks named Wonday, Tuday,
+   Thirday, Forday, Fiday, Sixday, Senday. Written DDD-YYYY.
+
+   SOLOMANI — Solomani Front's timeline fixes 1 AD at Imperial
+   year -4520, so Imperial 0 falls in 4521 AD. Imperial years are
+   exactly 365 days and Gregorian ones are not, so the two drift.
+   That is correct, not a fault.
+
+   ASLAN — Aliens of Charted Space Vol 1 is the only source here.
+   It gives two conversions: an Aslan term of service is four
+   Imperial years or four and a half Aslan ones, and 16 Aslan years
+   of age is about 14 standard. Both land on the same ratio. Kusyu
+   turns in 32 hours. The book gives no Aslan era at all, so the
+   year counts from the Imperial founding until you offset it.
+   --------------------------------------------------------------- */
+const IDAYS=['Wonday','Tuday','Thirday','Forday','Fiday','Sixday','Senday'];
+const GMONTH=['January','February','March','April','May','June','July',
+              'August','September','October','November','December'];
+const SOL_EPOCH=4521;              /* Solomani Front: 1 AD = Imperial -4520 */
+const ASLAN_RATIO=4.5/4;           /* Aslan years per Imperial year */
+const ASLAN_YEAR_DAYS=365/ASLAN_RATIO;             /* standard days in an Aslan year */
+const ASLAN_LOCAL_DAY=32/24;       /* Kusyu turns in 32 hours */
+
+
+
+/* ---------------------------------------------------------------
+   Rotation periods cannot be derived. The UWP carries starport,
+   size, atmosphere, hydrographics, population, government, law and
+   tech; PBG adds belts and gas giants; the stellar data gives a
+   spectral class. None of that fixes how fast a world turns —
+   Traveller's own world generation rolls for it. So this offers a
+   plausible number and says plainly that it is a suggestion.
+
+   The one real inference: a world close to a dim primary tides
+   into a lock, so its day equals its year. We know the star's
+   class but not the orbit, so that is flagged, not asserted.
+   --------------------------------------------------------------- */
+function suggestRotation(){
+  const here=shipHere();
+  const f=S.fleet||{ships:{},active:''};
+  const s=(f.ships||{})[f.active||Object.keys(f.ships||{})[0]]||S.ship||{};
+  const uwp=(s.shAstUWP||'').replace(/[^0-9A-Za-z-]/g,'');
+  const star=(s.shAstStar||'').toUpperCase();
+  const sizeChar=uwp[1]||'';
+  const size=parseInt(sizeChar,36);
+  const dim=/^[MK]/.test(star.trim());
+  let hours, why;
+  if(!uwp){ note('No system logged'); return; }
+  if(size===0){ hours=24; why='an asteroid belt keeps no day worth the name — 24 is a convention'; }
+  else if(size<=2){ hours=2*d(6)+30; why='a small world, slowed by nothing much'; }
+  else if(size<=5){ hours=2*d(6)+18; why='a middling world'; }
+  else { hours=2*d(6)+14; why='a large world, spun up in its formation'; }
+  S.camp.localHours=hours;
+  renderCamp(); queueSave();
+  const note2 = dim
+    ? ' <b class="hotc">Its primary is a '+star.trim().split(' ')[0]+
+      '. Close in to a dim star a world tides into a lock and its day becomes its year — if this one sits '+
+      'in the habitable zone, set the day to hundreds of hours instead.</b>'
+    : '';
+  document.getElementById('rotNote').innerHTML =
+    '<b>'+hours+' hours</b> suggested for '+(here.name||'this world')+' — '+why+
+    '. This is a guess, not a derivation: nothing in the UWP fixes rotation.'+note2;
+}
+
+function pad2(n){ return String(Math.floor(n)).padStart(2,'0'); }
+function localDayHours(){ S.camp=S.camp||{};
+  return (S.camp.localHours===undefined||!+S.camp.localHours) ? 24 : +S.camp.localHours; }
+/* the local clock runs on the main world's day, counted from the same instant */
+function toLocal(t){
+  const L=localDayHours();
+  const stdHours = (t.y*365 + (t.d-1))*24 + t.h + t.m/60;
+  const dayNo = Math.floor(stdHours / L) % 100000;
+  const into  = stdHours - Math.floor(stdHours/L)*L;      /* hours into the local day */
+  const hh    = Math.floor(into);
+  const mm    = Math.round((into-hh)*60);
+  return {hh:pad2(hh), mm:pad2(mm===60?0:mm), dayNo};
+}
+/* where the active ship says it is */
+function setInJump(v){
+  S.camp=S.camp||{}; S.camp.inJump=!!v;
+  renderCamp(); queueSave();
+  logEvent(v ? 'Jumped — in transit' : 'Emerged from jump');
+}
+/* where the ship's own log says it is bound */
+function jumpTargetName(){
+  const f=S.fleet||{ships:{},active:''};
+  const s=(f.ships||{})[f.active||Object.keys(f.ships||{})[0]]||S.ship||{};
+  let r=null; try{ r=JSON.parse(s.shRoute||'null'); }catch(e){}
+  if(r&&r.stops&&r.stops.length>1) return r.stops[r.stops.length-1].n;
+  return (s.shNextName||'').trim() || 'the destination';
+}
+function jumpTarget(){
+  const f=S.fleet||{ships:{},active:''};
+  const s=(f.ships||{})[f.active||Object.keys(f.ships||{})[0]]||S.ship||{};
+  const n=(s.shNextHex||'').trim();
+  return n ? ((s.shNextSec||'').trim()+' '+n).trim() : '';
+}
+function shipHere(){
+  const f=S.fleet||{ships:{},active:''};
+  const id=f.active||Object.keys(f.ships||{})[0];
+  const s=(f.ships||{})[id]||S.ship||{};
+  return {name:(s.shAstName||'').trim(), sec:(s.shAstSec||'').trim(),
+          hex:(s.shAstHex||'').trim(), uwp:(s.shAstUWP||'').trim(), ship:(s.shName||'').trim()};
+}
+function timeStep(h){
+  const t=campDate();
+  let total=t.h+h;
+  let carry=0;
+  while(total>=24){ total-=24; carry+=1; }
+  while(total<0){ total+=24; carry-=1; }
+  t.h=total;
+  if(carry) dateStep(carry); else { renderCamp(); queueSave(); }
+}
+
+function campDate(){
+  S.camp=S.camp||{};
+  S.camp.date=S.camp.date||{d:1,y:1105,h:8,m:0};
+  if(S.camp.date.h===undefined) S.camp.date.h=8;
+  if(S.camp.date.m===undefined) S.camp.date.m=0;
+  if(S.camp.aslanEra===undefined) S.camp.aslanEra=0;
+  if(S.camp.localHours===undefined) S.camp.localHours=24;
+  return S.camp.date;
+}
+function impWeekday(d){ return d===1 ? 'Holiday' : IDAYS[(d-2)%7]; }
+function impWeek(d){ return d===1 ? null : Math.floor((d-2)/7)+1; }
+function impDateStr(){ const t=campDate();
+  return String(t.d).padStart(3,'0')+'-'+t.y; }
+
+function toSolomani(d,y){
+  const base=new Date(Date.UTC(2000,0,1));
+  base.setUTCFullYear(SOL_EPOCH,0,1);
+  base.setUTCDate(base.getUTCDate() + y*365 + (d-1));
+  return base;
+}
+function toAslan(d,y){
+  const stdDays = y*365 + (d-1);
+  const years = Math.floor(stdDays / ASLAN_YEAR_DAYS);
+  const into  = stdDays - years*ASLAN_YEAR_DAYS;         /* standard days into the year */
+  const local = Math.floor(into / ASLAN_LOCAL_DAY) + 1;  /* 32 hour days */
+  const total = Math.ceil(ASLAN_YEAR_DAYS / ASLAN_LOCAL_DAY);
+  return {year: years + (S.camp.aslanEra||0), day: local, of: total};
+}
+function dateStep(n){
+  const t=campDate();
+  let d=t.d+n, y=t.y;
+  while(d>365){ d-=365; y+=1; }
+  while(d<1){ d+=365; y-=1; }
+  t.d=d; t.y=y;
+  renderCamp(); queueSave();
+  if(n>=7) logEvent('Time passes — now '+impDateStr());
+}
+function setDatePart(k,v){
+  const t=campDate();
+  if(k==='d') t.d=Math.max(1,Math.min(365,+v||1));
+  if(k==='y') t.y=Math.round(+v||0);
+  if(k==='h') t.h=Math.max(0,Math.min(23,Math.round(+v||0)));
+  if(k==='m') t.m=Math.max(0,Math.min(59,Math.round(+v||0)));
+  if(k==='localHours') S.camp.localHours=Math.max(1,Math.min(400,+v||24));
+  if(k==='aslanEra') S.camp.aslanEra=Math.round(+v||0);
+  renderCamp(); queueSave();
+}
+function renderDate(){
+  const el=document.getElementById('dateBox'); if(!el) return;
+  const t=campDate();
+  const wd=impWeekday(t.d), wk=impWeek(t.d);
+  const sol=toSolomani(t.d,t.y);
+  const asl=toAslan(t.d,t.y);
+  const L=localDayHours();
+  const loc=toLocal(t);
+  const here=shipHere();
+  el.innerHTML=`
+    <div class="clocks">
+      <div class="clock imp">
+        <span class="cl">Imperial</span>
+        <b class="big">${impDateStr()}</b>
+        <span class="sub">${wd}${wk?' &middot; week '+wk:''}</span>
+      </div>
+      <div class="clock sol">
+        <span class="cl">Solomani</span>
+        <b class="big">${sol.getUTCDate()} ${GMONTH[sol.getUTCMonth()]} ${sol.getUTCFullYear()}</b>
+        <span class="sub">Gregorian &middot; 1 AD is Imperial &minus;4520</span>
+      </div>
+      <div class="clock asl">
+        <span class="cl">Aslan Hierate</span>
+        <b class="big">${asl.year}</b>
+        <span class="sub">day ${asl.day} of ${asl.of}</span>
+      </div>
+    </div>
+
+    <div class="clocks" style="margin-top:9px">
+      <div class="clock ship${S.camp.inJump?' injump':''}">
+        <span class="cl">Ship &mdash; standard</span>
+        <b class="big">${S.camp.inJump?'NaN':pad2(t.h)+':'+pad2(t.m)}</b>
+        <span class="sub">${S.camp.inJump?'a pocket universe keeps no hour':'24 hour day, wherever you are'}</span>
+      </div>
+      <div class="clock local${S.camp.inJump?' injump':''}">
+        <span class="cl">Local &mdash; ${S.camp.inJump ? 'in jump' : (here.name||'no system logged')}</span>
+        <b class="big">${S.camp.inJump ? 'NaN' : loc.hh+':'+loc.mm}</b>
+        <span class="sub">${S.camp.inJump
+          ? 'no world, no day'
+          : L+' hour day'+(loc.dayNo?' &middot; local day '+loc.dayNo:'')}</span>
+      </div>
+    </div>
+
+    <div class="row" style="margin-top:9px">
+      <button class="mini" onclick="timeStep(1)">+1 hour</button>
+      <button class="mini" onclick="timeStep(6)">+6 hours</button>
+      <button class="mini" onclick="dateStep(1)">+1 day</button>
+      <button class="mini" onclick="dateStep(7)">+1 week &mdash; a jump</button>
+      <button class="mini" onclick="dateStep(28)">+28 days</button>
+      <button class="mini" onclick="timeStep(-1)">&minus;1 hour</button>
+      <button class="mini" onclick="dateStep(-1)">&minus;1 day</button>
+      <span class="grow"></span>
+      <button class="${S.camp.inJump?'jumpon':'mini'}" onclick="setInJump(${S.camp.inJump?'false':'true'})">
+        ${S.camp.inJump?'Emerge from jump':'Jump'}</button>
+    </div>
+
+    <div class="row" style="margin-top:7px">
+      <label class="hint">Day <input type="number" value="${t.d}" style="width:74px"
+        onchange="setDatePart('d',this.value)"></label>
+      <label class="hint">Year <input type="number" value="${t.y}" style="width:86px"
+        onchange="setDatePart('y',this.value)"></label>
+      <label class="hint">Hour <input type="number" value="${t.h}" style="width:70px"
+        onchange="setDatePart('h',this.value)"></label>
+      <label class="hint">Min <input type="number" value="${t.m}" style="width:70px"
+        onchange="setDatePart('m',this.value)"></label>
+      <label class="hint" title="How long the main world's day is, in standard hours. Nothing in the UWP fixes this, so it is yours to set.">
+        Local day, hours <input type="number" step="0.1" value="${L}" style="width:92px"
+        onchange="setDatePart('localHours',this.value)"></label>
+      <button class="mini" onclick="suggestRotation()" title="Offer a plausible rotation period">Suggest</button>
+      <label class="hint" title="The books give no Aslan era, so the year counts from the Imperial founding until you offset it.">
+        Aslan offset <input type="number" value="${S.camp.aslanEra||0}" style="width:86px"
+        onchange="setDatePart('aslanEra',this.value)"></label>
+    </div>
+
+    <div id="rotNote" class="hint" style="margin-top:6px"></div>
+
+    ${S.camp.inJump ? `<div class="herecard injump">
+        <div class="locpair">
+          <div><span class="cl">Current</span><b class="nanv">NaN</b>
+            <span class="hint">in jump &mdash; nowhere that has coordinates</span></div>
+          ${jumpTarget() ? `<div><span class="cl">Target</span><b>${jumpTargetName()}</b>
+            <span class="hint">${jumpTarget()}</span></div>` : ''}
+        </div>
+      </div>`
+    : here.name ? `<div class="herecard">
+        <span class="cl">Where you are</span>
+        <b>${here.name}</b> <span class="hint">${here.sec} ${here.hex}</span>
+        ${here.uwp?`<b class="goldc">${here.uwp}</b>`:''}
+        ${here.ship?`<span class="hint">&mdash; aboard ${here.ship}</span>`:''}
+        <a class="mini" target="_blank" rel="noopener"
+           href="https://travellermap.com/go/${encodeURIComponent(here.sec||'')}/${encodeURIComponent(here.hex||'')}">Map &nearr;</a>
+        <a class="mini" target="_blank" rel="noopener"
+           href="https://wiki.travellerrpg.com/${encodeURIComponent(String(here.name).replace(/ /g,'_'))}_(world)">Info &nearr;</a>
+      </div>`
+    : ''}
+
+`;
+}
+
+
+/* ---------------------------------------------------------------
+   The system, read for what a referee actually needs mid-session.
+
+   This works the UWP the crew already looked up rather than
+   scraping the wiki's prose: the wiki is written for readers, not
+   for rulings, and its text is somebody else's to reproduce. What
+   a referee wants at the table — what is illegal here, can we
+   refuel, can we sell this, who is watching — falls straight out
+   of the code. The wiki link is right there for the rest.
+   --------------------------------------------------------------- */
+const LAWNOTE={
+ 0:'No law. Nothing is prohibited, including to them',
+ 1:'Only poison gas, explosives, undetectable weapons and WMD',
+ 2:'Portable energy and laser weapons restricted',
+ 3:'Military weapons restricted',
+ 4:'Light assault weapons and submachine guns restricted',
+ 5:'Personal concealable weapons restricted',
+ 6:'All firearms except shotguns restricted; carrying weapons discouraged',
+ 7:'Shotguns restricted',
+ 8:'Long bladed weapons controlled; open display forbidden',
+ 9:'Any weapon out of doors is an offence'
+};
+const PORTNOTE={
+ A:'Shipyard, refined fuel, annual maintenance, brokers, everything',
+ B:'Spacecraft yard, refined fuel, annual maintenance',
+ C:'Unrefined fuel, some repairs, a reasonable market',
+ D:'Unrefined fuel only, no repair facility worth the name',
+ E:'A marked landing area. No fuel, no facilities, no questions',
+ X:'No starport. Landing is your own affair'
+};
+const TRADECODE={
+ Ag:'Agricultural',As:'Asteroid belt',Ba:'Barren',De:'Desert',Fl:'Fluid oceans',Ga:'Garden',
+ Hi:'High population',Ht:'High technology',Ic:'Ice-capped',In:'Industrial',Lo:'Low population',
+ Lt:'Low technology',Na:'Non-agricultural',Ni:'Non-industrial',Po:'Poor',Ri:'Rich',
+ Va:'Vacuum',Wa:'Water world',Cp:'Subsector capital',Cs:'Sector capital',Cx:'Capital',
+ Pa:'Pre-agricultural',Ph:'Pre-high population',Pi:'Pre-industrial',Pr:'Pre-rich',
+ Fo:'Forbidden',Pz:'Puzzle',Da:'Danger',Ab:'Data repository',An:'Ancient site'
+};
+function sysDetail(){
+  const el=document.getElementById('sysBox'); if(!el) return;
+  const f=S.fleet||{ships:{},active:''};
+  const s=(f.ships||{})[f.active||Object.keys(f.ships||{})[0]]||S.ship||{};
+  const name=(s.shAstName||'').trim();
+  if(S.camp.inJump){
+    el.innerHTML='<p class="hint">In jump.</p>'; return;
+  }
+  if(!name){
+    el.innerHTML='<p class="hint">No system logged.</p>';
+    return;
+  }
+  const uwp=(s.shAstUWP||'').trim();
+  const P=uwp[0]||'', size=parseInt(uwp[1]||'0',36), atm=parseInt(uwp[2]||'0',36),
+        hyd=parseInt(uwp[3]||'0',36), pop=parseInt(uwp[4]||'0',36),
+        gov=parseInt(uwp[5]||'0',36), law=parseInt(uwp[6]||'0',36),
+        tl=parseInt((uwp.split('-')[1]||'0'),36);
+  const pbg=(s.shAstPBG||'').trim(), gg=/[1-9]$/.test(pbg), belts=+(pbg[1]||0);
+  const zone=(s.shAstZone||'').trim().toUpperCase();
+  const bases=(s.shAstBase||'').trim();
+  const rem=(s.shAstRem||'').trim();
+  const codes=rem.split(/\s+/).filter(x=>TRADECODE[x]).map(x=>TRADECODE[x]);
+  const vacc=(atm<=3||atm>=10);
+  const line=(k,v,cls)=>v?`<div class="sysrow"><span>${k}</span><b class="${cls||''}">${v}</b></div>`:'';
+  el.innerHTML=
+    `<div class="sysname"><b>${name}</b> <span class="hint">${s.shAstSec||''} ${s.shAstHex||''}</span>
+      <span class="uwpbig">${uwp}</span>
+      ${zone==='A'?'<span class="zone amber">Amber zone</span>':''}
+      ${zone==='R'?'<span class="zone red">Red zone &mdash; interdicted</span>':''}
+      <a class="mini" target="_blank" rel="noopener"
+         href="https://wiki.travellerrpg.com/${encodeURIComponent(name.replace(/ /g,'_'))}_(world)">Wiki &nearr;</a>
+      <a class="mini" target="_blank" rel="noopener"
+         href="https://travellermap.com/go/${encodeURIComponent(s.shAstSec||'')}/${encodeURIComponent(s.shAstHex||'')}">Map &nearr;</a>
+    </div>
+    <div class="sysgrid">
+      ${line('Starport', P+' &mdash; '+(PORTNOTE[P]||'unknown'))}
+      ${line('What is illegal', isNaN(law)?'':'Law '+law+' &mdash; '+(LAWNOTE[Math.min(9,law)]||'Anything they decide'), law>=6?'hotc':'')}
+      ${line('They can build to', isNaN(tl)?'':'TL '+tl+(tl<8?' &mdash; below anything you fly':'')+(tl>=12?' &mdash; they can fix your ship':''))}
+      ${line('People', isNaN(pop)?'':(pop===0?'Nobody lives here':'About 10^'+pop+(pop<=3?' &mdash; a settlement, not a society':(pop>=9?' &mdash; a world that matters':''))))}
+      ${line('Air', vacc?'Vacc suit country':'Breathable, more or less', vacc?'hotc':'')}
+      ${line('Refuelling', gg?'Gas giant &mdash; skim it and leave no record':(P==='A'||P==='B'?'Refined at the port':(hyd>0?'Water to crack, slowly':'Nothing. Bring your own')), gg?'greenc':'')}
+      ${line('Belts', belts?belts+' asteroid belt'+(belts>1?'s':''):'')}
+      ${line('Watching you', bases||(zone==='R'?'Interdicted &mdash; somebody is':'Nobody official'), bases?'hotc':'')}
+      ${line('Trade', codes.join(' &middot; ')||rem)}
+      ${line('Stars', (s.shAstStar||'').trim())}
+    </div>
+`;
+}
+
 /* ==================== SESSIONS ==================== */
 function sessionAdd(){
   S.sessions=S.sessions||[];
@@ -2464,7 +2915,7 @@ function renderSessions(){
   const el=document.getElementById('sessionList'); if(!el) return;
   S.sessions=S.sessions||[];
   if(!S.sessions.length){
-    el.innerHTML='<p class="hint">No sessions yet. Start one and the notes field grows as you fill it.</p>';
+    el.innerHTML='<p class="hint">No sessions yet.</p>';
     return;
   }
   el.innerHTML=S.sessions.map(s=>{
@@ -2545,6 +2996,16 @@ function chime(){
     });
   }catch(e){}
 }
+function applyTheme(){
+  const light = ck('drinaxTheme')==='light';
+  document.documentElement.classList.toggle('light', light);
+  const b=document.getElementById('themeBtn');
+  if(b){ b.innerHTML = light ? '&#9788;' : '&#9789;'; b.title = light ? 'Light' : 'Dark'; }
+}
+function toggleTheme(){
+  setCk('drinaxTheme', ck('drinaxTheme')==='light' ? 'dark' : 'light');
+  applyTheme();
+}
 function toggleAlerts(){
   alertOn=!alertOn;
   const b=document.getElementById('alertBtn');
@@ -2590,8 +3051,7 @@ function clockSeed(){
 function renderClocks(){
   const el=document.getElementById('clockList'); if(!el) return;
   S.clocks=S.clocks||[];
-  if(!S.clocks.length){ el.innerHTML='<p class="hint">No clocks yet. These are the slow pressures — '+
-    'the ones that never come up in a session but decide the campaign.</p>'; return; }
+  if(!S.clocks.length){ el.innerHTML='<p class="hint">No clocks yet.</p>'; return; }
   el.innerHTML=S.clocks.map(c=>{
     const pips=[...Array(c.seg)].map((_,i)=>
       `<button class="pip ${i<c.fill?'fill':''}" onclick="clockTick('${c.id}', ${i<c.fill?-(c.fill-i):(i+1-c.fill)})"
@@ -2822,6 +3282,11 @@ const HELP=[
   "at the top, older ones collapse to a single line with a word count, and the notes area scrolls rather than "+
   "pushing everything else off the screen. Campaign notes below it are for standing facts &mdash; who owes them, "+
   "who is hunting them &mdash; rather than session by session.<br><br>"+
+  "<b>Transfers.</b> Every row of kit on a sheet has a <b>&rarr;</b> beside it. A player taps it, picks "+
+  "another character or the ship's hold, and the item <b>moves</b> &mdash; it never copies. A weapon "+
+  "handed over lands in their weapons table and armour in their armour table, so it arrives where it "+
+  "is used. Only sheets can do this; if you need to shift something, open the sheet. Every move writes "+
+  "a line into your session log.<br><br>"+
   "<b>Conditions</b> live on the player's own sheet, so what you write appears in their hands and what they "+
   "write appears on their row here. Four slots each, with an optional round count that ticks itself down as "+
   "the round rolls over and clears when it reaches zero.<br><br>"+
@@ -2927,7 +3392,7 @@ function shipJumpCard(){
         `<div><span class="hint">${e.d||''}</span> ${e.from||'?'} → <b>${e.to||e.toHex||'?'}</b>
          ${e.eff===''||e.eff===undefined?'':`<span class="${+e.eff<0?'redc':'greenc'}">Effect ${e.eff>=0?'+':''}${e.eff}</span>`}
          ${e.n?'<span class="hint">— '+e.n+'</span>':''}</div>`).join('')+`</div>`
-    : '<p class="hint">No jumps logged. The crew fills this in from their sheets.</p>';
+    : '<p class="hint">No jumps logged.</p>';
   return `<div class="card"><h2>Course and jump log</h2>${legs}${rows}</div>`;
 }
 function shipPortraitCard(){
@@ -3029,7 +3494,7 @@ function renderShip(){
             href="https://travellermap.com/go/${encodeURIComponent(sec||'Trojan Reach')}/${encodeURIComponent(hx||'')}">Map &nearr;</a>
          <a class="mini" style="text-decoration:none;padding:3px 8px" target="_blank" rel="noopener"
             href="https://wiki.travellerrpg.com/${encodeURIComponent(String(n).replace(/ /g,'_'))}_(world)">Wiki &nearr;</a>`
-      : '<span class="hint">No system logged — the crew can look one up on their sheet.</span>';
+      : '<span class="hint">&mdash;</span>';
   }
   el.innerHTML = SHIPFIELDS.map(([title,fields])=>
     `<div class="card"><h2>${title}</h2><div class="row">`+
@@ -3049,8 +3514,8 @@ function renderShip(){
         <button class="mini" onclick="ru('c',-1)">&minus;</button><b class="num" id="ruC">${(S.camp&&S.camp.ru?S.camp.ru.c:0)}</b>
         <button class="mini" onclick="ru('c',1)">+</button>
       </div>
-      <p class="hint" style="margin-top:6px">A proper repair costs 5 Cosmetic RU per Structural or Technical RU
-        spent. Defect and repair rules &mdash; <b>Companion p.59&ndash;62</b>.</p>
+      <p class="hint" style="margin-top:6px">5 Cosmetic RU per Structural or Technical RU spent
+        &mdash; <b>Companion p.59&ndash;62</b>.</p>
     </div>` +
     `<div class="card"><h2>Damage and defects</h2>` +
     [0,1,2,3,4,5,6,7].map(i=>
@@ -3079,7 +3544,7 @@ function shipWatchConsole(){
     const v=s.val()||{};
     S.fleet={ships:v.ships||{}, active:v.active||Object.keys(v.ships||{})[0]||''};
     S.ship=Object.assign({}, (S.fleet.ships||{})[activeShipC()]||{});
-    renderShip();
+    renderShip(); renderDate();
     document.getElementById('shipNote').textContent='Live — shared with every sheet in the campaign.';
   }, err=>{ document.getElementById('shipNote').textContent='Cannot read the fleet: '+err.code; });
 }
@@ -3388,6 +3853,15 @@ function applyRemote(all){
     p.md=p.md||built.md; p.wd=p.wd||built.wd;
     if(!p.wpn||!p.wpn.length) p.wpn=built.wpn;
     else built.wpn.forEach((w,i)=>{ if(p.wpn[i]){ p.wpn[i].n=w.n; p.wpn[i].d=w.d; p.wpn[i].mag=w.mag; } });
+    /* somebody handed something to somebody else */
+    const lt=node.live&&node.live.lastTransfer;
+    if(lt && lt.at && lt.at!==(p.lastXferAt||0)){
+      p.lastXferAt=lt.at;
+      if(FB.ready && !applyingFirst){
+        logEvent(`<b>${lt.from||p.n}</b> gave <b>${lt.what}</b> to <b>${lt.to}</b>`);
+        announce(lt.from||p.n, 'handed over '+lt.what);
+      }
+    }
     /* announce a real edit, but not the first load and not our own writes */
     if(FB.ready && !applyingFirst){
       const before=JSON.stringify(p.sheet||{});
@@ -3433,6 +3907,8 @@ function cycleTrainFail(){
   S.camp=S.camp||{};
   S.camp.trainFail = (S.camp.trainFail==='revert') ? 'zero' : 'revert';
   renderTrainFail();
+  renderDate();
+  sysDetail();
   ['s','t','c'].forEach(k=>{ const e=document.getElementById('ru'+k.toUpperCase());
     if(e) e.textContent=(S.camp.ru||{s:0,t:0,c:0})[k]; }); pushLive(); queueSave();
 }
@@ -3488,6 +3964,7 @@ function pushLive(){
         ammo:(p.wpn||[]).map(w=>w.cur),
         trainFail:(S.camp&&S.camp.trainFail)||'zero',
         party:S.party.filter(x=>x.n).map(x=>x.n),
+        roster:S.party.filter(x=>x.remote&&x.uid&&x.n).map(x=>({id:x.uid, n:x.n})),
         by:'console', at:firebase.database.ServerValue.TIMESTAMP
       }).catch(e=>syncStatus('Write refused: '+e.code,'redc'));
     });
@@ -3763,7 +4240,7 @@ function renderLiveTable(){
        <button class="mini x" onclick="forgetSlot('${s.id}','${s.name}')">&times;</button></td></tr>`).join('') : '';
 
   if(!people.length && !empty.length){
-    el.innerHTML='<p class="hint">Nobody here yet. Make a sheet for a player above, or add one by hand.</p>';
+    el.innerHTML='<p class="hint">Nobody here yet.</p>';
     return;
   }
 
@@ -4959,6 +5436,8 @@ function splitSpoils(){
 }
 function renderCamp(){
   renderTrainFail();
+  renderDate();
+  sysDetail();
   ['s','t','c'].forEach(k=>{ const e=document.getElementById('ru'+k.toUpperCase());
     if(e) e.textContent=(S.camp.ru||{s:0,t:0,c:0})[k]; });
   /* an older save may be missing whole sub-objects */
@@ -5034,7 +5513,7 @@ document.getElementById('bArch').innerHTML=
 document.getElementById('bArch').value=MOBS.findIndex(m=>m.n==='Merchant crew');
 document.getElementById('nmSp').innerHTML=SPECIES.map(s=>`<option>${s}</option>`).join('');
 document.getElementById('sArch').innerHTML=SHIPS.map((s,i)=>`<option value="${i}">${s.n} &mdash; ${s.t}</option>`).join('');
-typeChanged(); loadAll(); restoreTab(); setTimeout(gateBoot,700);
+applyTheme(); typeChanged(); loadAll(); restoreTab(); setTimeout(gateBoot,700);
 </script>
 </body>
 </html>
