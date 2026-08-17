@@ -184,6 +184,11 @@ textarea{width:100%;min-height:120px;resize:vertical;line-height:1.6;}
 .skc{border:1px solid var(--line);background:var(--panel2);padding:3px 7px;font-size:12px;color:var(--dim);}
 .skc b{color:var(--ink);}
 .wstat{color:var(--dim);font-size:11px;letter-spacing:.02em;}
+.cchip{display:inline-flex;align-items:center;gap:4px;border:1px solid var(--hot);color:var(--ink);
+  background:#241417;padding:2px 4px 2px 8px;font-size:12px;margin-right:4px;}
+.cchip b{color:var(--hot);}
+.cchip button{min-height:20px;padding:0 5px;font-size:12px;background:none;border:none;color:var(--dim);}
+.cchip button:hover{color:var(--red);border:none;}
 .wdbox{width:44px;flex:0 0 44px;text-align:center;padding:3px 0;min-height:32px;
   font-size:14px;font-variant-numeric:tabular-nums;color:var(--dim);}
 .wdbox.on{color:var(--hot);font-weight:700;}
@@ -237,6 +242,14 @@ textarea{width:100%;min-height:120px;resize:vertical;line-height:1.6;}
   box-shadow:0 20px 60px rgba(0,0,0,.7);}
 button.danger{background:var(--green);border-color:var(--green);color:#0c0405;font-weight:700;}
 button.danger:hover{background:var(--red);border-color:var(--red);}
+.sess{border:1px solid var(--line);padding:9px;margin-bottom:8px;background:var(--panel2);}
+.sesnotes{width:100%;margin-top:8px;min-height:190px;max-height:46vh;overflow-y:auto;resize:vertical;
+  line-height:1.55;font-size:14px;}
+#tab-camp{max-height:calc(100vh - 190px);overflow-y:auto;padding-right:6px;
+  -webkit-overflow-scrolling:touch;}
+#tab-camp::-webkit-scrollbar{width:9px;}
+#tab-camp::-webkit-scrollbar-thumb{background:#3a2226;border-radius:0;}
+#tab-camp::-webkit-scrollbar-track{background:#140d0e;}
 .pgfoot{margin:22px 0 4px;padding-top:11px;border-top:1px solid var(--line);
   font-size:10px;letter-spacing:.08em;color:var(--green);line-height:1.6;}
 .pgfoot span{display:block;font-size:9px;letter-spacing:.04em;color:var(--green);opacity:.62;margin-top:3px;}
@@ -253,6 +266,7 @@ button.danger:hover{background:var(--red);border-color:var(--red);}
   <nav>
     <button id="t-combat" class="on" onclick="tab('combat')">Combat</button>
     <button id="t-party" onclick="tab('party')">Party</button>
+    <button id="t-ship" onclick="tab('ship')">Ship</button>
     <button id="t-space" onclick="tab('space')">Space</button>
     <button id="t-camp" onclick="tab('camp')">Campaign</button>
     <button id="t-rules" onclick="tab('rules')">Rules</button>
@@ -481,6 +495,8 @@ button.danger:hover{background:var(--red);border-color:var(--red);}
     <div class="row" style="margin-top:8px">
       <input id="slotName" class="grow" placeholder="Character name" style="min-width:150px">
       <button onclick="makeSlot()">Create a character slot</button>
+      <button class="mini" id="tfBtn" onclick="cycleTrainFail()"
+              title="What a failed training check costs">Failed training: lose all</button>
       <button class="mini" onclick="dlTable()" title="Every character in the campaign, one file">&#8681; All characters</button>
       <button class="mini" onclick="dlEverything()" title="Console state and every character together">&#8681; Everything</button>
       <button class="mini x" onclick="purgeEmpty()" title="Delete slots with no character in them">Purge empty slots</button>
@@ -498,6 +514,21 @@ button.danger:hover{background:var(--red);border-color:var(--red);}
       the wounds and ammunition you set here appear on their sheet.</p>
   </div>
   <div id="partyList"></div>
+  <div class="pgfoot">&copy; 2026 Effigy Media. All rights reserved.
+    <span>Traveller is a trademark of Far Future Enterprises. Contains material &copy; Mongoose Publishing,
+    used under the Community Content Agreement for The Travellers' Aid Society.</span></div>
+</section>
+
+<!-- ============================ SHIP ============================ -->
+<section class="tab" id="tab-ship">
+  <div class="card">
+    <div class="row">
+      <b style="font-size:17px;letter-spacing:.05em" id="shipTitle">The ship</b>
+      <span class="hint grow" id="shipNote">Shared with every character sheet in the campaign.</span>
+      <button class="mini" onclick="shipSeedConsole()">Load the Harrier</button>
+    </div>
+  </div>
+  <div id="shipBody"></div>
   <div class="pgfoot">&copy; 2026 Effigy Media. All rights reserved.
     <span>Traveller is a trademark of Far Future Enterprises. Contains material &copy; Mongoose Publishing,
     used under the Community Content Agreement for The Travellers' Aid Society.</span></div>
@@ -782,8 +813,27 @@ button.danger:hover{background:var(--red);border-color:var(--red);}
   </div>
 
   <div class="card">
-    <h2>Campaign log</h2>
-    <textarea id="notes" placeholder="What they did, who saw them, who owes them, what is coming."></textarea>
+    <h2>Clocks <span class="hint" style="letter-spacing:0;text-transform:none;font-weight:400">the slow pressures</span></h2>
+    <div class="row">
+      <input id="clkName" class="grow" placeholder="What is building" style="min-width:150px">
+      <input id="clkSeg" type="number" value="6" style="width:70px" title="Segments">
+      <button onclick="clockAdd(document.getElementById('clkName').value, +document.getElementById('clkSeg').value); document.getElementById('clkName').value=''">Add a clock</button>
+      <button class="mini" onclick="clockSeed()">Add the usual five</button>
+    </div>
+    <div id="clockList" style="margin-top:9px"></div>
+  </div>
+
+  <div class="card">
+    <h2>Sessions</h2>
+    <div class="row">
+      <input id="sesDate" type="date" style="width:160px">
+      <input id="sesName" class="grow" placeholder="What this session was called" style="min-width:170px">
+      <button onclick="sessionAdd()">New session</button>
+    </div>
+    <div id="sessionList" style="margin-top:10px"></div>
+
+    <h2 style="margin-top:16px">Campaign notes <span class="hint" style="letter-spacing:0;text-transform:none;font-weight:400">standing facts, not session by session</span></h2>
+    <textarea id="notes" placeholder="Who owes them, who is hunting them, what is coming."></textarea>
     <div class="row" style="margin-top:8px">
       <button onclick="downloadSave()">&#8681; Save to Files</button>
       <button onclick="document.getElementById('loadFile').click()">&#8679; Load from Files</button>
@@ -1416,6 +1466,33 @@ const RULES=[[
  ["Boons and banes",
   "A boon rolls <b>3D and keeps the highest two</b>. A bane rolls 3D and keeps the lowest two. "+
   "One of each cancels out. Reach for these instead of inventing a modifier.","Core p.60"],
+ ["The action economy",
+  "One <b>Major</b> action and one <b>Minor</b> — or <b>three Minor</b> instead. Plus unlimited "+
+  "<b>Reactions</b> and <b>Free</b> actions. <span class=\'pg\'>Core p.74–76</span><br>"+
+  "<table><tr><th>Major</th><th>What it is</th></tr>"+
+  "<tr><td>Attack</td><td>Melee 2D + Melee + STR or DEX DM · Ranged 2D + Gun Combat + DEX DM, usually 8+</td></tr>"+
+  "<tr><td>Leadership</td><td>Effect = that many DM+1 bonuses handed out. A negative Effect gives the enemy that many DM−1 against your side</td></tr>"+
+  "<tr><td>Absorbing work</td><td>First aid, bypassing security, a psionic talent, taking a crew position, calling ortillery</td></tr>"+
+  "<tr><td>Two Minors</td><td>Trade it for two more Minor actions</td></tr></table>"+
+  "<table><tr><th>Minor</th><th>What it is</th></tr>"+
+  "<tr><td>Aim</td><td>DM+1 to the next ranged attack on that target, stacking to DM+6 if they do nothing else</td></tr>"+
+  "<tr><td>Move</td><td>Up to Movement, usually 6m. Halved in rough terrain, quartered prone</td></tr>"+
+  "<tr><td>Change stance</td><td>Stand, crouch or go prone</td></tr>"+
+  "<tr><td>Draw or reload</td><td>One weapon readied or one magazine changed</td></tr>"+
+  "<tr><td>Something quick</td><td>Spot a firing position, identify kit, pick something up</td></tr></table>"+
+  "<table><tr><th>Reaction</th><th>Unlimited — but each costs DM−1 on their next actions</th></tr>"+
+  "<tr><td>Dodge</td><td>Penalty equal to their DEX DM or Athletics (dex), whichever is higher. Melee or ranged, each attack separately</td></tr>"+
+  "<tr><td>Dive for cover</td><td>DM−2 to every attacker this round and possibly better protection. <b>House rule:</b> they lose their next Minor action only — the Major is untouched. They may attack from the floor, or spend the Major as two Minors to stand and move. Prone until they stand. Ranged only</td></tr>"+
+  "<tr><td>Parry</td><td>In close combat, penalty equal to their Melee skill</td></tr></table>"+
+  "<b>Free actions</b> — shouting a warning, pressing a button. As many as you will wear."],
+ ["Attack modifiers",
+  "Aiming <b>+1</b> each · laser sight while aiming <b>+1</b> · short range <b>+1</b> "+
+  "<span class=\'pg\'>Core p.74</span><br>"+
+  "Long range <b>−2</b> · extreme <b>−4</b> · target in cover <b>−2</b> · prone target <b>−1</b> · "+
+  "fast mover <b>−1</b> for every full 10m of movement relative to the shooter<br>"+
+  "Short range is within a quarter of the weapon's Range; long is beyond Range but under twice it.<br>"+
+  "In close combat only one-handed weapons fire, and a pistol can be parried aside; rifles are clubs. "+
+  "Moving away from a melee gives the enemy an immediate free attack at <b>DM+2</b>."],
  ["Personal combat",
   "Initiative <b>2D + DEX DM</b>, plus the leader's Tactics.<br>"+
   "Attack <b>2D + skill + STR or DEX DM</b>, usually against <b>8+</b>.<br>"+
@@ -2135,6 +2212,119 @@ function lootFromMob(id){
   tab('tables'); rollLoot();
 }
 
+
+
+/* ==================== SESSIONS ==================== */
+function sessionAdd(){
+  S.sessions=S.sessions||[];
+  const d=document.getElementById('sesDate').value || new Date().toISOString().slice(0,10);
+  const n=(document.getElementById('sesName').value||'').trim();
+  S.sessions.unshift({id:uid(), d, n:n||('Session '+(S.sessions.length+1)), t:'', open:true});
+  document.getElementById('sesName').value='';
+  renderSessions(); queueSave();
+  setTimeout(()=>{ const a=document.querySelector('#sessionList textarea'); if(a) a.focus(); },60);
+}
+function sessionField(id,k,v){
+  const s=(S.sessions||[]).find(x=>x.id===id); if(!s) return;
+  s[k]=v; queueSave();
+  if(k!=='t') renderSessions();
+}
+function sessionToggle(id){
+  const s=(S.sessions||[]).find(x=>x.id===id); if(!s) return;
+  s.open=!s.open; renderSessions(); queueSave();
+}
+function sessionDel(id){
+  const s=(S.sessions||[]).find(x=>x.id===id);
+  askConfirm('Delete <b>'+(s?s.n:'this session')+'</b> and its notes? This cannot be undone from here.',
+    ()=>{ S.sessions=S.sessions.filter(x=>x.id!==id); renderSessions(); queueSave(); });
+}
+function renderSessions(){
+  const el=document.getElementById('sessionList'); if(!el) return;
+  S.sessions=S.sessions||[];
+  if(!S.sessions.length){
+    el.innerHTML='<p class="hint">No sessions yet. Start one and the notes field grows as you fill it.</p>';
+    return;
+  }
+  el.innerHTML=S.sessions.map(s=>{
+    const words=(s.t||'').trim() ? (s.t.trim().split(/\s+/).length+' words') : 'empty';
+    return `<div class="sess">
+      <div class="row">
+        <input type="date" value="${s.d||''}" style="width:150px"
+          onchange="sessionField('${s.id}','d',this.value)">
+        <input class="grow" value="${(s.n||'').replace(/"/g,'&quot;')}" style="min-width:150px;font-weight:700"
+          onchange="sessionField('${s.id}','n',this.value)">
+        <span class="hint" style="min-width:64px;text-align:right">${words}</span>
+        <button class="mini" onclick="sessionToggle('${s.id}')">${s.open?'Hide':'Open'}</button>
+        <button class="mini x" onclick="sessionDel('${s.id}')">&times;</button>
+      </div>
+      ${s.open?`<textarea class="sesnotes" placeholder="What happened, who they met, what it cost, what is owed."
+        oninput="sessionField('${s.id}','t',this.value)">${(s.t||'')}</textarea>`:''}
+    </div>`;
+  }).join('');
+}
+
+/* ==================== CAMPAIGN CLOCKS ==================== */
+const CLOCKSEED=[
+ ["Imperial attention",8,"Raids reported, patrols reassigned, a name attached to the ship"],
+ ["The Aslan grudge",6,"Ihatei clans remember faces, and honour does not expire"],
+ ["Rao's plan",8,"Whatever she is actually doing, it is further along than you think"],
+ ["Wrax's ambition",6,"He wanted the Harrier. He still does"],
+ ["Drinax restored",12,"Worlds allied, tribute paid, a kingdom back on the map"]
+];
+function clockAdd(name,seg){
+  S.clocks=S.clocks||[];
+  S.clocks.push({id:uid(), n:name||'New clock', seg:seg||6, fill:0, note:''});
+  renderClocks(); queueSave();
+}
+function clockTick(id,v){
+  const c=(S.clocks||[]).find(x=>x.id===id); if(!c) return;
+  c.fill=Math.max(0,Math.min(c.seg,c.fill+v));
+  if(v>0 && c.fill===c.seg) logEvent(`<b class="hotc">${c.n}</b> is full`);
+  renderClocks(); queueSave();
+}
+function clockField(id,k,v){ const c=(S.clocks||[]).find(x=>x.id===id); if(!c) return;
+  c[k]= (k==='seg') ? Math.max(1,Math.min(24,+v||6)) : v;
+  if(k==='seg') c.fill=Math.min(c.fill,c.seg);
+  renderClocks(); queueSave(); }
+function clockDel(id){ const c=(S.clocks||[]).find(x=>x.id===id);
+  askConfirm('Delete the clock <b>'+(c?c.n:'')+'</b>?',()=>{
+    S.clocks=S.clocks.filter(x=>x.id!==id); renderClocks(); queueSave(); }); }
+function clockSeed(){
+  askConfirm('Add the five clocks this campaign usually runs on? Anything already here is left alone.',()=>{
+    S.clocks=S.clocks||[];
+    CLOCKSEED.forEach(([n,seg,note])=>{
+      if(!S.clocks.some(c=>c.n===n)) S.clocks.push({id:uid(),n,seg,fill:0,note});
+    });
+    renderClocks(); queueSave();
+  },'Add them');
+}
+function renderClocks(){
+  const el=document.getElementById('clockList'); if(!el) return;
+  S.clocks=S.clocks||[];
+  if(!S.clocks.length){ el.innerHTML='<p class="hint">No clocks yet. These are the slow pressures — '+
+    'the ones that never come up in a session but decide the campaign.</p>'; return; }
+  el.innerHTML=S.clocks.map(c=>{
+    const pips=[...Array(c.seg)].map((_,i)=>
+      `<button class="pip ${i<c.fill?'fill':''}" onclick="clockTick('${c.id}', ${i<c.fill?-(c.fill-i):(i+1-c.fill)})"
+        title="${i+1} of ${c.seg}"></button>`).join('');
+    const full=c.fill>=c.seg;
+    return `<div class="card" style="padding:11px">
+      <div class="row">
+        <input value="${c.n.replace(/"/g,'&quot;')}" onchange="clockField('${c.id}','n',this.value)"
+          style="flex:1.4;min-width:150px;font-weight:700${full?';color:var(--green)':''}">
+        <input type="number" value="${c.seg}" onchange="clockField('${c.id}','seg',this.value)"
+          style="width:66px" title="Segments">
+        <span class="num" style="min-width:52px;text-align:right">${c.fill}/${c.seg}</span>
+        <button class="mini x" onclick="clockDel('${c.id}')">&times;</button>
+      </div>
+      <div class="pips" style="margin-top:7px">${pips}</div>
+      <input class="grow" style="margin-top:6px" placeholder="What filling this means"
+        value="${(c.note||'').replace(/"/g,'&quot;')}" onchange="clockField('${c.id}','note',this.value)">
+      ${full?'<div class="hint hotc" style="margin-top:5px">Full. Something happens now.</div>':''}
+    </div>`;
+  }).join('');
+}
+
 /* ==================== CUSTOM TABLES ==================== */
 const CTMODE={d66:36,d6:6,d12:12,d20:20,'2d':11,even:0};
 let ctEditing=null;
@@ -2221,6 +2411,9 @@ const HELP=[
   "<b>Order.</b> Nothing sorts itself. Every initiative is a box you can type into, and the small arrows beside it "+
   "move anyone up or down the order by hand. <b>Sort by initiative</b> re-orders on demand and keeps the marker "+
   "on whoever is acting. <b>Roll for everyone</b> is there if you want the console to do it.<br><br>"+
+  "<b>Their combat page comes with them.</b> A weapon written on a player's sheet arrives here whole &mdash; "+
+  "attack DM, damage, range and traits &mdash; and shows on their row in the fight, so you are not asking "+
+  "what someone's rifle does.<br><br>"+
   "<b>Ammunition</b> shows on every Traveller's row in the order of battle &mdash; magazine count, then "+
   "<b>1</b>, <b>3</b>, <b>6</b> to spend rounds and <b>R</b> to reload. It is the same count as the Party tab, "+
   "so you can run the whole fight from here and never switch away. Counts go amber at a third and red at empty.<br><br>"+
@@ -2332,6 +2525,24 @@ const HELP=[
   "<b>Name tables</b> sit at the front of the Tables tab: first names by gender and surnames, as separate D66 "+
   "tables for Vilani, Solomani, Zhodani, Aslan and Vargr. The gold <b>✦ One-off NPC name</b> button rolls species, "+
   "gender and both halves in one go when you just need somebody called something, now.<br><br>"+
+  "<b>Sessions</b> on the Campaign tab keep a dated, named record each with its own notes field. Newest sits "+
+  "at the top, older ones collapse to a single line with a word count, and the notes area scrolls rather than "+
+  "pushing everything else off the screen. Campaign notes below it are for standing facts &mdash; who owes them, "+
+  "who is hunting them &mdash; rather than session by session.<br><br>"+
+  "<b>Conditions</b> live on the player's own sheet, so what you write appears in their hands and what they "+
+  "write appears on their row here. Four slots each, with an optional round count that ticks itself down as "+
+  "the round rolls over and clears when it reaches zero.<br><br>"+
+  "<b>Clocks</b> on the Campaign tab are for the pressures that never surface in a single session and decide "+
+  "the campaign anyway &mdash; Imperial attention, the Aslan grudge, Rao's plan, Wrax's ambition, Drinax "+
+  "restored. Tap a segment to fill to it, tap a filled one to pull back. They are yours alone; nothing about "+
+  "them reaches the players.<br><br>"+
+  "<b>Ship</b> is one record shared by the console and every character sheet. Change the fuel here and it "+
+  "changes in their hands a second later; a player marking a defect repaired changes it for you. "+
+  "<b>Load the Harrier</b> fills in the ship as Oleb handed her over, defects and all, without "+
+  "overwriting anything already written.<br><br>"+
+  "<b>Failed training</b> on the Party tab decides what a botched EDU check costs your players: the rules as "+
+  "written lose every banked study week, or the gentler house version keeps all but the last. The setting "+
+  "travels to their sheets automatically.<br><br>"+
   "<b>Loot</b> rolls what a beaten enemy was carrying &mdash; loose cash scaled to their number, gear drawn "+
   "from tables that suit the archetype, cheap armour on a 4+, the odd credit stick, and something personal "+
   "in a pocket. The <b>Loot</b> button on any mob in the fight fills it in from that mob and jumps here.<br><br>"+
@@ -2350,6 +2561,75 @@ const HELP=[
 
 
 
+
+
+/* ==================== THE SHIP ==================== */
+const SHIPSEED = {"shName": "Dragon Alliance", "shClass": "Harrier-class commerce raider", "shTL": "15", "shHull": "200 tons \u00b7 streamlined, reinforced", "shPrev": "V'Hurg", "shArmour": "4", "shArmourType": "Bonded superdense", "shThrust": "6", "shJump": "2", "shPower": "260", "shPowerNow": "195", "shHullPts": "88", "shHullNow": "72", "shFuel": "42", "shFuelNow": "42", "shFuelNote": "J-2 and four weeks of operation", "shBridge": "Holographic controls", "shComputer": "Computer/20", "shSensors": "Advanced \u00b7 DM+1", "shCM": "Military countermeasures suite", "shCargo": "29.7", "shCargoNow": "0", "shStater": "8", "shLow": "8", "shBerthsNow": "", "shMaint": "2657", "shMaintNow": "10000", "shCost": "318.94875", "shSoftware": "Evade/1 \u00b7 Fire Control/2 \u00b7 Jump Control/2 \u00b7 Library \u00b7 Manoeuvre/0", "shSystems": "Armoury \u00b7 Cargo scoop \u00b7 Fuel processor, 40 tons a day \u00b7 Holographic hull \u00b7 Superior stealth", "shCrewList": "Captain \u00b7 Pilot \u00b7 Astrogator \u00b7 Engineer \u00b7 Maintenance \u00b7 Gunner \u00d72 \u00b7 Medic \u00b7 Marines \u00d73", "shW0n": "Particle barbette", "shW0m": "Dorsal", "shW0d": "4D", "shW0t": "Accurate, high yield \u00b7 Power 15", "shW1n": "Single turret, missile rack", "shW1m": "Ventral", "shW1d": "by missile", "shW1t": "12 missiles stored \u00b7 Power 1 \u00b7 DAMAGED", "shD0": "1", "shD0n": "Keel microfractures", "shD0e": "Hull 72 of 88. One Ship Share restores 8, up to 88", "shD1": "1", "shD1n": "Damaged ventral turret", "shD1e": "Turret and ammo feed hit by a fusion bay. 1 Ship Share", "shD2": "1", "shD2n": "Holographic hull", "shD2e": "Only the port wing and nose projectors work, and it draws full power. 1 Ship Share", "shD3": "1", "shD3n": "Countermeasures suite", "shD3e": "Reduced to a plain countermeasures suite. DM+1 per Ship Share, max DM+6 for 2", "shD4": "1", "shD4n": "Power plant", "shD4e": "75% efficiency \u2014 Power 195 of 260. 1 Ship Share", "shD5": "1", "shD5n": "Unreliable jump drive", "shD5e": "DM\u22122 to Engineer (J-drive) checks to jump. Each Ship Share removes 1", "shD6": "1", "shD6n": "Unreliable manoeuvre drive", "shD6e": "Double 1 on any Pilot check and all Thrust is lost for a round. 2 Ship Shares", "shD7": "1", "shD7n": "Maintenance", "shD7e": "Cr10,000 a month instead of Cr2,657. Each Ship Share cuts Cr2,000, floor Cr2,657", "shNotes": "Built at TL15, far above anything in the Reach. The exotic components no longer exist, which is\nwhy repairs cost what they cost. Upgrades run 1 Ship Share to MCr5 once the campaign is underway."};
+const SHIPFIELDS=[
+ ['Identity',[['shName','Name',2],['shClass','Class',2],['shPrev','Formerly',1],['shTL','TL',1]]],
+ ['Hull',[['shHull','Hull',3],['shArmour','Armour',1],['shArmourType','Armour type',2],['shCost','Cost MCr',1]]],
+ ['Drives and power',[['shThrust','Thrust',1],['shThrustNow','Thrust now',1],['shJump','Jump',1],['shJumpNow','Jump now',1],
+   ['shPower','Power',1],['shPowerNow','Power now',1],['shHullPts','Hull points',1],['shHullNow','Hull now',1],
+   ['shFuel','Fuel tons',1],['shFuelNow','Fuel now',1],['shFuelNote','Fuel note',2]]],
+ ['Weapons',[['shW0n','Mount 1',2],['shW0m','Position',1],['shW0d','Damage',1],['shW0t','Notes',4],
+   ['shW1n','Mount 2',2],['shW1m','Position',1],['shW1d','Damage',1],['shW1t','Notes',4]]],
+ ['Fit',[['shBridge','Bridge',2],['shComputer','Computer',1],['shSensors','Sensors',2],['shCM','Countermeasures',2],
+   ['shSoftware','Software',4],['shSystems','Systems',4]]],
+ ['Accommodation, hold and upkeep',[['shStater','Staterooms',1],['shLow','Low berths',1],
+   ['shCargo','Cargo tons',1],['shCargoNow','In the hold',1],
+   ['shMaint','Upkeep normal',1],['shMaintNow','Upkeep actual',1],['shCrewList','Crew posts',4]]]
+];
+function shipVal(k){ S.ship=S.ship||{}; return S.ship[k]===undefined?'':S.ship[k]; }
+function shipSet(k,v){ S.ship=S.ship||{}; S.ship[k]=v; shipPushConsole(k); queueSave(); }
+function shipSeedConsole(){
+  askConfirm('Fill the ship record with the <b>Harrier</b> as she was handed over? '+
+    'Anything already written is left alone.', ()=>{
+      S.ship=S.ship||{};
+      Object.keys(SHIPSEED).forEach(k=>{ if(!S.ship[k]) S.ship[k]=SHIPSEED[k]; });
+      renderShip(); Object.keys(SHIPSEED).forEach(shipPushConsole); queueSave();
+    },'Load');
+}
+function renderShip(){
+  const el=document.getElementById('shipBody'); if(!el) return;
+  S.ship=S.ship||{};
+  document.getElementById('shipTitle').textContent = S.ship.shName || 'The ship';
+  el.innerHTML = SHIPFIELDS.map(([title,fields])=>
+    `<div class="card"><h2>${title}</h2><div class="row">`+
+    fields.map(([k,label,w])=>
+      `<label class="hint" style="display:flex;flex-direction:column;gap:3px;flex:${w} 1 ${w*70}px;min-width:${w*70}px">${label}
+        <input value="${String(shipVal(k)).replace(/"/g,'&quot;')}" onchange="shipSet('${k}',this.value)"></label>`).join('')+
+    `</div></div>`).join('') +
+    `<div class="card"><h2>Damage and defects</h2>` +
+    [0,1,2,3,4,5,6,7].map(i=>
+      `<div class="row" style="border-top:1px solid #1e1516;padding:6px 0">
+        <button class="pip g ${shipVal('shDx'+i)?'fill':''}" onclick="shipSet('shDx'+${i}, shipVal('shDx'+${i})?'':'1');renderShip()"
+          title="Tick when repaired">${shipVal('shDx'+i)?'✓':''}</button>
+        <input style="flex:1.2;min-width:150px" value="${String(shipVal('shD'+i+'n')).replace(/"/g,'&quot;')}"
+          onchange="shipSet('shD${i}n',this.value)">
+        <input class="grow" value="${String(shipVal('shD'+i+'e')).replace(/"/g,'&quot;')}"
+          onchange="shipSet('shD${i}e',this.value)">
+      </div>`).join('') + `</div>` +
+    `<div class="card"><h2>Ship's log</h2>
+      <textarea style="min-height:90px" onchange="shipSet('shNotes',this.value)">${String(shipVal('shNotes'))}</textarea></div>`;
+}
+/* the shared record */
+function shipWatchConsole(){
+  if(!FB.db) return;
+  if(FB.shipRef) FB.shipRef.off();
+  FB.shipRef=FB.db.ref('campaigns/'+campaignId()+'/ship');
+  FB.shipRef.on('value', s=>{
+    const v=s.val(); if(!v) return;
+    S.ship=Object.assign(S.ship||{}, v);
+    renderShip();
+    document.getElementById('shipNote').textContent='Live — shared with every sheet in the campaign.';
+  }, err=>{ document.getElementById('shipNote').textContent='Cannot read the ship record: '+err.code; });
+}
+function shipPushConsole(k){
+  if(!FB.db||!FB.ok) return;
+  const up={}; up[k]=S.ship[k]===undefined?null:S.ship[k];
+  FB.db.ref('campaigns/'+campaignId()+'/ship').update(up)
+    .catch(e=>{ document.getElementById('shipNote').textContent='Not saved: '+e.code; });
+}
 
 /* ==================== LIVE SYNC ==================== */
 const FBCONF={
@@ -2382,6 +2662,7 @@ async function syncStart(){
     if(FB.ref) FB.ref.off();
     FB.camp=campaignId();
     FB.ref=FB.db.ref('campaigns/'+FB.camp+'/players');
+    shipWatchConsole();
     FB.ref.on('value', snap=>{ applyRemote(snap.val()||{}); },
       err=>{ syncStatus('Cannot see the table — sign in as referee','hotc'); });
     showRef();
@@ -2573,7 +2854,7 @@ function applyRemote(all){
     if(!p){ p={id:'rp_'+uid, uid:uid, ablate:true, notes:''}; S.party.push(p); }
     /* the sheet owns identity, stats, skills and kit; the console owns wounds and ammo */
     p.uid=uid; p.remote=true; p.n=built.n; p.role=built.role;
-    p.mx=built.mx; p.skl=built.skl; p.skills=built.skills; p.sheet=sheet;
+    p.mx=built.mx; p.skl=built.skl; p.skills=built.skills; p.sheet=sheet; p.cnd=built.cnd;
     p.armMax=built.armMax; if(p.arm===undefined) p.arm=built.armMax;
     p.md=p.md||built.md; p.wd=p.wd||built.wd;
     if(!p.wpn||!p.wpn.length) p.wpn=built.wpn;
@@ -2596,16 +2877,67 @@ function buildFromSheet(o){
   const wpn=[];
   for(let i=0;i<8;i++){ const nm=(o['wN'+i]||'').trim(); if(!nm) continue;
     wpn.push({id:'w'+i,n:nm,d:(o['wD'+i]||'').trim(),mag:num(o,'wMx'+i),
-      cur:(o['wMn'+i]===''||o['wMn'+i]===undefined)?num(o,'wMx'+i):num(o,'wMn'+i)}); }
+      cur:(o['wMn'+i]===''||o['wMn'+i]===undefined)?num(o,'wMx'+i):num(o,'wMn'+i),
+      atk:(o['wA'+i]||'').trim(), rng:(o['wR'+i]||'').trim(),
+      sk:(o['wS'+i]||'').trim(),  tr:(o['wT'+i]||'').trim()}); }
+  const cnd=[];
+  for(let i=0;i<4;i++){ const n=(o['cnd'+i+'n']||'').trim();
+    if(n) cnd.push({i, n, r:(o['cnd'+i+'r']||'').trim()}); }
   const skl=[];
   SHEETSKILLS.forEach((s,n)=>{ const lv=num(o,'skL'+n)+num(o,'skM'+n);
     if(lv>0) skl.push({n:(o['skN'+n]?s.replace('____',o['skN'+n]):s), l:lv}); });
   skl.sort((a,b)=>b.l-a.l);
-  return {n:(o.name||'').trim()||'Unnamed', role:[o.species,o.player?'played by '+o.player:''].filter(Boolean).join(' · '),
+  return {cnd, n:(o.name||'').trim()||'Unnamed', role:[o.species,o.player?'played by '+o.player:''].filter(Boolean).join(' · '),
     mx,md,wd,armMax,wpn,skl,skills:skl.slice(0,6).map(s=>s.n+' '+s.l).join(' · ')};
 }
 
 /* ---- outgoing: the console owns what happens in play ---- */
+function cycleTrainFail(){
+  S.camp=S.camp||{};
+  S.camp.trainFail = (S.camp.trainFail==='revert') ? 'zero' : 'revert';
+  renderTrainFail(); pushLive(); queueSave();
+}
+function renderTrainFail(){
+  const b=document.getElementById('tfBtn'); if(!b) return;
+  b.textContent = 'Failed training: ' + ((S.camp&&S.camp.trainFail==='revert') ? 'keep all but one week' : 'lose all');
+}
+/* the referee can write into a player's own sheet — that is where conditions live */
+function setCondition(pcId, slot, name, rounds){
+  const p=S.party.find(x=>x.id===pcId); if(!p) return;
+  p.cnd=p.cnd||[];
+  const at=p.cnd.findIndex(c=>c.i===slot);
+  if(name){ const rec={i:slot,n:name,r:rounds||''};
+    if(at>=0) p.cnd[at]=rec; else p.cnd.push(rec); }
+  else if(at>=0) p.cnd.splice(at,1);
+  if(FB.db&&FB.ok&&p.uid){
+    const up={}; up['cnd'+slot+'n']=name||''; up['cnd'+slot+'r']=rounds||'';
+    FB.db.ref('campaigns/'+campaignId()+'/players/'+p.uid+'/sheet').update(up).catch(()=>{});
+  }
+  renderParty(); renderCombat(); queueSave();
+}
+function addCondition(pcId){
+  const p=S.party.find(x=>x.id===pcId); if(!p) return;
+  const used=(p.cnd||[]).map(c=>c.i);
+  let slot=-1; for(let i=0;i<4;i++) if(used.indexOf(i)<0){ slot=i; break; }
+  if(slot<0){ note('All four condition slots are full'); return; }
+  askText('What is affecting <b>'+p.n+'</b>?', 'Stunned', v=>{
+    if(!v) return;
+    const m=v.match(/^(.*?)[, ]+(\d+)$/);
+    setCondition(pcId, slot, m?m[1].trim():v, m?m[2]:'');
+  });
+}
+function askText(prompt, placeholder, cb){
+  const m=document.getElementById('modal');
+  document.getElementById('mtext').innerHTML=prompt+
+    '<br><br><input id="mtin" class="grow" placeholder="'+(placeholder||'')+
+    '" style="width:100%" onkeyup="if(event.key===\'Enter\')document.getElementById(\'mok\').click()">'+
+    '<div class="hint" style="margin-top:6px">Add a number for rounds — <i>Stunned 3</i></div>';
+  const ok=document.getElementById('mok');
+  ok.textContent='Add';
+  ok.onclick=()=>{ const v=(document.getElementById('mtin')||{}).value||''; closeModal(); cb(v.trim()); };
+  m.classList.add('on');
+  setTimeout(()=>{ const i=document.getElementById('mtin'); if(i) i.focus(); },60);
+}
 function pushLive(){
   if(!FB.db||!FB.ok||applying) return;
   clearTimeout(FB.pushT);
@@ -2614,6 +2946,8 @@ function pushLive(){
       FB.db.ref('campaigns/'+FB.camp+'/players/'+p.uid+'/live').set({
         wd:p.wd||{}, md:p.md||{}, arm:p.arm===undefined?null:p.arm,
         ammo:(p.wpn||[]).map(w=>w.cur),
+        trainFail:(S.camp&&S.camp.trainFail)||'zero',
+        party:S.party.filter(x=>x.n).map(x=>x.n),
         by:'console', at:firebase.database.ServerValue.TIMESTAMP
       }).catch(e=>syncStatus('Write refused: '+e.code,'redc'));
     });
@@ -2664,10 +2998,15 @@ function sheetToParty(o){
   for(let i=0;i<8;i++){
     const nm=(o['wN'+i]||'').trim(); if(!nm) continue;
     wpn.push({id:uid(),n:nm,d:(o['wD'+i]||'').trim(),
-      mag:num(o,'wMx'+i), cur:(o['wMn'+i]===''||o['wMn'+i]===undefined)?num(o,'wMx'+i):num(o,'wMn'+i)});
+      mag:num(o,'wMx'+i), cur:(o['wMn'+i]===''||o['wMn'+i]===undefined)?num(o,'wMx'+i):num(o,'wMn'+i),
+      atk:(o['wA'+i]||'').trim(), rng:(o['wR'+i]||'').trim(),
+      sk:(o['wS'+i]||'').trim(),  tr:(o['wT'+i]||'').trim()});
   }
 
   /* skills with a level, best first */
+  const cnd=[];
+  for(let i=0;i<4;i++){ const cn=(o['cnd'+i+'n']||'').trim();
+    if(cn) cnd.push({i, n:cn, r:(o['cnd'+i+'r']||'').trim()}); }
   const skl=[];
   SHEETSKILLS.forEach((s,n)=>{
     const lv=num(o,'skL'+n)+num(o,'skM'+n);
@@ -2681,7 +3020,7 @@ function sheetToParty(o){
   const existing=S.party.find(p=>p.n.toLowerCase()===name.toLowerCase());
   const rec={id:existing?existing.id:uid(), n:name, role,
     ch,mx,md,wd, arm:armour, armMax:armour, ablate:existing?existing.ablate:true,
-    wpn, skl, skills:skl.slice(0,6).map(s=>s.n+' '+s.l).join(' · '),
+    wpn, skl, cnd, skills:skl.slice(0,6).map(s=>s.n+' '+s.l).join(' · '),
     sheet:o, notes:existing?existing.notes:''};
   if(existing) Object.assign(existing, rec); else S.party.push(rec);
   migratePC(rec); syncCh(rec);
@@ -2701,7 +3040,11 @@ function partyToSheet(id){
     o['b'+k]=p.mx[k]; o['m'+k]=p.md[k]||0; o['i'+k]=p.wd[k]||0;
   });
   (p.wpn||[]).forEach((w,i)=>{ if(i>7) return;
-    o['wN'+i]=w.n; o['wD'+i]=w.d||''; o['wMx'+i]=w.mag||''; o['wMn'+i]=w.cur; });
+    o['wN'+i]=w.n; o['wD'+i]=w.d||''; o['wMx'+i]=w.mag||''; o['wMn'+i]=w.cur;
+    if(w.atk!==undefined) o['wA'+i]=w.atk;
+    if(w.rng!==undefined) o['wR'+i]=w.rng;
+    if(w.sk!==undefined)  o['wS'+i]=w.sk;
+    if(w.tr!==undefined)  o['wT'+i]=w.tr; });
   const nm=(p.n||'traveller').replace(/[^\w-]+/g,'_').toLowerCase();
   const blob=new Blob([JSON.stringify(o,null,1)],{type:'application/json'});
   const u=URL.createObjectURL(blob), a=document.createElement('a');
@@ -2915,7 +3258,9 @@ function renderParty(){
         <input class="magbox mx" type="number" value="0" title="Full magazine"
                onchange="setMag('${p.id}','${w.id}',this.value)">
         <button class="mini x" onclick="delWpn('${p.id}','${w.id}')">&times;</button></div>`;
-      return `<div class="wpn"><span class="nm"><b>${w.n}</b>${w.d?` <span class="hint">${w.d}</span>`:''}</span>
+      const det=[w.d,w.rng,w.tr].filter(Boolean).join(' · ');
+      return `<div class="wpn"><span class="nm"><b>${w.n}</b>${w.atk?` <b class="greenc">${/^[+-]/.test(w.atk)?w.atk:'+'+w.atk}</b>`:''}
+          ${det?`<span class="hint">${det}</span>`:''}${w.sk?`<span class="hint"> · ${w.sk}</span>`:''}</span>
         <input class="magbox ${cls}" type="number" value="${w.cur}" title="Rounds loaded"
                onchange="setCur('${p.id}','${w.id}',this.value)">
         <span class="hint">of</span>
@@ -2978,6 +3323,8 @@ function renderParty(){
                placeholder="Recon 2, Gun Combat (slug) 1, Vacc Suit 0 …"
                onchange="setSkills('${p.id}',this.value)">
       </div>
+      ${(p.cnd&&p.cnd.length)?`<h2 style="margin-top:12px">Conditions</h2>
+        <div class="skchips">${p.cnd.map(x=>`<span class="skc">${x.n}${x.r?` <b>${x.r}</b>`:''}</span>`).join('')}</div>`:''}
       ${(p.skl&&p.skl.length)?`<h2 style="margin-top:12px">Skills <span class="hint" style="letter-spacing:0;text-transform:none;font-weight:400">from the imported sheet</span></h2>
         <div class="skchips">${p.skl.map(s=>`<span class="skc">${s.n} <b>${s.l}</b></span>`).join('')}</div>`:''}
       <h2 style="margin-top:12px">Weapons &amp; ammunition</h2>
@@ -3234,7 +3581,7 @@ function wipeNow(){
 
 /* ---------------- tabs ---------------- */
 function tab(n){
-  ['combat','party','space','camp','rules','tables','help'].forEach(k=>{
+  ['combat','party','ship','space','camp','rules','tables','help'].forEach(k=>{
     document.getElementById('tab-'+k).classList.toggle('on',k===n);
     document.getElementById('t-'+k).classList.toggle('on',k===n);
   });
@@ -3327,6 +3674,11 @@ function moveOrder(id,dir){
 }
 function rollInit(){ S.combat.list.forEach(c=>c.init=d(6)+d(6)); sortC(); S.combat.turn=0; renderCombat(); queueSave(); }
 function nextTurn(){
+  if(S.combat.turn>=S.combat.list.length-1){        /* a new round begins */
+    S.party.filter(p=>p.cnd&&p.cnd.length).forEach(p=>{
+      p.cnd.slice().forEach(c=>{ if(c.r) tickCondition(p.id,c.i,-1); });
+    });
+  }
   if(!S.combat.list.length) return;
   S.combat.turn++;
   if(S.combat.turn>=S.combat.list.length){ S.combat.turn=0; S.combat.round++; tickConds(); }
@@ -3496,7 +3848,7 @@ function renderCombat(){
         <button class="mini" onclick="addCond('${c.id}')">Add</button>
         <span class="hint">blank rounds = until you remove it</span>
       </div>`:''}
-      ${ammoStrip(c)}${c.t==='mob'?psiStrip(c):''}
+      ${ammoStrip(c)}${c.t==='mob'?psiStrip(c):''}${condStrip(c)}
       ${cbtEditPane(c)}
       <div class="row" style="margin-top:5px">
         ${body}
@@ -3684,6 +4036,25 @@ function addGenShip(){
   renderSpace(); queueSave();
 }
 
+function condStrip(c){
+  if(!c.pcId) return '';
+  const p=S.party.find(x=>x.id===c.pcId); if(!p) return '';
+  const list=p.cnd||[];
+  const chips=list.map(x=>
+    `<span class="cchip">${x.n}${x.r?` <b>${x.r}</b>`:''}
+      ${x.r?`<button onclick="tickCondition('${p.id}',${x.i},-1)" title="One round down">&minus;</button>`:''}
+      <button onclick="setCondition('${p.id}',${x.i},'')" title="Clear it">&times;</button></span>`).join('');
+  return `<div class="ammostrip"><div class="agrp"><span class="an">Conditions</span>
+    ${chips||'<span class="hint">none</span>'}
+    <button onclick="addCondition('${p.id}')" title="Add one">+</button></div></div>`;
+}
+function tickCondition(pcId, slot, v){
+  const p=S.party.find(x=>x.id===pcId); if(!p) return;
+  const c=(p.cnd||[]).find(x=>x.i===slot); if(!c) return;
+  const n=Math.max(0,(+c.r||0)+v);
+  if(n===0){ setCondition(pcId, slot, ''); note(c.n+' ended'); }
+  else setCondition(pcId, slot, c.n, String(n));
+}
 function ammoStrip(c){
   if(!c.pcId) return '';
   const p=S.party.find(x=>x.id===c.pcId);
@@ -3692,7 +4063,10 @@ function ammoStrip(c){
   if(!live.length) return '';
   return '<div class="ammostrip">'+live.map(w=>{
     const cls=w.cur===0?'out':(w.cur<=w.mag*0.34?'low':'');
-    return `<div class="agrp"><span class="an">${w.n}</span>
+    const line=[w.d,w.rng,w.tr].filter(Boolean).join(' · ');
+    const atk=(w.atk!==undefined&&w.atk!=='')?` <b class="greenc">${/^[+-]/.test(w.atk)?w.atk:'+'+w.atk}</b>`:'';
+    return `<div class="agrp" title="${line}"><span class="an">${w.n}${atk}</span>
+      ${line?`<span class="wstat">${line}</span>`:''}
       <span class="ac ${cls}">${w.cur}<span class="hint" style="font-size:10px">/${w.mag}</span></span>
       <button onclick="fire('${p.id}','${w.id}',1)" title="Fire one">1</button>
       <button onclick="fire('${p.id}','${w.id}',3)" title="Burst">3</button>
@@ -3979,6 +4353,7 @@ function splitSpoils(){
      &nbsp;·&nbsp; captain <b class="goldc">${m(per*5)}</b>`;
 }
 function renderCamp(){
+  renderTrainFail();
   /* an older save may be missing whole sub-objects */
   S.camp=S.camp||{};
   S.camp.ru=S.camp.ru||{s:0,t:0,c:0};
@@ -4024,10 +4399,10 @@ function importState(){
   try{ S=JSON.parse(io.value); renderAll(); saveAll(true); hideBox(); note('Restored '+stamp()); }
   catch(e){ note('Not a valid save'); }
 }
-function renderAll(){ S.party=S.party||[]; S.rolls=S.rolls||[]; S.custom=S.custom||[]; S.npcs=S.npcs||[]; S.events=S.events||[];
+function renderAll(){ S.party=S.party||[]; S.rolls=S.rolls||[]; S.custom=S.custom||[]; S.npcs=S.npcs||[]; S.events=S.events||[]; S.ship=S.ship||{}; S.clocks=S.clocks||[]; S.sessions=S.sessions||[];
   renderMode(); renderParty(); renderCombat(); renderSpace(); renderCamp();
   rules(S.rulePane||0); renderRolls(); renderCustom(); renderTableBtns(); renderTable();
-  renderEvents(); refreshUndoUI(); }
+  renderEvents(); renderShip(); renderClocks(); renderSessions(); refreshUndoUI(); }
 document.getElementById('helpBody').innerHTML=HELP.map(x=>
   `<div class="card"><h2>${x[0]}</h2><div class="hint" style="font-size:14px;line-height:1.7">${x[1]}</div></div>`).join('');
 document.getElementById('gArch').innerHTML=
