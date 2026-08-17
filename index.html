@@ -254,6 +254,45 @@ button.danger:hover{background:var(--red);border-color:var(--red);}
   font-size:10px;letter-spacing:.08em;color:var(--green);line-height:1.6;}
 .pgfoot span{display:block;font-size:9px;letter-spacing:.04em;color:var(--green);opacity:.62;margin-top:3px;}
 .log div{border-bottom:1px solid #1e1516;padding:2px 0;}
+
+/* ---------------------------------------------------------------
+   Phones. The console is a two-hand tool on an iPad and a one-hand
+   tool on a phone — so the tab bar scrolls, cards stack, and the
+   panels that hang off the header become full width.
+   --------------------------------------------------------------- */
+@media (max-width:760px){
+  header{gap:6px;padding:calc(9px + env(safe-area-inset-top,0px)) 10px 9px;}
+  header .brand{font-size:12px;}
+  nav{overflow-x:auto;flex-wrap:nowrap;-webkit-overflow-scrolling:touch;
+      scrollbar-width:none;}
+  nav::-webkit-scrollbar{display:none;}
+  nav button{white-space:nowrap;flex:0 0 auto;}
+  main{padding:10px calc(10px + env(safe-area-inset-right,0px))
+             10px calc(10px + env(safe-area-inset-left,0px));}
+  .card{padding:11px;}
+  .row{gap:6px;}
+  /* only fields meant to fill the row do — a two-digit box stays a two-digit box */
+  .row{flex-wrap:wrap;}
+  .row > .grow{flex:1 1 100%;min-width:0;}
+  .row > input:not([style*="width"]):not(.grow){flex:1 1 140px;min-width:0;}
+  .row > select:not([style*="width"]){flex:1 1 140px;min-width:0;}
+  .row > button,.row > .mini,.row > span,.row > label{flex:0 0 auto;}
+  button,input,select{min-height:40px;font-size:14px;}
+  .mini{min-height:36px;}
+  #dicePanel,#undoPanel{left:8px;right:8px;width:auto;max-height:70vh;}
+  .lane{min-width:140px;}
+  .plot{overflow-x:auto;-webkit-overflow-scrolling:touch;}
+  .grid2{grid-template-columns:1fr!important;}
+  .cbt .row{flex-wrap:wrap;}
+  #tab-camp{max-height:none;}
+  table{display:block;overflow-x:auto;-webkit-overflow-scrolling:touch;}
+  table thead,table tbody{display:table;width:100%;min-width:420px;}
+  .gbox{max-width:none;}
+}
+@media (max-width:420px){
+  header b{font-size:11px;letter-spacing:.14em;}
+  .pgfoot{font-size:9px;}
+}
 </style>
 <script src="https://www.gstatic.com/firebasejs/12.17.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/12.17.1/firebase-auth-compat.js"></script>
@@ -445,7 +484,10 @@ button.danger:hover{background:var(--red);border-color:var(--red);}
 <!-- ============================ PARTY ============================ -->
 <section class="tab" id="tab-party">
   <div class="card">
-    <h2>Add a Traveller</h2>
+    <h2>Add a Traveller by hand
+      <button class="mini" onclick="toggleManual()" id="manBtn" style="margin-left:9px">Show</button>
+      <span class="hint" style="letter-spacing:0;text-transform:none;font-weight:400">only needed offline, or for a guest with no link</span></h2>
+    <div id="manualAdd" style="display:none">
     <div class="row">
       <input id="pcName" placeholder="Name" class="grow" style="min-width:140px">
       <input id="pcRole" placeholder="Role aboard" style="width:150px">
@@ -460,6 +502,7 @@ button.danger:hover{background:var(--red);border-color:var(--red);}
       <input id="pcPSI" type="number" placeholder="PSI" style="width:78px" title="Leave blank if they have no psionic training">
       <input id="pcArm" type="number" placeholder="Armour" style="width:92px">
       <button onclick="addPC()">Add</button>
+      </div>
     </div>
     <div class="row" style="margin-top:8px">
       <button class="mini" onclick="addParty(false)">Send to the fight &mdash; I'll enter initiative</button>
@@ -496,7 +539,7 @@ button.danger:hover{background:var(--red);border-color:var(--red);}
       <input id="slotName" class="grow" placeholder="Character name" style="min-width:150px">
       <button onclick="makeSlot()">Create a character slot</button>
       <button class="mini" id="tfBtn" onclick="cycleTrainFail()"
-              title="What a failed training check costs">Failed training: lose all</button>
+              title="What a failed training check costs">Training: lose all</button>
       <button class="mini" onclick="dlTable()" title="Every character in the campaign, one file">&#8681; All characters</button>
       <button class="mini" onclick="dlEverything()" title="Console state and every character together">&#8681; Everything</button>
       <button class="mini x" onclick="purgeEmpty()" title="Delete slots with no character in them">Purge empty slots</button>
@@ -1816,20 +1859,11 @@ const T_RUMOUR=["A Sindalian treasury ship was hidden, not destroyed","Theev ans
 "A ship has been raiding under Drinax colours, and it is not yours",
 "The King is dying and the anagathics have stopped working","There is a black signal burned into some hulls",
 "Somebody at court is selling your movements"];
-const T_RESP=[[5,"No response. Roll again in an hour.",null],
- [7,"A vessel launches from the starport to investigate.",null],
- [9,"A vessel launches from the starport or the jump limit, whichever is nearer.",null],
- [10,"A vessel in orbit responds.",'1D+1 hours'],
- [11,"A vessel in orbit responds.",'1D hours'],
- [12,"A vessel in orbit responds.",'1Dx10 minutes'],
- [99,"A vessel in orbit responds, and fast.",'1Dx5 minutes']];
-
-const T_CAPT2=T_CAPTAINS, T_SHIP2=T_SHIPNAMES;
 const TABLES=[
  {n:"Crew name",       mode:"d66", items:T_NAMES},
  {n:"Crew quirk",      mode:"d66", items:T_QUIRKS},
- {n:"Merchant captain",mode:"d12", items:T_CAPT2},
- {n:"Merchant ship",   mode:"d12", items:T_SHIP2},
+ {n:"Merchant captain",mode:"d12", items:T_CAPTAINS},
+ {n:"Merchant ship",   mode:"d12", items:T_SHIPNAMES},
  {n:"Why they fight",  mode:"d6",  items:T_PREY},
  {n:"Boarding twist",  mode:"d12", items:T_BOARD},
  {n:"Dockside trouble",mode:"d12", items:T_PORT},
@@ -2263,6 +2297,9 @@ function renderSessions(){
   }).join('');
 }
 
+const CONDS=["Stunned","Prone","Suppressed","Dazed","Bleeding","Drugged",
+  "Suit breached","Drifting","Aiming","In cover","Grappled","Burning","Blinded","Deafened"];
+
 /* ==================== CAMPAIGN CLOCKS ==================== */
 const CLOCKSEED=[
  ["Imperial attention",8,"Raids reported, patrols reassigned, a name attached to the ship"],
@@ -2489,9 +2526,7 @@ const HELP=[
   "cannot win</i> &mdash; they know that. It is <i>we will be merciful if you do not make us.</i><br><br>"+
 
   "<b>5. If it goes loud.</b> Each contact has damage pips. Roll <b>Gunnery 8+</b> to mark one, then roll a critical "+
-  "and describe it. The ship's own line tells you what it does back: how many attacks an exchange, the number it "+
-  "needs to mark a pip on you, and how far out it reaches. Aim for the manoeuvre drive or the fuel &mdash; breaching "+
-  "the hull ruins the cargo you came for.<br><br>"+
+  "and describe it. What the target does back is on its own detail line.<br><br>"+
 
   "<b>6. Start the Response clock the moment you fire.</b> Roll it on the Tables tab, send it here, and count it "+
   "down out loud every exchange. That clock, not the freighter, is what kills pirates.<br><br>"+
@@ -2522,9 +2557,7 @@ const HELP=[
   "discarded die shown struck through.<br><br>"+
   "Put a number in <b>Target</b> and it works out the <b>Effect</b> and names the band, which is the part you "+
   "actually need at speed. Every roll drops into the session log.<br><br>"+
-  "<b>Name tables</b> sit at the front of the Tables tab: first names by gender and surnames, as separate D66 "+
-  "tables for Vilani, Solomani, Zhodani, Aslan and Vargr. The gold <b>✦ One-off NPC name</b> button rolls species, "+
-  "gender and both halves in one go when you just need somebody called something, now.<br><br>"+
+  "<b>Names</b> has its own card at the top of the Tables tab, and says what it does there.<br><br>"+
   "<b>Sessions</b> on the Campaign tab keep a dated, named record each with its own notes field. Newest sits "+
   "at the top, older ones collapse to a single line with a word count, and the notes area scrolls rather than "+
   "pushing everything else off the screen. Campaign notes below it are for standing facts &mdash; who owes them, "+
@@ -2540,9 +2573,8 @@ const HELP=[
   "changes in their hands a second later; a player marking a defect repaired changes it for you. "+
   "<b>Load the Harrier</b> fills in the ship as Oleb handed her over, defects and all, without "+
   "overwriting anything already written.<br><br>"+
-  "<b>Failed training</b> on the Party tab decides what a botched EDU check costs your players: the rules as "+
-  "written lose every banked study week, or the gentler house version keeps all but the last. The setting "+
-  "travels to their sheets automatically.<br><br>"+
+  "<b>Training</b> on the Party tab decides what a botched EDU check costs: <b>lose all</b> is the rules as "+
+  "written, <b>keep all</b> is the gentler house version. The setting travels to their sheets on its own.<br><br>"+
   "<b>Loot</b> rolls what a beaten enemy was carrying &mdash; loose cash scaled to their number, gear drawn "+
   "from tables that suit the archetype, cheap armour on a 4+, the odd credit stick, and something personal "+
   "in a pocket. The <b>Loot</b> button on any mob in the fight fills it in from that mob and jumps here.<br><br>"+
@@ -2899,7 +2931,7 @@ function cycleTrainFail(){
 }
 function renderTrainFail(){
   const b=document.getElementById('tfBtn'); if(!b) return;
-  b.textContent = 'Failed training: ' + ((S.camp&&S.camp.trainFail==='revert') ? 'keep all but one week' : 'lose all');
+  b.textContent = 'Training: ' + ((S.camp&&S.camp.trainFail==='revert') ? 'keep all' : 'lose all');
 }
 /* the referee can write into a player's own sheet — that is where conditions live */
 function setCondition(pcId, slot, name, rounds){
@@ -2927,15 +2959,16 @@ function addCondition(pcId){
   });
 }
 function askText(prompt, placeholder, cb){
-  const m=document.getElementById('modal');
-  document.getElementById('mtext').innerHTML=prompt+
+  /* the shared modal drives its OK button through modalYes, so hand it a modalFn */
+  askConfirm(prompt+
     '<br><br><input id="mtin" class="grow" placeholder="'+(placeholder||'')+
-    '" style="width:100%" onkeyup="if(event.key===\'Enter\')document.getElementById(\'mok\').click()">'+
-    '<div class="hint" style="margin-top:6px">Add a number for rounds — <i>Stunned 3</i></div>';
-  const ok=document.getElementById('mok');
-  ok.textContent='Add';
-  ok.onclick=()=>{ const v=(document.getElementById('mtin')||{}).value||''; closeModal(); cb(v.trim()); };
-  m.classList.add('on');
+    '" style="width:100%" onkeyup="if(event.key===\'Enter\')modalYes()">'+
+    '<div class="skchips" style="margin-top:8px">'+
+      CONDS.map(c=>`<span class="skc" style="cursor:pointer"
+        onclick="document.getElementById('mtin').value='${c}';document.getElementById('mtin').focus()">${c}</span>`).join('')+
+    '</div>'+
+    '<div class="hint" style="margin-top:6px">Add a number for rounds &mdash; <i>Stunned 3</i></div>',
+    ()=>{ const el=document.getElementById('mtin'); cb(el?el.value.trim():''); }, 'Add');
   setTimeout(()=>{ const i=document.getElementById('mtin'); if(i) i.focus(); },60);
 }
 function pushLive(){
@@ -2971,7 +3004,6 @@ const SHEETSKILLS=[
  "Profession: ____","Profession: ____","Recon","Science: ____","Science: ____","Science: ____",
  "Seafarer: Ocean Ships","Seafarer: Personal","Seafarer: Sail","Seafarer: Submarine","Stealth","Steward",
  "Streetwise","Survival","Tactics: Military","Tactics: Naval","Vacc Suit","____","____","____"];
-const SHEET_URL='./sheet.html';
 
 function importSheet(ev){
   const f=ev.target.files&&ev.target.files[0]; if(!f) return;
@@ -3083,6 +3115,13 @@ function chDM(v){ if(v<=0)return -3; if(v<=2)return -2; if(v<=5)return -1;
   if(v<=8)return 0; if(v<=11)return 1; if(v<=14)return 2; return 3; }
 function sgn(n){ return (n>=0?'+':'')+n; }
 
+function toggleManual(){
+  const d=document.getElementById('manualAdd'), b=document.getElementById('manBtn');
+  const on = d.style.display==='none';
+  d.style.display = on ? '' : 'none';
+  b.textContent = on ? 'Hide' : 'Show';
+  b.classList.toggle('on2', on);
+}
 function addPC(){
   const n=document.getElementById('pcName').value.trim(); if(!n) return;
   const ch={}, mx={}, wd={}, md={};
@@ -3693,8 +3732,6 @@ function dmg(id,v){
   c.end=Math.max(0,Math.min(c.endMax,c.end+v));
   renderCombat(); queueSave();
 }
-const CONDS=["Stunned","Prone","Suppressed","Dazed","Bleeding","Drugged",
-  "Suit breached","Drifting","Aiming","In cover","Grappled","Burning","Blinded","Deafened"];
 function addCond(id){
   const c=S.combat.list.find(x=>x.id===id); if(!c) return;
   const n=document.getElementById('cn-'+id).value.trim();
