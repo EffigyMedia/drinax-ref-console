@@ -460,6 +460,49 @@ input[type="checkbox"]:focus-visible{outline:1px solid var(--red);outline-offset
   input.calc{background:#eef4f9!important;color:#14202b!important;}
   *{-webkit-print-color-adjust:exact;print-color-adjust:exact;}
 }
+
+/* Checkboxes are square, everywhere, at one size. This sits last on purpose:
+   the control-height rules and the table-cell rules were each winning in
+   different places, giving 14x16 in tables and 16x26 beside a label. */
+input[type="checkbox"]{
+  width:16px!important; height:16px!important;
+  min-height:16px!important; max-height:16px!important;
+  min-width:16px!important; max-width:16px!important;
+  flex:0 0 16px!important; align-self:center; padding:0!important;
+  box-sizing:border-box!important;
+}
+@media (max-width:760px){
+  input[type="checkbox"]{
+    width:20px!important; height:20px!important;
+    min-height:20px!important; max-height:20px!important;
+    min-width:20px!important; max-width:20px!important;
+    flex:0 0 20px!important;
+  }
+}
+
+/* The personality scales are radios, and were rendering as nothing at all:
+   appearance:none with no styling behind it. Same language as the checkboxes,
+   round instead of square because that is what a radio means. */
+input[type="radio"]{
+  -webkit-appearance:none;appearance:none;
+  width:15px!important;height:15px!important;
+  min-width:15px!important;max-width:15px!important;
+  min-height:15px!important;max-height:15px!important;
+  flex:0 0 15px!important;
+  border:1px solid var(--line);border-radius:50%;background:transparent;
+  cursor:pointer;margin:0;padding:0;box-sizing:border-box;vertical-align:middle;
+}
+input[type="radio"]:hover{border-color:var(--red);}
+input[type="radio"]:checked{
+  border-color:var(--red);
+  background:radial-gradient(circle at 50% 50%, var(--red) 0 45%, transparent 46%);
+}
+input[type="radio"]:focus-visible{outline:1px solid var(--red);outline-offset:1px;}
+@media (max-width:760px){
+  input[type="radio"]{width:18px!important;height:18px!important;
+    min-width:18px!important;max-width:18px!important;
+    min-height:18px!important;max-height:18px!important;flex:0 0 18px!important;}
+}
 </style>
 <script src="https://www.gstatic.com/firebasejs/12.17.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/12.17.1/firebase-auth-compat.js"></script>
@@ -594,11 +637,9 @@ input[type="checkbox"]:focus-visible{outline:1px solid var(--red);outline-offset
     </div>
     <div>
       <h2 class="sec">PSIONICS</h2>
-      <div class="grid" style="grid-template-columns:1fr 1fr">
-        <div class="f"><label>Psionic strength</label><input data-k="psiStr" type="number" oninput="calc()"></div>
-        <div class="f"><label>Points spent</label><input data-k="psiSpent" type="number" oninput="calc()"></div>
-      </div>
-      <div class="f" style="margin-top:7px"><label>Points remaining</label><input data-k="psiLeft" class="calc" readonly></div>
+      <div class="note" style="margin-bottom:5px">PSI is a characteristic. Put it in the optional
+        row opposite and spend it as <b>injury</b>, the same as any other wound &mdash; current is
+        what you have left.</div>
       <table><thead><tr><th>Talent</th><th style="width:38px">Lvl</th><th style="width:38px">Misc</th><th style="width:44px">Check</th></tr></thead>
         <tbody id="psiBody"></tbody></table>
 
@@ -692,9 +733,9 @@ input[type="checkbox"]:focus-visible{outline:1px solid var(--red);outline-offset
       <h2 class="sec">COMBAT REFERENCE</h2>
       <div class="grid" style="grid-template-columns:1fr 1fr">
         <div class="f"><label>Initiative DM</label><input data-k="initDM" class="calc" readonly></div>
-        <div class="f"><label>Tactics DM</label><input data-k="tacDM"></div>
-        <div class="f"><label>Leadership DM</label><input data-k="ldrDM"></div>
-        <div class="f"><label>Opp. dodge penalty</label><input data-k="dodge"></div>
+        <div class="f"><label>Tactics DM</label><input data-k="tacDM" class="calc" readonly></div>
+        <div class="f"><label>Leadership DM</label><input data-k="ldrDM" class="calc" readonly></div>
+        <div class="f"><label>Dodge &mdash; their penalty</label><input data-k="dodge" class="calc" readonly></div>
       </div>
       <h3 class="sub">ENCUMBRANCE</h3>
       <div class="grid" style="grid-template-columns:1fr 1fr 1fr">
@@ -906,7 +947,7 @@ input[type="checkbox"]:focus-visible{outline:1px solid var(--red);outline-offset
     <select id="stationPick" onchange="setStation(this.value)"></select>
     <span class="hint" id="stationNote"></span>
   </div>
-  <h2 class="sec">THE SHIP <span id="shSync">shared with the whole crew</span></h2>
+  <h2 class="sec">THE SHIP <span id="shSync"></span></h2>
   <div class="row noprint" style="display:flex;gap:6px;align-items:center;margin-top:5px">
     <label class="hint" style="font-size:8px;letter-spacing:.13em;text-transform:uppercase;font-weight:700">Ship</label>
     <select id="shipPick" onchange="pickShip(this.value)" style="flex:1;min-width:0"></select>
@@ -1028,7 +1069,7 @@ input[type="checkbox"]:focus-visible{outline:1px solid var(--red);outline-offset
 <section class="page" id="p9">
   <div class="banner plain"><div><h1>ASTROGATION &amp; JUMP LOG</h1></div><div class="use">FOR USE WITH<br>MONGOOSE 2E</div></div>
 
-  <h2 class="sec">JUMP &amp; FUEL <span>shared with the whole crew</span></h2>
+  <h2 class="sec">JUMP &amp; FUEL</h2>
   <div class="grid" style="grid-template-columns:1.3fr 1.3fr .7fr .8fr .8fr .8fr .8fr">
     <div class="f"><label>Currently at</label><input data-k="shAt"></div>
     <div class="f"><label>Bound for</label><input data-k="shTo"></div>
@@ -1103,7 +1144,7 @@ input[type="checkbox"]:focus-visible{outline:1px solid var(--red);outline-offset
 
 <section class="page" id="p10">
   <div class="banner plain"><div><h1>HOLD &amp; STASH</h1></div><div class="use">FOR USE WITH<br>MONGOOSE 2E</div></div>
-  <h2 class="sec">HOLD &amp; STASH <span>everything the crew owns between them</span></h2>
+  <h2 class="sec">HOLD &amp; STASH</h2>
   <table><thead><tr><th>Item</th><th style="width:64px">Qty / tons</th><th style="width:80px">Value (Cr)</th>
     <th style="width:90px">Where</th><th style="width:190px">Notes</th></tr></thead>
     <tbody id="holdBody"><tr><td><input data-k="shM0i"></td><td class="mid"><input data-k="shM0q"></td>
@@ -1157,7 +1198,7 @@ input[type="checkbox"]:focus-visible{outline:1px solid var(--red);outline-offset
 <section class="page" id="p11">
   <div class="banner plain"><div><h1>VEHICLE RECORD</h1></div><div class="use">FOR USE WITH<br>MONGOOSE 2E</div></div>
 
-  <h2 class="sec">THE VEHICLE <span id="vhSync">shared with the whole crew</span></h2>
+  <h2 class="sec">THE VEHICLE <span id="vhSync"></span></h2>
   <div class="row noprint" style="display:flex;gap:6px;align-items:center;margin-top:5px">
     <label class="hint" style="font-size:8px;letter-spacing:.13em;text-transform:uppercase;font-weight:700">Vehicle</label>
     <select id="vehPick" onchange="pickVeh(this.value)" style="flex:1;min-width:0"></select>
@@ -1266,7 +1307,7 @@ input[type="checkbox"]:focus-visible{outline:1px solid var(--red);outline-offset
 <section class="page" id="p12">
   <div class="banner plain"><div><h1>ROBOT RECORD</h1></div><div class="use">FOR USE WITH<br>MONGOOSE 2E</div></div>
 
-  <h2 class="sec">THE ROBOT <span id="rbSync">shared with the whole crew</span></h2>
+  <h2 class="sec">THE ROBOT <span id="rbSync"></span></h2>
   <div class="row noprint" style="display:flex;gap:6px;align-items:center;margin-top:5px">
     <label class="hint" style="font-size:8px;letter-spacing:.13em;text-transform:uppercase;font-weight:700">Robot</label>
     <select id="robPick" onchange="pickRob(this.value)" style="flex:1;min-width:0"></select>
@@ -1670,7 +1711,7 @@ input[type="checkbox"]:focus-visible{outline:1px solid var(--red);outline-offset
     </div>
   </div>
   <div class="foot"><div>Created under license · Community Content Agreement for The Travellers' Aid Society</div>
-    <div class="r">Sheet layout &copy; Effigy Media<br>Combat reference<br>Page 13 of 17</div></div>
+    <div class="r">Sheet layout &copy; Effigy Media<br>Combat reference<br>Page 15 of 17</div></div>
 </section>
 
 <section class="page" id="p16">
@@ -1742,7 +1783,7 @@ input[type="checkbox"]:focus-visible{outline:1px solid var(--red);outline-offset
   </div>
 
   <div class="foot"><div>Created under license · Community Content Agreement for The Travellers' Aid Society</div>
-    <div class="r">Sheet layout &copy; Effigy Media<br>Psionics 1 of 2<br>Page 15 of 17</div></div>
+    <div class="r">Sheet layout &copy; Effigy Media<br>Psionics 1 of 2<br>Page 16 of 17</div></div>
 </section>
 
 <section class="page" id="p17">
@@ -1916,7 +1957,7 @@ const SKILLS=[
  "Profession: ____","Profession: ____","Recon","Science: ____","Science: ____","Science: ____",
  "Seafarer: Ocean Ships","Seafarer: Personal","Seafarer: Sail","Seafarer: Submarine","Stealth","Steward",
  "Streetwise","Survival","Tactics: Military","Tactics: Naval","Vacc Suit","____","____","____","____"];
-const TALENTS=["Awareness","Clairvoyance","Telekinesis","Telepathy","Teleportation"];
+const TALENTS=["Awareness","Clairvoyance","Telekinesis","Telepathy","Teleportation","Zhodani talent","",""];
 const PERS=[["Diplomatic","Violent"],["Passive","Instigating"],["Cautious","Reckless"],["Selfless","Selfish"],
  ["Trusting","Suspicious"],["Logical","Emotional"],["Optimistic","Pessimistic"],["Extroverted","Introverted"],
  ["Neat","Messy"],["Confident","Shy"],["Works","Relaxes"]];
@@ -2057,10 +2098,21 @@ function pageScale(el){
   return Math.min(1, Math.max(MIN_SCALE, room / need));
 }
 function fitPages(){
+  const room = PAGE_INCHES * 96;
   document.querySelectorAll('.page').forEach(el=>{
     if(el.classList.contains('noprint')) return;
-    const s = pageScale(el);
-    el.style.zoom = s < 0.999 ? s.toFixed(3) : '';
+    el.style.zoom='';
+    /* Applying zoom reflows the page, so one measurement is not enough —
+       a page can still overflow after being scaled. Converge instead. */
+    let s = 1;
+    for(let pass=0; pass<6; pass++){
+      const h = el.getBoundingClientRect().height;
+      if(h <= room + 0.5) break;
+      s = Math.max(MIN_SCALE, s * (room / h) * 0.995);
+      el.style.zoom = s.toFixed(4);
+      if(s <= MIN_SCALE) break;
+    }
+    if(s >= 0.999) el.style.zoom='';
   });
 }
 function unfitPages(){
@@ -2461,7 +2513,7 @@ function vehWatch(){
   };
   VH.ref.on('child_changed', incoming);
   VH.ref.on('child_added', incoming);
-  vehNote('shared with the whole crew');
+  vehNote('');
 }
 function garageWatch(){
   if(!FB.db) return;
@@ -2498,7 +2550,7 @@ function vehPush(k){
     GARAGE.vehicles[GARAGE.active]=Object.assign(GARAGE.vehicles[GARAGE.active]||{}, up);
     if(up.vhName!==undefined) renderVehPicker();
     FB.db.ref(vehPath()).update(up)
-      .then(()=>{ vehNote('saved for the whole crew'); setTimeout(()=>keys.forEach(k=>delete VH.dirty[k]),400); })
+      .then(()=>{ vehNote('saved'); setTimeout(()=>keys.forEach(k=>delete VH.dirty[k]),400); })
       .catch(e=>{ keys.forEach(k=>delete VH.dirty[k]); vehNote('not saved — '+e.code); });
   },700);
 }
@@ -2953,7 +3005,7 @@ function robWatch(){
   };
   RB.ref.on('child_changed', incoming);
   RB.ref.on('child_added', incoming);
-  robNote('shared with the whole crew');
+  robNote('');
 }
 function roboticsWatch(){
   if(!FB.db) return;
@@ -2988,7 +3040,7 @@ function robPush(k){
     Object.keys(RB.dirty).forEach(k=>{ up[k]=o[k]===undefined?null:o[k]; });
     const keys=Object.keys(up); if(!keys.length) return;
     FB.db.ref(robNode()).update(up)
-      .then(()=>{ robNote('saved for the whole crew'); setTimeout(()=>keys.forEach(k=>delete RB.dirty[k]),400); })
+      .then(()=>{ robNote('saved'); setTimeout(()=>keys.forEach(k=>delete RB.dirty[k]),400); })
       .catch(e=>{ keys.forEach(k=>delete RB.dirty[k]); robNote('not saved — '+e.code); });
   },700);
 }
@@ -3032,9 +3084,9 @@ const HELPMAP={
  travelz:"Amber or red travel zone, if any.", gasg:"Whether the system has a gas giant to skim fuel from.",
  raddose:"Background radiation of the homeworld, if it matters.",
  upp:"Calculated. Your six characteristics in hexadecimal, the traditional Traveller shorthand.",
- psiStr:"Your PSI characteristic. Leave blank if you have no psionic training.",
- psiSpent:"Points spent so far. Rises as you use talents and clears when you rest.",
- psiLeft:"Calculated. Strength minus spent.",
+ tacDM:"Calculated. INT DM plus your best Tactics skill.",
+ ldrDM:"Calculated. SOC DM plus Leadership.",
+ dodge:"Calculated. What an attacker takes when you dodge — your DEX DM or Athletics (dexterity), whichever is better.",
  radCum:"Total radiation absorbed over your career. It accumulates and does not heal.",
  radEff:"What that dose is doing to you.",
  disease:"Anything you are currently suffering from.",
@@ -3367,9 +3419,17 @@ function calcChars(cur){
   const psiHex=($('bPSI')&&$('bPSI').value!=='') ? '-'+(cur.PSI>=0&&cur.PSI<18?hexd[cur.PSI]:'?') : '';
   set('upp', anyChar ? upp+psiHex : '');
 
-  set('psiLeft', $('psiStr').value==='' ? '' : Math.max(0, V('psiStr')-V('psiSpent')));
   set('mvCur', ($('mvBase').value===''&&$('mvMisc').value==='') ? '' : V('mvBase')+V('mvMisc'));
   set('initDM', $('bDEX').value==='' ? '' : sgn(chDM(cur.DEX)));
+  /* the three other DMs a fight keeps asking for */
+  const lvlOf = name => { const n=SKILLS.indexOf(name); return n<0 ? -99 : effLevel(n)+V('skM'+n); };
+  const tac = Math.max(lvlOf('Tactics: Military'), lvlOf('Tactics: Naval'));
+  set('tacDM', $('bINT').value==='' ? '' : sgn(chDM(cur.INT) + (tac>-99?Math.max(0,tac):0)));
+  const ldr = lvlOf('Leadership');
+  set('ldrDM', $('bSOC').value==='' ? '' : sgn(chDM(cur.SOC) + (ldr>-99?Math.max(0,ldr):0)));
+  const ath = lvlOf('Athletics: Dexterity');
+  const dodge = Math.max(chDM(cur.DEX), ath>-99?ath:0);
+  set('dodge', $('bDEX').value==='' ? '' : sgn(-Math.max(0,dodge)));
 }
 
 /* returns the best Athletics total, which encumbrance needs */
@@ -3944,7 +4004,7 @@ function shipWatch(){
   };
   SH.ref.on('child_changed', incoming);
   SH.ref.on('child_added', incoming);
-  shipNote('shared with the whole crew');
+  shipNote('');
 }
 function shipPush(k){
   if(SH.applying) return;
@@ -3963,7 +4023,7 @@ function shipPush(k){
     FLEET.ships[FLEET.active]=Object.assign(FLEET.ships[FLEET.active]||{}, up);
     if(up.shName!==undefined) renderShipPicker();
     FB.db.ref(shipPath()).update(up)
-      .then(()=>{ shipNote('saved for the whole crew');
+      .then(()=>{ shipNote('saved');
         setTimeout(()=>keys.forEach(k=>delete SH.dirty[k]),400); })
       .catch(e=>{ keys.forEach(k=>delete SH.dirty[k]); shipNote('not saved — '+e.code); });
   },700);

@@ -523,6 +523,25 @@ nav{gap:6px;align-items:center;}
   .pills{overflow-x:auto;flex-wrap:nowrap;}
   .pill-btn{white-space:nowrap;flex:0 0 auto;}
 }
+
+/* Checkboxes are square, everywhere, at one size. This sits last on purpose:
+   the control-height rules and the table-cell rules were each winning in
+   different places, giving 14x16 in tables and 16x26 beside a label. */
+input[type="checkbox"]{
+  width:16px!important; height:16px!important;
+  min-height:16px!important; max-height:16px!important;
+  min-width:16px!important; max-width:16px!important;
+  flex:0 0 16px!important; align-self:center; padding:0!important;
+  box-sizing:border-box!important;
+}
+@media (max-width:760px){
+  input[type="checkbox"]{
+    width:20px!important; height:20px!important;
+    min-height:20px!important; max-height:20px!important;
+    min-width:20px!important; max-width:20px!important;
+    flex:0 0 20px!important;
+  }
+}
 </style>
 <script src="https://www.gstatic.com/firebasejs/12.17.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/12.17.1/firebase-auth-compat.js"></script>
@@ -970,13 +989,17 @@ nav{gap:6px;align-items:center;}
     <p class="hint" id="sRespNote" style="margin-top:6px"></p>
   </div>
 
-  <div class="card">
+  <div class="card" id="cardPhase">
+    <div id="scPhase" class="pills" style="margin-bottom:0"></div>
+  </div>
+
+  <div class="card" id="cardDuties">
     <h2>Crew duties <span class="hint" style="letter-spacing:0;text-transform:none;font-weight:400">
       who is where aboard your ship</span></h2>
     <div id="dutyBox"></div>
   </div>
 
-  <div class="card">
+  <div class="card" id="cardTurnOrder">
     <h2>Turn order <span class="hint" style="letter-spacing:0;text-transform:none;font-weight:400">
       2D + Pilot + Thrust</span></h2>
     <div class="row">
@@ -1120,7 +1143,7 @@ nav{gap:6px;align-items:center;}
     </div>
   </div>
 
-  <div class="card">
+  <div class="card" id="cardAsk">
     <h2>The Ask &mdash; modifiers</h2>
     <p class="hint">
       Short <b>+4</b> · Medium <b>+2</b> · warning shot <b>+2</b> (and +2 Alarm) · disabling hit <b>+4</b> ·
@@ -6839,6 +6862,51 @@ const SC_MANOEUVRES = [
   ['line',  'Line up a shot','A steadier firing solution'],
   ['evade', 'Evasive action','Repeatable — every other manoeuvre is once a round']
 ];
+
+/* ---------------------------------------------------------------
+   Two phases, because they run on different clocks.
+
+   THE APPROACH takes hours. You are closing on a mark, deciding
+   whether to hail her, whether she believes you, whether anyone
+   has called it in. Range matters for who can see whom, but there
+   is no Thrust accounting — stepping a fast intercept through a
+   six minute round would be absurd.
+
+   THE BATTLE is six minutes a round. Initiative, Thrust budgets,
+   the step order. You drop into it the moment the gig is up.
+   --------------------------------------------------------------- */
+function scPhase(){ return S.space.phase || 'approach'; }
+function scSetPhase(p){
+  S.space.phase = p;
+  if(p==='battle'){
+    S.space.step = 0;
+    if(!(S.space.contacts||[]).some(c=>c.init!==null&&c.init!==undefined)) spaceRollInit();
+    else scResetThrust();
+    logEvent('<b class="hotc">The gig is up</b> — battle stations');
+  } else {
+    logEvent('Back to the approach');
+  }
+  renderSpace(); queueSave();
+}
+function renderPhaseBar(){
+  const el=document.getElementById('scPhase'); if(!el) return;
+  const p=scPhase();
+  el.innerHTML = `
+    <button class="pill-btn${p==='approach'?' on':''}" onclick="scSetPhase('approach')">The approach</button>
+    <button class="pill-btn${p==='battle'?' on':''}" onclick="scSetPhase('battle')">The battle</button>
+    ${p==='approach'
+      ? `<button class="jumpon" onclick="scSetPhase('battle')">The gig is up &rsaquo;</button>
+         <span class="hint">Closing takes hours. Move freely, work the Ask, watch the alarm.</span>`
+      : `<span class="hint">Six minutes a round. Thrust is a budget.</span>`}`;
+  /* show only what the phase needs */
+  const battleOnly=['cardTurnOrder','cardDuties'];
+  battleOnly.forEach(id=>{ const n=document.getElementById(id);
+    if(n) n.style.display = p==='battle' ? '' : 'none'; });
+  const approachOnly=['cardAsk'];
+  approachOnly.forEach(id=>{ const n=document.getElementById(id);
+    if(n) n.style.display = p==='approach' ? '' : 'none'; });
+}
+
 function scStep(){ return S.space.step||0; }
 function scResetThrust(){
   (S.space.contacts||[]).forEach(c=>{
@@ -6861,6 +6929,9 @@ function scMove(id, dir){
   const c=S.space.contacts.find(x=>x.id===id); if(!c) return;
   const to=Math.max(0,Math.min(BANDS.length-1, c.band+dir));
   if(to===c.band) return;
+  if(scPhase()==='approach'){          /* closing over hours — no Thrust accounting */
+    c.band=to; renderSpace(); queueSave(); return;
+  }
   const cost=THRUST_COST[BANDS[to]]||1;
   if(c.thrustLeft===undefined) c.thrustLeft=(c.th===undefined?1:c.th);
   if(cost>c.thrustLeft){
@@ -6889,6 +6960,7 @@ function scThrustSet(id,v){
 }
 function renderSpaceSteps(){
   const el=document.getElementById('scSteps'); if(!el) return;
+  if(scPhase()!=='battle'){ el.innerHTML=''; return; }
   el.innerHTML = SC_STEPS.map((s,i)=>
     `<button class="pill-btn${i===scStep()?' on':''}" onclick="S.space.step=${i};renderSpace();queueSave()">${s}</button>`).join('')
     + `<button class="mini" onclick="scNextStep()">Next step &rsaquo;</button>`
@@ -6998,6 +7070,7 @@ function spaceTurnId(){
 }
 function renderSpaceOrder(){
   const el=document.getElementById('shipOrder'); if(!el) return;
+  if(scPhase()!=='battle'){ el.innerHTML='<span class="hint">Initiative is rolled when the shooting starts.</span>'; return; }
   const rolled=spaceOrdered();
   if(!rolled.length){
     el.innerHTML='<span class="hint">No initiative rolled. 2D + Pilot skill + Thrust, once per ship.</span>';
@@ -7083,6 +7156,7 @@ function renderSpace(){
   tagContacts();
   (S.space.contacts||[]).forEach(ensureHull);
   renderSpaceOrder();
+  renderPhaseBar();
   renderSpaceSteps();
   renderDuties();
   document.getElementById('ladder').innerHTML=BANDS.map((b,i)=>{
@@ -7090,7 +7164,7 @@ function renderSpace(){
       <div class="chip ${S.space.sel===c.id?'sel':''}${spaceTurnId()===c.id?' acting':''}" onclick="selContact('${c.id}')"><b><span class="tagbadge">${contactTag(c)}</span>${c.n}</b>Res ${c.res} · hull ${c.hull}/${c.hullMax}${c.armour?' · armour '+c.armour:''}${c.hull<=0?' · <b class="redc">dead</b>':''}
         <span class="initbadge" onclick="event.stopPropagation();spaceRollOne('${c.id}')"
           title="2D + Pilot skill + Thrust">${c.init===null||c.init===undefined?'init?':'init '+c.init}</span>
-        ${scThrustBar(c)}
+        ${scPhase()==='battle'?scThrustBar(c):''}
         <div class="mv">
           <button onclick="moveContact('${c.id}',-1)" title="Closer — ${THRUST_COST[BANDS[Math.max(0,c.band-1)]]} Thrust">&lsaquo;</button>
           <button onclick="contactDmg('${c.id}',10)" title="Ten points of damage">&#9673;</button>
