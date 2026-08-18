@@ -612,6 +612,30 @@ input[type="checkbox"]{
   .sysgrid{grid-template-columns:1fr;}
   .verdict .hint{flex-basis:100%;}
 }
+
+/* the table grid */
+.tilegrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:6px;
+  margin-bottom:4px;}
+.tile{display:flex;align-items:center;justify-content:space-between;gap:8px;
+  height:auto;min-height:38px;padding:7px 11px;text-align:left;font-size:12.5px;
+  letter-spacing:.02em;line-height:1.3;white-space:normal;}
+.tile span{font-size:10px;color:var(--dim);flex:0 0 auto;}
+.tile.on{background:var(--red);border-color:var(--red);color:#fff;}
+.tile.on span{color:rgba(255,255,255,.75);}
+.tablebody{margin-top:10px;border-top:1px solid var(--line);}
+.trow{display:flex;gap:11px;padding:5px 8px;border-bottom:1px solid #17100f;cursor:pointer;
+  font-size:13px;line-height:1.45;}
+.trow:hover{background:var(--panel2);}
+/* the rolled row has to be findable at arm's length across a table */
+.trow.hit{background:#3a1a1f;border-left:3px solid var(--red);padding-left:5px;}
+.trow.hit span:last-child{color:#fff;font-weight:700;}
+.trow.hit .tnum{color:var(--red);font-weight:700;}
+.tnum{flex:0 0 34px;color:var(--dim);font-size:11px;font-variant-numeric:tabular-nums;
+  padding-top:1px;}
+@media (max-width:760px){
+  .tilegrid{grid-template-columns:repeat(auto-fill,minmax(130px,1fr));}
+  .trow{font-size:12.5px;}
+}
 </style>
 <script src="https://www.gstatic.com/firebasejs/12.17.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/12.17.1/firebase-auth-compat.js"></script>
@@ -985,6 +1009,18 @@ input[type="checkbox"]{
       <label class="hint">Bandwidth up <input id="rsBW" type="number" value="0" style="width:80px" oninput="rsRender()"></label>
       <label class="mtd"><input type="checkbox" id="rsEff" onchange="rsRender()"> Efficiency &mdash; double endurance</label>
     </div>
+    <div class="row" style="margin-top:8px">
+      <label class="hint">Fit <select id="rsOptCat" onchange="rsOptCatChanged()"></select></label>
+      <select id="rsOpt" style="min-width:190px"></select>
+      <button class="mini" onclick="rsAddOption()">Add it</button>
+    </div>
+    <div class="row" style="margin-top:8px">
+      <label class="hint">Skill <select id="rsSkill" style="min-width:150px"></select></label>
+      <label class="hint">Level <input id="rsSkillLv" type="number" value="0" min="0" max="4" style="width:66px"></label>
+      <button class="mini" onclick="rsAddSkill()">Load it</button>
+      <label class="hint">Package <select id="rsPack" style="min-width:170px"></select></label>
+      <button class="mini" onclick="rsAddPackage()">Load package</button>
+    </div>
     <div id="rsOut" class="astrobox" style="margin-top:9px"></div>
     <div class="row" style="margin-top:9px">
       <button onclick="rsSend()">Add it to the robots</button>
@@ -1008,6 +1044,11 @@ input[type="checkbox"]{
       <label class="hint">Crew <input id="vfCrew" type="number" value="1" style="width:70px" oninput="vfRender()"></label>
       <label class="hint">Passengers <input id="vfPax" type="number" value="0" style="width:78px" oninput="vfRender()"></label>
     </div>
+    <div class="row" style="margin-top:8px">
+      <label class="hint">Fit <select id="vfCustCat" onchange="vfCustCatChanged()"></select></label>
+      <select id="vfCust" style="min-width:200px"></select>
+      <button class="mini" onclick="vfAddCustom()">Add it</button>
+    </div>
     <div class="row" style="margin-top:8px" id="vfFits"></div>
     <div id="vfOut" class="astrobox" style="margin-top:9px"></div>
     <div class="row" style="margin-top:9px">
@@ -1015,6 +1056,27 @@ input[type="checkbox"]{
       <button class="mini" onclick="vfRender()">Recalculate</button>
     </div>
   </div>
+  </div>
+
+  <div class="card" id="energyCard">
+    <h2>Energy weapons <span class="hint" style="letter-spacing:0;text-transform:none;font-weight:400">
+      Field Catalogue p.62&ndash;64 &mdash; the powerpack comes first</span></h2>
+    <div class="row">
+      <input id="ewName" class="grow" placeholder="What it will be called" oninput="ewRender()">
+      <label class="hint">TL <input id="ewTL" type="number" value="10" style="width:70px" oninput="ewRender()"></label>
+    </div>
+    <div class="row" style="margin-top:8px">
+      <label class="hint">Receiver <select id="ewRec" onchange="ewRender()"></select></label>
+      <label class="hint">Barrel <select id="ewBar" onchange="ewRender()"></select></label>
+      <label class="hint">Damage dice <input id="ewDice" type="number" value="3" min="1" max="8" style="width:78px" oninput="ewRender()"></label>
+      <label class="hint">Powerpack kg <input id="ewPack" type="number" value="1" step="0.5" style="width:86px" oninput="ewRender()"></label>
+    </div>
+    <div class="row" style="margin-top:8px" id="ewOpts"></div>
+    <div id="ewOut" class="astrobox" style="margin-top:9px"></div>
+    <div class="row" style="margin-top:9px">
+      <button onclick="ewSend()">Give it to a Traveller</button>
+      <button class="mini" onclick="ewRender()">Recalculate</button>
+    </div>
   </div>
 
   <div class="makerbox" id="maker-creature">
@@ -1059,12 +1121,26 @@ input[type="checkbox"]{
     </div>
     <div class="row" style="margin-top:8px">
       <label class="hint">Power plant <select id="syPower" onchange="syRender()"></select></label>
-      <label class="hint">Computer <input id="syComp" type="number" value="5" style="width:74px" oninput="syRender()"></label>
+      <label class="hint">Computer <select id="syComputer" onchange="syRender()"></select></label>
       <label class="hint">Staterooms <input id="syRooms" type="number" value="4" style="width:78px" oninput="syRender()"></label>
       <label class="hint">Low berths <input id="syLow" type="number" value="0" style="width:78px" oninput="syRender()"></label>
-      <label class="hint">Turrets <input id="syWeap" type="number" value="1" style="width:74px" oninput="syRender()"></label>
+
       <label class="hint">Weeks of fuel <input id="syFuel" type="number" value="4" style="width:82px" oninput="syRender()"></label>
     </div>
+    <div class="row" style="margin-top:8px">
+      <label class="hint">Sensors <select id="sySensor" onchange="syRender()"></select></label>
+      <label class="hint">Mount <select id="syMount" onchange="syMountChanged()"></select></label>
+      <label class="hint">Weapon <select id="syWeapon"></select></label>
+      <button class="mini" onclick="syAddMount()">Fit it</button>
+      <label class="hint">Screen <select id="syScreen"></select></label>
+      <button class="mini" onclick="syAddScreen()">Fit screen</button>
+    </div>
+    <div class="row" style="margin-top:8px">
+      <label class="hint">Fit <select id="syOpt"></select></label>
+      <label class="hint">How many <input id="syOptQty" type="number" value="1" min="1" style="width:70px"></label>
+      <button class="mini" onclick="syAddOpt()">Add it</button>
+    </div>
+    <div class="row" style="margin-top:8px" id="syHullOpts"></div>
     <div id="syOut" class="astrobox" style="margin-top:9px"></div>
     <div class="row" style="margin-top:9px">
       <button onclick="sySend()">Launch her into the fleet</button>
@@ -1472,68 +1548,17 @@ input[type="checkbox"]{
 <!-- ============================ TABLES ============================ -->
 <section class="tab" id="pane-tables">
   <div class="card">
-    <h2>Loot off the bodies <span class="hint" style="letter-spacing:0;text-transform:none;font-weight:400">
-      by archetype</span></h2>
-    <div class="row">
-      <select id="lootArch" class="grow"></select>
-      <select id="lootTier">
-        <option value="0">Rabble</option><option value="1" selected>Trained</option>
-        <option value="2">Veteran</option><option value="3">Elite</option>
-      </select>
-      <input id="lootBodies" type="number" value="4" style="width:80px" title="How many bodies">
-      <button onclick="rollLoot()">What did they have?</button>
-    </div>
-    <div id="lootBody" class="astrobox" style="margin-top:9px"></div>
+    <h2>Tables <span class="hint" style="letter-spacing:0;text-transform:none;font-weight:400">
+      tap one, it opens below</span></h2>
+    <div id="tblGrid"></div>
+  </div>
+
+  <div class="card" id="tblOpenCard">
+    <div id="tblOpen"></div>
   </div>
 
   <div class="card">
-    <h2>Loot</h2>
-    <div class="row">
-      <label class="hint">Category <select id="lootCat" onchange="lootRender()"></select></label>
-      <label class="hint">How many <input id="lootN" type="number" value="3" style="width:78px"></label>
-      <button onclick="lootRender()">Roll it</button>
-    </div>
-    <div id="lootOut" class="astrobox" style="margin-top:9px"></div>
-  </div>
-  <div class="card">
-    <h2>Names</h2>
-    <div class="row">
-      <select id="nmSp" style="min-width:120px"></select>
-      <select id="nmPart">
-        <option>♂ first</option><option>♀ first</option><option>surname</option>
-      </select>
-      <button class="mini" onclick="showNameTable()">Show the table</button>
-      <button class="mini" onclick="rollNameTable()">Roll it</button>
-      <button class="mini" style="border-color:var(--green);color:var(--green)"
-              onclick="rollAnyName()">✦ One-off NPC name</button>
-    </div>
-
-  </div>
-
-  <div class="card">
-    <h2>Tables</h2>
-    <div id="tableBtns" class="row"></div>
-  </div>
-
-  <div class="cols">
-    <div>
-      <div class="card" id="tableCard">
-        <div class="row">
-          <b id="tblName" style="font-size:17px;letter-spacing:.04em">Pick a table</b>
-          <span class="hint" id="tblDice"></span>
-          <div class="grow"></div>
-          <button id="tblRoll" onclick="rollCurrent()">Roll it for me</button>
-        </div>
-        <div id="tblBody" style="margin-top:10px"></div>
-        <div class="row" id="respRow" style="display:none;margin-top:9px">
-          <button onclick="sendResp()">Send to the Response clock</button>
-        </div>
-      </div>
-
-      
-
-      <div class="card">
-        <h2>Your own tables</h2>
+    <h2>Your own tables</h2>
         <p class="hint">Worth entering first:
         <b>Crewman Names</b> and <b>Crewman Quirks</b>, PoD p.11 ·
         <b>Prey Quirks</b>, PoD p.18&ndash;19 ·
@@ -1569,9 +1594,14 @@ input[type="checkbox"]{
   <div class="pgfoot">&copy; 2026 Effigy Media. All rights reserved.
     <span>Traveller is a trademark of Far Future Enterprises. Contains material &copy; Mongoose Publishing,
     used under the Community Content Agreement for The Travellers' Aid Society.</span></div>
+
+  
+
+  <div class="pgfoot">&copy; 2026 Effigy Media. All rights reserved.
+    <span>Traveller is a trademark of Far Future Enterprises. Contains material &copy; Mongoose Publishing,
+    used under the Community Content Agreement for The Travellers' Aid Society.</span></div>
 </section>
 
-<!-- ============================ HELP ============================ -->
 <section class="tab" id="pane-help">
   <div id="helpBody"></div>
   <div class="pgfoot">&copy; 2026 Effigy Media. All rights reserved.
@@ -2485,7 +2515,7 @@ function curTable(){
   if(s.k==='b') return TABLES[s.i]||null;
   return (S.custom||[]).find(x=>x.id===s.i)||null;
 }
-function showTable(kind,id){ S.tblSel={k:kind,i:id}; S.tblHit=null; renderTable(); queueSave(); }
+function showTable(kind,id){ S.tblSel={k:kind,i:id}; S.tblHit=null; renderOpenTable(); queueSave(); }
 function rollCurrent(){
   const t=curTable(); if(!t) return;
   const r=tblRoll(t);
@@ -2501,34 +2531,149 @@ function rollCurrent(){
   S.rolls=S.rolls||[];
   S.rolls.unshift(`<b>${t.n}</b> ${r.label} — ${t.items[r.idx]||'&mdash;'}`);
   if(S.rolls.length>40) S.rolls.length=40;
-  renderTable(); renderRolls(); queueSave();
+  renderOpenTable(); renderRolls(); queueSave();
 }
-function renderTable(){
-  const rb=document.getElementById('tblRoll'); if(rb) rb.style.display='';
-  const t=curTable();
-  const nm=document.getElementById('tblName'), dc=document.getElementById('tblDice'),
-        bd=document.getElementById('tblBody'), rr=document.getElementById('respRow');
-  if(!t){ nm.textContent='Pick a table'; dc.textContent=''; rr.style.display='none';
-    bd.innerHTML='<p class="hint">Tap any table above to lay it out in full. Roll your own dice and read it off, '+
-      'type what you rolled into the box to highlight it, or let the console roll.</p>'; return; }
-  nm.innerHTML=t.n; dc.textContent=tblDiceName(t);
-  const L=tblLabels(t), two=t.items.length>12;
-  const rows=t.items.map((e,i)=>
-    `<div class="trow ${S.tblHit===i?'hit':''}"><span class="ix">${L[i]||''}</span><span>${e}</span></div>`).join('');
-  bd.innerHTML=`<div class="tgrid ${two?'two':''}" ${two?`style="grid-template-rows:repeat(${Math.ceil(t.items.length/2)},auto)"`:''}>${rows}</div>`
-    + (t.foot?`<p class="hint" style="margin-top:9px">${t.foot}</p>`:'');
-  rr.style.display=(t.mode==='resp'&&pendingResp)?'':'none';
+/* renderTable is gone — renderOpenTable draws the open table now */
+function bootLootArch(){
+  const sel=document.getElementById('lootArch');
+  if(!sel || sel.options.length) return;
+  setTimeout(()=>{ const s2=document.getElementById('lootArch');
+    if(s2) s2.value=MOBS.findIndex(m=>m.n==='Merchant crew'); },0);
+  const grp=(label,g)=>'<optgroup label="'+label+'">'+
+    MOBS.map((m,i)=>m.g===g?`<option value="${i}">${m.n}</option>`:'').join('')+'</optgroup>';
+  sel.innerHTML=grp('Standard','S')+grp('Trojan Reach','R')+grp('Creatures','C');
 }
-function renderTableBtns(){
-  document.getElementById('tableBtns').innerHTML =
-    `<button class="mini" style="border-color:var(--gold);color:var(--gold)"
-        onclick="showBookTables()">&#9776; Tables in the books</button>`
-    + TABLES.map((t,i)=> NAMETBL[t.n] ? '' :`<button class="mini ${S.tblSel&&S.tblSel.k==='b'&&S.tblSel.i===i?'on2':''}"
-        onclick="showTable('b',${i})">${t.n}</button>`).join('')
-    + (S.custom||[]).map(t=>`<button class="mini ${S.tblSel&&S.tblSel.k==='c'&&S.tblSel.i===t.id?'on2':''}"
-        style="${S.tblSel&&S.tblSel.k==='c'&&S.tblSel.i===t.id?'':'border-color:var(--gold);color:var(--gold)'}"
-        onclick="showTable('c','${t.id}')">${t.n}</button>`).join('');
+function bootNameCard(){
+  const sel=document.getElementById('nmSp');
+  if(sel && !sel.options.length && typeof SPECIES!=='undefined')
+    sel.innerHTML=SPECIES.map(s=>`<option>${s}</option>`).join('');
 }
+
+function tgroups(){
+  const books = TABLES.map((t,i)=>({k:'b', i, n:t.n, count:(t.items||[]).length}))
+                      .filter(t=>!NAMETBL[t.n] && t.count>0);
+  const mine  = (S.custom||[]).map(t=>({k:'c', i:t.id, n:t.n, count:(t.items||[]).length}))
+                      .filter(t=>t.count>0);
+  return [
+    ['Loot',   [{k:'L', i:'bodies', n:'Off the bodies'},
+                {k:'L', i:'cat',    n:'By category'}]],
+    ['Names',  [{k:'N', i:'roll',   n:'A name, now'},
+                {k:'N', i:'table',  n:'Pick a culture'}]],
+    ['In the books', books.concat([{k:'R', i:'books', n:'\u2630 Page references'}])],
+    ['Your own',    mine]
+  ].filter(([,list])=>list.length);
+}
+function renderTableGrid(){
+  const el=document.getElementById('tblGrid'); if(!el) return;
+  const sel=S.tblSel||{};
+  el.innerHTML = tgroups().map(([label,list])=>
+    `<div class="sectionhead"><b>${label}</b><hr></div>
+     <div class="tilegrid">${list.map(t=>
+       `<button class="tile${sel.k===t.k&&String(sel.i)===String(t.i)?' on':''}"
+          onclick="openTable('${t.k}','${t.i}')">${t.n}${
+          t.count?`<span>${t.count}</span>`:''}</button>`).join('')}</div>`).join('');
+}
+function openTable(kind, idx){
+  S.tblSel={k:kind, i:idx};
+  S.tblHit=null;
+  renderTableGrid(); renderOpenTable(); queueSave();
+}
+function currentTable(){
+  const s=S.tblSel; if(!s) return null;
+  if(s.k==='b') return TABLES[s.i];
+  if(s.k==='c') return (S.custom||[]).find(t=>t.id===s.i);
+  return null;
+}
+function rollOpenTable(){
+  const s=S.tblSel; if(!s) return;
+  if(s.k==='L' || s.k==='N') return;
+  const t=currentTable(); if(!t||!t.items||!t.items.length) return;
+  const n=t.items.length;
+  const i = t.mode==='d66' ? d66()%n : (d(n)-1);
+  S.tblHit=i;
+  const line=t.items[i];
+  const text=Array.isArray(line)?line.join(' \u2014 '):line;
+  S.rolls=[`<b>${t.n}</b> \u2014 ${text}`].concat(S.rolls||[]).slice(0,24);
+  logEvent(`<b>${t.n}</b> &mdash; ${text}`);
+  renderOpenTable(); renderRolls(); queueSave();
+}
+function pickEntry(i){ S.tblHit=i; renderOpenTable(); queueSave(); }
+function renderOpenTable(){
+  const el=document.getElementById('tblOpen'); if(!el) return;
+  const s=S.tblSel;
+  if(!s){ el.innerHTML='<div class="hint">Pick a table above.</div>'; return; }
+
+  /* the two loot tools and the two name tools keep their own controls */
+  if(s.k==='L'){ el.innerHTML = s.i==='bodies' ? lootBodiesCard() : lootCatCard();
+    if(s.i==='bodies') bootLootArch(); else lootBoot();
+    return; }
+  if(s.k==='N'){ el.innerHTML = nameCard(s.i); bootNameCard(); return; }
+  if(s.k==='R'){ showBookTables(); return; }
+
+  const t=currentTable();
+  if(!t){ el.innerHTML='<div class="hint">That table has gone.</div>'; return; }
+  const hit=S.tblHit;
+  const rows=(t.items||[]).map((line,i)=>{
+    const text=Array.isArray(line)?line.join(' &mdash; '):line;
+    return `<div class="trow${i===hit?' hit':''}" onclick="pickEntry(${i})">
+      <span class="tnum">${t.mode==='d66'?d66label(i):i+1}</span>
+      <span>${text}</span></div>`;
+  }).join('');
+  const canSend = t.mode==='resp' && hit!==null && hit!==undefined;
+  el.innerHTML=`
+    <div class="row" style="align-items:baseline">
+      <b style="font-size:17px;letter-spacing:.04em">${t.n}</b>
+      <span class="hint">${t.mode||''} &middot; ${(t.items||[]).length} entries</span>
+      <div class="grow"></div>
+      ${canSend?`<button class="mini" onclick="sendResp()">Send to the Response clock</button>`:''}
+      <button onclick="rollOpenTable()">Roll it</button>
+    </div>
+    <div class="tablebody">${rows}</div>
+    ${t.foot?`<p class="hint" style="margin-top:9px">${t.foot}</p>`:''}`;
+}
+function d66label(i){ return (Math.floor(i/6)+1)+''+((i%6)+1); }
+
+/* the loot and name tools, as cards the grid can open */
+function lootBodiesCard(){
+  return `<div class="row">
+      <b class="grow" style="font-size:17px">Off the bodies</b>
+      <select id="lootArch" style="min-width:170px"></select>
+      <select id="lootTier">
+        <option value="0">Rabble</option><option value="1" selected>Trained</option>
+        <option value="2">Veteran</option><option value="3">Elite</option>
+      </select>
+      <input id="lootBodies" type="number" value="4" style="width:76px" title="How many bodies">
+      <button onclick="rollLoot()">What did they have?</button>
+    </div>
+    <div id="lootBody" class="astrobox" style="margin-top:9px"></div>`;
+}
+function lootCatCard(){
+  return `<div class="row">
+      <b class="grow" style="font-size:17px">By category</b>
+      <select id="lootCat" onchange="lootRender()"></select>
+      <input id="lootN" type="number" value="3" style="width:70px" title="How many">
+      <button onclick="lootRender()">Roll it</button>
+    </div>
+    <div id="lootOut" class="astrobox" style="margin-top:9px"></div>`;
+}
+function nameCard(which){
+  if(which==='roll') return `<div class="row">
+      <b class="grow" style="font-size:17px">A name, now</b>
+      <button onclick="rollAnyName()">&#10038; Roll one</button>
+    </div>
+    <div id="nameOut" class="astrobox" style="margin-top:9px"></div>`;
+  return `<div class="row">
+      <b class="grow" style="font-size:17px">Pick a culture</b>
+      <select id="nmSp" style="min-width:130px"></select>
+      <select id="nmPart">
+        <option>\u2642 first</option><option>\u2640 first</option><option>surname</option>
+      </select>
+      <button class="mini" onclick="showNameTable()">Show it</button>
+      <button onclick="rollNameTable()">Roll it</button>
+    </div>
+    <div id="nameOut" class="astrobox" style="margin-top:9px"></div>`;
+}
+
 function renderRolls(){
   document.getElementById('rollLog').innerHTML=(S.rolls||[]).map(r=>`<div>${r}</div>`).join('')||'<div>Nothing yet.</div>';
 }
@@ -2553,86 +2698,66 @@ function rollAnyName(){
   const sp=SPECIES[Math.floor(Math.random()*SPECIES.length)];
   const g=d(6)<=3?'m':'f';
   const nm=makeName(sp,g);
-  document.getElementById('tblName').innerHTML='One-off NPC name';
-  document.getElementById('tblDice').textContent=sp+' · '+(g==='m'?'male':'female');
-  document.getElementById('tblBody').innerHTML=
-    `<div style="font-size:22px;font-weight:700;padding:10px 0" class="greenc">${nm}</div>`+
-    `<div class="hint">Roll again for another, or open that species' tables above to pick by hand.</div>`;
-  document.getElementById('respRow').style.display='none';
-  S.tblSel=null; S.rolls=S.rolls||[];
-  S.rolls.unshift(`<b>NPC name</b> ${sp} — ${nm}`);
-  if(S.rolls.length>40) S.rolls.length=40;
-  renderRolls(); renderTableBtns(); queueSave();
+  const out=document.getElementById('nameOut');
+  if(out) out.innerHTML=
+    `<div style="font-size:26px;font-weight:700;padding:6px 0" class="greenc">${nm}</div>`+
+    `<div class="hint">${sp} &middot; ${g==='m'?'male':'female'}. Roll again, or pick a culture to choose by hand.</div>`;
+  S.rolls=[`<b>NPC name</b> ${sp} \u2014 ${nm}`].concat(S.rolls||[]).slice(0,24);
+  logEvent(`<b>NPC name</b> &mdash; ${nm}`);
+  renderRolls(); queueSave();
 }
 
-/* ---- where the printed tables live ---- */
-const BOOKTABLES=[
- ["Pirates of Drinax — Book 1",[
-  ["Port attitudes · fence, recruit, arrest, spies, protection","9"],
-  ["Port attitude by Law Level","10"],
-  ["Crew pay rates and crew quality","10"],
-  ["<b>Crewman Names</b> (D66)","11"],
-  ["<b>Crewman Quirks</b> (D66)","11"],
-  ["Morale modifiers","12"],
-  ["Division of the spoils","12"],
-  ["Effects of Standing","13"],
-  ["<b>Prey Encounter</b> (D66) and traffic DMs","14"],
-  ["Prey types and their cargoes","15"],
-  ["Enemy morale by ship type","15"],
-  ["Encounter distance and timing","15"],
-  ["<b>Jump Limit Transit</b>","16"],
-  ["Pirate attack skill checks, the five steps","16–18"],
-  ["<b>Prey Quirks</b> (D66)","18–19"],
-  ["<b>Prey Complications</b> (D66)","20"],
-  ["<b>Response</b> — pirate hunters, 2D","21"],
-  ["Customs ships, SDBs and Q-ships","21"],
-  ["Patrons and opportunities","263"]]],
- ["The Trojan Reach — Book 2",[
-  ["Harrier deckplan","9"],
-  ["Harrier stats","10"],
-  ["The court of Drinax, NPC by NPC","22–25"],
-  ["Powers of the Reach","24–25"],
-  ["Aslan Central Supply Catalogue","96"],
-  ["World listings by subsector","133+"],
-  ["Library data","209"]]],
- ["Ships of the Reach — Book 3",[
-  ["Ship listings","2"],
-  ["Planet-class heavy cruiser (Krond)","53"],
-  ["Aslan ships","62"],
-  ["Ship index and deckplan keys","96"]]],
- ["Drinaxian Companion",[
-  ["Key concepts — PWH, Allegiance, Asset Value, PRI","2–3"],
-  ["Empire building — worlds, assets, projects","9"],
-  ["Harrier damage and defects","59"],
-  ["Repair Units and refit costs","59–62"],
-  ["Crew requirements and shipboard operations","63"],
-  ["Commerce raiding operations","65"],
-  ["Operational considerations","75"],
-  ["<b>Sindal Scholar</b> (2D) and rumour gathering","96"],
-  ["<b>Ship Encounters</b> — full encounter tables","149"],
-  ["<b>Information Bounties</b> (2D)","149"],
-  ["Equipment and base components","177–184"],
-  ["Starships of the Reach","187"],
-  ["Personalities and factions","214"]]]
+/* Page references to tables that live in the books and are not worth
+   retyping. This data never existed: the old "Tables in the books"
+   button referenced an undefined BOOKTABLES and threw every time. */
+const BOOKTABLES = [
+  ['Pirates of Drinax', [
+    ['Crewman names', 'book 1 p.11'],
+    ['Crewman quirks', 'book 1 p.11'],
+    ['Prey quirks', 'book 1 p.18\u201319'],
+    ['Prey complications', 'book 1 p.19'],
+    ['The pirate attack sequence', 'book 1 p.16\u201318'],
+    ['Jump limit transit times', 'book 1 p.17'],
+    ['Patron encounters', 'book 2'],
+    ['Reach rumours', 'Drinaxian Companion']
+  ]],
+  ['Core Rulebook', [
+    ['Animal size and Hits', 'p.88'],
+    ['Animal behaviours', 'p.89'],
+    ['Trade goods', 'p.244'],
+    ['Passenger traffic', 'p.240'],
+    ['Space combat criticals', 'p.170'],
+    ['World trade codes', 'p.250'],
+    ['Encounters by terrain', 'p.90']
+  ]],
+  ['High Guard', [
+    ['Crew requirements and salary', 'p.22'],
+    ['Ship criticals', 'p.169'],
+    ['Sensors and their DMs', 'p.21'],
+    ['Weapons by mount', 'p.27\u201346'],
+    ['Common ships', 'p.100+']
+  ]],
+  ['Central Supply Catalogue', [
+    ['Armour', 'p.13\u201333'],
+    ['Slug weapons', 'p.143\u2013145'],
+    ['Energy weapons', 'p.62\u201364'],
+    ['Augments', 'p.51\u201362'],
+    ['Computers and software', 'p.67\u201373'],
+    ['Survival and medical', 'p.97\u2013107']
+  ]]
 ];
-function showBookTables(){
-  S.tblSel=null; S.tblHit=null;
-  document.getElementById('tblName').innerHTML='Tables in the books';
-  document.getElementById('tblDice').textContent='page references — nothing to roll here';
-  document.getElementById('respRow').style.display='none';
-  document.getElementById('tblRoll').style.display='none';
-  document.getElementById('tblBody').innerHTML=
-    BOOKTABLES.map(b=>`<div style="margin-bottom:12px">
-      <div style="font-size:10px;letter-spacing:.2em;color:var(--dim);text-transform:uppercase;
-                  border-bottom:1px solid var(--line);padding-bottom:4px;margin-bottom:5px">${b[0]}</div>`+
-      b[1].map(r=>`<div class="trow"><span>${r[0]}</span>
-        <span style="margin-left:auto;color:var(--green);font-weight:700;white-space:nowrap">${r[1]}</span></div>`).join('')+
-      `</div>`).join('')+
-    '';
-  renderTableBtns();
-}
 
-let pendingResp=null;
+function showBookTables(){
+  const el=document.getElementById('tblOpen'); if(!el) return;
+  S.tblSel={k:'R', i:'books'}; S.tblHit=null;
+  el.innerHTML='<div class="row"><b style="font-size:17px">Tables in the books</b>'+
+    '<span class="hint">page references &mdash; nothing to roll here</span></div>'+
+    BOOKTABLES.map(b=>`<div style="margin-top:12px">
+      <div class="sectionhead"><b>${b[0]}</b><hr></div>`+
+      b[1].map(r=>`<div class="trow"><span class="tnum">${r[1]}</span><span>${r[0]}</span></div>`).join('')+
+      '</div>').join('');
+  renderTableGrid(); queueSave();
+}
 function sendResp(){
   if(!pendingResp) return;
   S.space.resp=pendingResp; S.space.respMax=pendingResp;
@@ -3543,6 +3668,229 @@ const RS_BRAIN = {          /* p.66 — the cheapest row for each at its best TL
   'Self-Aware TL15':    {tl:15, bw:10, cost:1000000, int:12, dm:+2, cap:'Near sentient, Expert/3, Security/3'},
   'Conscious TL18':     {tl:18, bw:30, cost:1000000, int:15, dm:+3, cap:'Conscious intelligence, Security/3'}
 };
+
+/* ---------------------------------------------------------------
+   Robot skill packages, Robot Handbook p.69-75.
+
+   This was step 5 of 6 and missing entirely — bandwidth was
+   counted but nothing spent it, which is a budget with nothing to
+   buy. What a robot does unsupervised is the whole point of it.
+
+   The table is level 0. Each level above costs ten times as much
+   and wants one more TL; levels 2 and up cost a point of
+   Bandwidth. Jack-of-all-Trades is never available to a robot.
+   --------------------------------------------------------------- */
+
+/* ---------------------------------------------------------------
+   Robot physical options, Robot Handbook p.19-68.
+
+   Read off the book's own tables. Slots is either a flat number of
+   Slots or a percentage of Base Slots — the book uses both, and
+   the difference matters on a small chassis. Cost is per Base Slot
+   where the book says so, otherwise flat.
+   --------------------------------------------------------------- */
+const RS_OPTIONS = {
+  'Sensors': {
+    'Basic sensor package':    {tl:6,  slots:1,   cost:100,    t:'Sight and hearing'},
+    'Improved sensors':        {tl:8,  slots:2,   cost:1000,   t:'Light intensifier, thermal'},
+    'Enhanced sensors':        {tl:10, slots:3,   cost:5000,   t:'Adds a densitometer'},
+    'Advanced sensors':        {tl:13, slots:4,   cost:20000,  t:'DM+1 to Recon and Investigate'},
+    'Densitometer sensor':     {tl:14, slots:3,   cost:20000,  t:'Sees through walls'},
+    'Bioscanner sensor':       {tl:15, slots:2,   cost:350000, t:'Reads life signs'},
+    'Neural activity sensor':  {tl:15, slots:5,   cost:35000,  t:'Reads thought activity'},
+    'Planetology sensor suite':{tl:12, slots:5,   cost:25000,  t:'Survey work'},
+    'Recon sensor':            {tl:8,  slots:1,   cost:1000,   t:'DM+1 Recon'}
+  },
+  'Communications': {
+    'Basic communicator':      {tl:8,  slots:1,   cost:100,    t:'Ship-to-shore'},
+    'Tightbeam communicator':  {tl:8,  slots:1,   cost:2000,   t:'Hard to intercept'},
+    'Satellite uplink':        {tl:6,  slots:2,   cost:1000,   t:'Orbital relay'},
+    'Holographic projector':   {tl:10, slots:1,   cost:1000,   t:'Projects an image'},
+    'Video display':           {tl:7,  slots:1,   cost:500,    t:'A face, or a screen'},
+    'Voder speaker':           {tl:8,  slots:1,   cost:500,    t:'Speaks aloud'}
+  },
+  'Environment': {
+    'Corrosive protection':    {tl:9,  slots:1,   cost:600,  perBase:true, t:'Acidic atmospheres'},
+    'Insidious protection':    {tl:11, slots:1,   cost:3000, perBase:true, t:'Atmospheres that seek a way in'},
+    'Radiation protection':    {tl:7,  slots:1,   cost:600,  perBase:true, t:'Rad +100 per Slot'},
+    'Submersible protection':  {tl:6,  slots:1,   cost:200,  perBase:true, t:'Safe depth by TL'},
+    'Vacuum protection':       {tl:8,  slots:1,   cost:200,  perBase:true, t:'Works in vacuum'},
+    'Self-repairing chassis':  {tl:11, pct:5,     cost:1000, perBase:true, t:'One Hit back per penetration'},
+    'Active camouflage':       {tl:15, slots:1,   cost:10000,perBase:true, t:'DM+4 Stealth, and it moves'}
+  },
+  'Tools and kit': {
+    'Toolkit, basic':          {tl:6,  slots:1,   cost:1000,  t:'Mechanic and Engineer at no penalty'},
+    'Toolkit, advanced':       {tl:12, slots:2,   cost:20000, t:'DM+1 to repairs'},
+    'Cutting torch':           {tl:6,  slots:1,   cost:500,   t:'Through a bulkhead, slowly'},
+    'Fire extinguisher':       {tl:5,  slots:1,   cost:100,   t:'Puts out what it started'},
+    'Stylist toolkit':         {tl:6,  slots:3,   cost:2000,  t:'Hair, and the rest of it'},
+    'Medikit':                 {tl:8,  slots:1,   cost:1000,  t:'Medic at no penalty'},
+    'Medical chamber':         {tl:11, slots:8,   cost:200000,t:'A surgery in a box'},
+    'Nanorobot applicator':    {tl:13, slots:4,   cost:100000,t:'Applies medical nanites'},
+    'Nanorobot generator':     {tl:13, slots:8,   cost:200000,t:'Makes them on the spot'}
+  },
+  'Carrying and cargo': {
+    'Cargo space':             {tl:5,  slots:1,   cost:0,     t:'One Slot of hold, per Slot'},
+    'Concealed compartment':   {tl:8,  slots:1,   cost:1000,  t:'Difficult (10+) to find'},
+    'Low berth (basic)':       {tl:10, slots:8,   cost:20000, t:'Carries a sleeper'},
+    'Low berth (improved)':    {tl:12, slots:8,   cost:20000, t:'Safer'},
+    'Cryoberth (basic)':       {tl:10, slots:8,   cost:20000, t:'Long haul'},
+    'External power':          {tl:9,  pct:5,     cost:100, perBase:true, t:'Runs off a cable'},
+    'Quick charger':           {tl:8,  slots:1,   cost:200,   t:'An hour, not a day'}
+  },
+  'Weapons and defence': {
+    'Weapon mount (small)':    {tl:1,  slots:3,   cost:500,   t:'A pistol or equivalent'},
+    'Weapon mount (medium)':   {tl:2,  slots:5,   cost:1000,  t:'A rifle'},
+    'Weapon mount (heavy)':    {tl:10, slots:7,   cost:5000,  t:'A support weapon'},
+    'Weapon mount (vehicle)':  {tl:12, slots:15,  cost:10000, t:'Something serious'},
+    'Magazine, small':         {tl:5,  slots:1,   cost:250,   t:'Reloads without hands'},
+    'Self-destruct, defensive':{tl:8,  pct:1,     cost:500, perBase:true, t:'Denies the wreck'},
+    'Reflec armour coating':   {tl:10, pct:1,     cost:1000, perBase:true, t:'Halves laser damage'}
+  },
+  'Movement': {
+    'Secondary locomotion':    {tl:8,  pct:10,    cost:0,     t:'A second way to move, half speed'},
+    'Grav module':             {tl:12, slots:5,   cost:100000,t:'Flight, whatever the chassis'},
+    'Vehicle speed movement':  {tl:8,  pct:10,    cost:1000, perBase:true, t:'Moves at vehicle speeds'},
+    'Agility enhancement':     {tl:10, pct:10,    cost:5000, perBase:true, t:'Agility +1 per step'},
+    'Stealth coating':         {tl:9,  pct:1,     cost:500,  perBase:true, t:'DM+2 to hide from sensors'}
+  }
+};
+function rsOptFitted(){ S.rsOpts=S.rsOpts||[]; return S.rsOpts; }
+function rsAddOption(){
+  const cat=(document.getElementById('rsOptCat')||{}).value;
+  const name=(document.getElementById('rsOpt')||{}).value;
+  const o=(RS_OPTIONS[cat]||{})[name]; if(!o) return;
+  rsOptFitted().push({cat, name});
+  rsRender(); queueSave();
+}
+function rsDropOption(i){ rsOptFitted().splice(i,1); rsRender(); queueSave(); }
+function rsOptTotals(baseSlots){
+  let slots=0, cost=0, tl=0;
+  const rows=rsOptFitted().map(e=>{
+    const o=(RS_OPTIONS[e.cat]||{})[e.name]; if(!o) return null;
+    const s = o.pct ? baseSlots*o.pct/100 : o.slots;
+    const c = o.perBase ? o.cost*(baseSlots/100)*(o.pct?o.pct:1) : o.cost;
+    slots+=s; cost+=c; tl=Math.max(tl,o.tl);
+    return {name:e.name, slots:Math.round(s*100)/100, cost:Math.round(c), tl:o.tl, t:o.t};
+  }).filter(Boolean);
+  return {rows, slots:Math.round(slots*100)/100, cost:Math.round(cost), tl};
+}
+function rsOptCatChanged(){
+  const cat=(document.getElementById('rsOptCat')||{}).value;
+  const sel=document.getElementById('rsOpt');
+  if(sel) sel.innerHTML=Object.keys(RS_OPTIONS[cat]||{}).map(k=>`<option>${k}</option>`).join('');
+}
+function rsOptBlock(baseSlots){
+  const t=rsOptTotals(baseSlots);
+  if(!t.rows.length) return '<div class="hint" style="margin-top:5px">No options fitted.</div>';
+  return `<div class="sysrow" style="margin-top:8px"><span>Options</span>
+      <b>${t.rows.length}</b> <span class="hint">${t.slots} slots &middot; Cr${t.cost.toLocaleString()}</span></div>
+    <div class="legs" style="display:block;margin-top:5px">${t.rows.map((r,i)=>
+      `<div class="sysrow"><span>${r.slots} sl</span><b>${r.name}</b>
+        <span class="hint">TL${r.tl} &middot; Cr${r.cost.toLocaleString()} &middot; ${r.t}</span>
+        <span class="grow"></span>
+        <button class="mini" onclick="rsDropOption(${i})">&times;</button></div>`).join('')}</div>`;
+}
+
+const RS_SKILLS = {
+  'Admin':[8,0,'INT',100],           'Advocate':[10,0,'INT',500],
+  'Animals':[9,0,'DEX',200],         'Art':[10,0,'INT',500],
+  'Astrogation':[12,1,'INT',500],    'Athletics':[8,0,'varies',100],
+  'Broker':[10,0,'INT',200],         'Carouse':[11,1,'INT',500],
+  'Deception':[13,1,'INT',1000],     'Diplomat':[10,1,'INT',500],
+  'Drive':[8,0,'DEX',100],           'Electronics':[8,0,'INT',100],
+  'Engineer':[9,0,'INT',200],        'Explosives':[8,0,'INT',100],
+  'Flyer':[8,0,'DEX',100],           'Gambler':[10,0,'INT',500],
+  'Gun Combat':[8,0,'DEX',100],      'Gunner':[8,0,'DEX',100],
+  'Heavy Weapons':[8,0,'DEX',100],   'Investigate':[11,1,'INT',500],
+  'Language':[9,0,'INT',200],        'Leadership':[13,1,'INT',1000],
+  'Mechanic':[8,0,'INT',100],        'Medic':[9,0,'INT',200],
+  'Melee':[8,0,'DEX',100],           'Navigation':[8,0,'INT',100],
+  'Persuade':[11,1,'INT',500],       'Pilot':[8,0,'DEX',100],
+  'Profession':[9,0,'INT',200],      'Recon':[10,0,'INT',500],
+  'Science':[9,0,'INT',200],         'Seafarer':[8,0,'DEX',100],
+  'Stealth':[10,0,'DEX',500],        'Steward':[8,0,'INT',100],
+  'Streetwise':[13,1,'INT',1000],    'Survival':[10,0,'INT',200],
+  'Tactics':[8,0,'INT',100]
+};
+/* the ready-made packages the book lists by brain type */
+const RS_PACKAGES = {
+  'Basic (labourer)':  {bw:1, tl:8,  skills:['Profession 2']},
+  'Basic (locomotion)':{bw:1, tl:8,  skills:['Athletics (dexterity) X','Vehicle X']},
+  'Basic (recon)':     {bw:1, tl:8,  skills:['Recon 2']},
+  'Basic (security)':  {bw:1, tl:8,  skills:['Weapon 1','Tactics (military) 1']},
+  'Basic (servant)':   {bw:1, tl:8,  skills:['Profession (domestic) 2']},
+  'Basic (service)':   {bw:1, tl:8,  skills:['Mechanic 0','Steward 0']},
+  'Basic (target)':    {bw:1, tl:8,  skills:['Explosives 1 or Weapon 1']},
+  'Hunter/Killer (standard)': {bw:1, tl:10, skills:['Gun Combat/Melee 0','Recon 0']},
+  'Hunter/Killer (tactical)': {bw:1, tl:10, skills:['Gun Combat/Melee 0','Recon 0','Tactics (military) 2'], cost:10000}
+};
+function rsSkillCost(name, level){
+  const s=RS_SKILLS[name]; if(!s) return null;
+  const [tl,bw0,ch,cost0]=s;
+  const lv=Math.max(0, Math.min(4, level|0));
+  return {
+    tl: tl + lv,                                  /* a level higher wants a TL higher */
+    bw: lv >= 2 ? Math.max(1,bw0) + (lv-1) : bw0, /* complex skills eat Bandwidth */
+    ch, cost: cost0 * Math.pow(10, lv)            /* ten times per level */
+  };
+}
+function rsLoadout(){
+  S.rsPkg = S.rsPkg || [];
+  return S.rsPkg;
+}
+function rsAddSkill(){
+  const name=(document.getElementById('rsSkill')||{}).value;
+  const lv=+(document.getElementById('rsSkillLv')||{}).value||0;
+  if(!RS_SKILLS[name]) return;
+  rsLoadout().push({name, lv});
+  rsRender(); queueSave();
+}
+function rsAddPackage(){
+  const name=(document.getElementById('rsPack')||{}).value;
+  const p=RS_PACKAGES[name]; if(!p) return;
+  rsLoadout().push({pack:name});
+  rsRender(); queueSave();
+}
+function rsDropSkill(i){ rsLoadout().splice(i,1); rsRender(); queueSave(); }
+function rsSkillTotals(){
+  let bw=0, cost=0, tl=0;
+  const rows=rsLoadout().map(e=>{
+    if(e.pack){
+      const p=RS_PACKAGES[e.pack]||{bw:1,tl:8,skills:[]};
+      bw+=p.bw; cost+=p.cost||0; tl=Math.max(tl,p.tl);
+      return {label:e.pack, detail:p.skills.join(', '), bw:p.bw, tl:p.tl, cost:p.cost||0};
+    }
+    const s=rsSkillCost(e.name, e.lv);
+    bw+=s.bw; cost+=s.cost; tl=Math.max(tl,s.tl);
+    return {label:e.name+' '+e.lv, detail:s.ch, bw:s.bw, tl:s.tl, cost:s.cost};
+  });
+  return {rows, bw, cost, tl};
+}
+function rsBootSkills(){
+  const sel=document.getElementById('rsSkill');
+  if(sel && !sel.options.length)
+    sel.innerHTML=Object.keys(RS_SKILLS).map(k=>`<option>${k}</option>`).join('');
+  const pk=document.getElementById('rsPack');
+  if(pk && !pk.options.length)
+    pk.innerHTML=Object.keys(RS_PACKAGES).map(k=>`<option>${k}</option>`).join('');
+}
+function rsSkillBlock(bandwidth){
+  const t=rsSkillTotals();
+  const over = t.bw > bandwidth;
+  return `<div class="sysrow" style="margin-top:8px"><span>Bandwidth spent</span>
+      <b class="${over?'redc':''}">${t.bw} of ${bandwidth}</b>
+      <span class="hint">${over?'over what the brain can hold':(bandwidth-t.bw)+' free'}</span></div>
+    ${t.rows.length?`<div class="legs" style="display:block;margin-top:6px">${
+      t.rows.map((r,i)=>`<div class="sysrow"><span>${r.label}</span>
+        <b>bw ${r.bw}</b>
+        <span class="hint">TL${r.tl} &middot; Cr${r.cost.toLocaleString()}${r.detail?' &middot; '+r.detail:''}</span>
+        <span class="grow"></span>
+        <button class="mini" onclick="rsDropSkill(${i})">&times;</button></div>`).join('')}</div>`
+      :'<div class="hint" style="margin-top:5px">Nothing loaded. A robot with no packages does only what its brain does by itself.</div>'}
+    ${t.cost?`<div class="sysrow"><span>Packages cost</span><b>Cr${t.cost.toLocaleString()}</b></div>`:''}`;
+}
+
 function rsArmourBand(tl){
   let band=RS_ARMOUR[0];
   RS_ARMOUR.forEach(b=>{ if(tl>=b.tl) band=b; });
@@ -3594,6 +3942,8 @@ function rsBuild(){
   cost += bwUp * brain.cost * 0.5;
   const bandwidth = brain.bw + bwUp;
 
+  const opt=rsOptTotals(baseSlots);
+  slotsUsed += opt.slots; cost += opt.cost;
   const manip = Math.max(0, +g('rsManip')||2);
   if(manip>2){ slotsUsed += (manip-2); cost += (manip-2)*size.cost*0.1; }
 
@@ -3602,7 +3952,7 @@ function rsBuild(){
 
   return {
     name: g('rsName') || ('Size '+g('rsSize')+' '+g('rsLoco').toLowerCase()+' robot'),
-    size:+g('rsSize'), tl, hits, dm:size.dm, eq:size.eq,
+    size:+g('rsSize'), tl:Math.max(tl, opt.tl), hits, dm:size.dm, eq:size.eq,
     loco:g('rsLoco'), speed: loco.ag===null?'—':'6m', agility: loco.ag,
     traits: [loco.tr, chassis==='Resilient'?'Resilient chassis':'', chassis==='Light'?'Light chassis':'']
               .filter(Boolean).join(', '),
@@ -3639,8 +3989,10 @@ function rsRender(){
         <span class="hint">skill DM ${r.skillDM>=0?'+':''}${r.skillDM}</span></div>
       <div class="sysrow"><span>Bandwidth</span><b>${r.bandwidth}</b>
         <span class="hint">for skill packages</span></div>
-      <div class="sysrow"><span>Cost</span><b>${money(r.cost)}</b></div>
+      <div class="sysrow"><span>Cost</span><b>${money(r.cost + rsSkillTotals().cost)}</b></div>
     </div>
+    ${rsOptBlock(r.baseSlots)}
+    ${rsSkillBlock(r.bandwidth)}
     ${r.traits?`<div class="rem">${r.traits}</div>`:''}
     <div class="hint" style="margin-top:5px">${r.cap}</div>`;
 }
@@ -3654,7 +4006,8 @@ function rsSend(){
     rbSize:r.size, rbHits:r.hits, rbHitsNow:r.hits, rbADM:(r.dm>=0?'+':'')+r.dm,
     rbLoco:r.loco, rbSpeed:r.speed, rbArm:r.armour, rbEnd:r.endurance,
     rbSlots:r.baseSlots, rbSlotsUsed:r.slotsUsed, rbManip:r.manip,
-    rbBrain:r.brain, rbINT:r.int, rbBand:r.bandwidth, rbProg:r.cap, rbTraits:r.traits
+    rbBrain:r.brain, rbINT:r.int, rbBand:r.bandwidth, rbProg:r.cap, rbTraits:r.traits,
+    rbSkills:rsSkillTotals().rows.map(x=>x.label).join(', ')
   };
   S.robotics.robots[id]=rec; S.robotics.active=id; S.rob=Object.assign({},rec);
   if(FB.db&&FB.ok){
@@ -3670,6 +4023,12 @@ function rsBoot(){
   sel('rsSize', Object.keys(RS_SIZE).map(k=>`<option value="${k}"${k==='5'?' selected':''}>${k} — ${RS_SIZE[k].eq}</option>`).join(''));
   sel('rsLoco', Object.keys(RS_LOCO).map(k=>`<option${k==='Walker'?' selected':''}>${k}</option>`).join(''));
   sel('rsBrain',Object.keys(RS_BRAIN).map(k=>`<option${k==='Advanced TL12'?' selected':''}>${k}</option>`).join(''));
+  rsBootSkills();
+  { const cs=document.getElementById('rsOptCat');
+    if(cs && !cs.options.length){
+      cs.innerHTML=Object.keys(RS_OPTIONS).map(k=>`<option>${k}</option>`).join('');
+      rsOptCatChanged();
+    } }
   sel('rsChassis',['Standard','Resilient','Light'].map(k=>`<option>${k}</option>`).join(''));
   rsRender();
 }
@@ -3683,6 +4042,158 @@ function rsBoot(){
    chassis's own limits, exactly as the ship design works with
    tonnage.
    --------------------------------------------------------------- */
+
+/* ---------------------------------------------------------------
+   Vehicle speed and range, Vehicle Handbook.
+
+   Every chassis has a Tech Table: what it does at a given Tech
+   Level and how far it goes. The forge reported neither, which for
+   a vehicle is most of what you want to know.
+
+   Speed bands are the book's own words. Range is in kilometres on
+   one load of fuel.
+   --------------------------------------------------------------- */
+const VF_TECH = {
+  'Light ground vehicle': [[4,'Very Slow',100],[6,'Slow',200],[8,'Medium',400],[10,'High',500],[99,'Fast',600]],
+  'Heavy ground vehicle': [[4,'Very Slow',200],[6,'Slow',300],[8,'Medium',400],[10,'Medium',500],[99,'High',600]],
+  'Light walker':         [[8,'Very Slow',150],[10,'Slow',300],[12,'Medium',450],[14,'High',600],[99,'High',750]],
+  'Heavy walker':         [[8,'Very Slow',150],[10,'Slow',300],[12,'Medium',450],[14,'High',600],[99,'High',750]],
+  'Light hovercraft':     [[5,'Slow',300],[7,'Medium',400],[9,'High',500],[11,'High',600],[99,'Fast',700]],
+  'Heavy hovercraft':     [[5,'Slow',300],[7,'Medium',400],[9,'High',500],[11,'High',600],[99,'Fast',700]],
+  'Light grav vehicle':   [[8,'High',1000],[10,'Fast',2000],[12,'Fast',3000],[14,'Fast',4000],[99,'Very Fast',5000]],
+  'Heavy grav vehicle':   [[8,'High',1000],[10,'Fast',2000],[99,'Fast',3000]],
+  'Unpowered vehicle':    [[3,'Idle',100],[5,'Very Slow',200],[8,'Slow',400],[11,'Slow',800],[99,'Medium',1200]],
+  'Sailing vessel':       [[4,'Very Slow',2000],[6,'Very Slow',4000],[8,'Slow',6000],[10,'Slow',8000],[99,'Medium',12000]],
+  'Powered boat':         [[4,'Medium',300],[6,'High',600],[8,'Fast',1200],[10,'Fast',2400],[99,'Very Fast',4800]],
+  'Ocean ship':           [[4,'Slow',4000],[7,'Medium',6000],[9,'Medium',8000],[11,'Medium',10000],[99,'Medium',12000]],
+  'Small submarine':      [[5,'Idle',50],[8,'Very Slow',100],[11,'Slow',150],[14,'Medium',200],[99,'Medium',250]],
+  'Large submarine':      [[5,'Idle',50],[8,'Very Slow',100],[11,'Slow',150],[14,'Medium',200],[99,'Medium',250]],
+  'Airship':              [[5,'Slow',4000],[7,'Medium',6000],[9,'Medium',8000],[11,'Medium',10000],[99,'Medium',12000]],
+  'Light aeroplane':      [[4,'Medium',300],[6,'High',600],[8,'Fast',1200],[10,'Fast',2400],[99,'Very Fast',4800]],
+  'Heavy aeroplane':      [[4,'Slow',1000],[6,'Medium',2000],[8,'High',3000],[10,'Fast',4000],[99,'Very Fast',5000]],
+  'Light jet':            [[5,'High',750],[8,'Fast',2000],[11,'Very Fast',4000],[99,'Subsonic',7000]],
+  'Heavy jet':            [[5,'High',1000],[8,'Fast',4000],[11,'Very Fast',7000],[99,'Subsonic',10000]],
+  'Helicopter':           [[6,'Medium',1000],[8,'Medium',4000],[10,'High',7000],[99,'High',10000]]
+};
+/* what a speed band means in a chase, Vehicle Handbook p.10 */
+const VF_BAND_KPH = {'Idle':'walking pace','Very Slow':'up to 50 kph','Slow':'50\u2013100 kph',
+  'Medium':'100\u2013200 kph','High':'200\u2013375 kph','Fast':'375\u2013750 kph',
+  'Very Fast':'750\u20131,500 kph','Subsonic':'1,500\u20133,000 kph','Supersonic':'over 3,000 kph'};
+function vfSpeedFor(chassis, tl){
+  const t=VF_TECH[chassis]; if(!t) return null;
+  for(const [maxTl,band,range] of t) if(tl<=maxTl) return {band, range, kph:VF_BAND_KPH[band]||''};
+  const last=t[t.length-1];
+  return {band:last[1], range:last[2], kph:VF_BAND_KPH[last[1]]||''};
+}
+
+
+/* ---------------------------------------------------------------
+   Vehicle customisation, Vehicle Handbook p.46-65.
+
+   Read off the book's own tables. Three costing shapes appear and
+   all three are here: a flat cost, a cost per Space of the whole
+   vehicle, and a percentage of the vehicle's Spaces consumed.
+   Reactive armour and stealth cost per Space but take none.
+   --------------------------------------------------------------- */
+const VF_CUSTOM = {
+  'Control and crew': {
+    'Control, primitive':  {tl:1,  sp:0, cost:-25,   agility:-1, t:'Cheaper, and worse'},
+    'Control, improved':   {tl:7,  sp:0, cost:5000,  agility:1,  t:'Agility +1'},
+    'Control, enhanced':   {tl:10, sp:0, cost:15000, agility:2,  t:'Agility +2'},
+    'Control, advanced':   {tl:12, sp:0, cost:25000, agility:3,  t:'Agility +3'},
+    'Autopilot, basic':    {tl:5,  sp:0, cost:2000,  t:'Skill 0'},
+    'Autopilot, improved': {tl:7,  sp:0, cost:7500,  t:'Skill 1'},
+    'Autopilot, enhanced': {tl:9,  sp:0, cost:10000, t:'Skill 2'},
+    'Autopilot, advanced': {tl:11, sp:0, cost:15000, t:'Skill 3'},
+    'Bunks':               {tl:1,  sp:1, cost:200,   t:'Sleeps two'},
+    'Command centre':      {tl:9,  sp:4, cost:75000, t:'Runs an operation from the back'}
+  },
+  'Power': {
+    'Fission plant, basic':    {tl:6,  pctSp:50, perSpace:100000, minSp:10, t:'One year between refuels'},
+    'Fission plant, improved': {tl:7,  pctSp:40, perSpace:150000, minSp:10, t:'25 years'},
+    'Fission plant, advanced': {tl:8,  pctSp:30, perSpace:250000, minSp:10, t:'50 years'},
+    'Fusion plant, basic':     {tl:9,  pctSp:25, perSpace:125000, minSp:10, t:'50 years, no drawbacks'},
+    'Fusion plant, advanced':  {tl:10, pctSp:20, perSpace:200000, minSp:10, t:'100 years'}
+  },
+  'Active defence': {
+    'Reactive armour, basic':    {tl:7,  sp:0, perSpace:1000, t:'Protection +15, degrades as it is hit'},
+    'Reactive armour, improved': {tl:9,  sp:0, perSpace:2500, t:'Protection +25'},
+    'Reactive armour, advanced': {tl:11, sp:0, perSpace:5000, t:'Protection +30'},
+    'Smoke discharger':          {tl:3,  sp:1, cost:1000,  t:'DM-2 against a stationary vehicle'},
+    'Decoy dispenser':           {tl:5,  sp:1, cost:2500,  t:'Against guided weapons'},
+    'Prismatic aerosol':         {tl:9,  sp:1, cost:4000,  t:'Against lasers'},
+    'Anti-missile, minigun':     {tl:8,  sp:0.5, cost:2000,  t:'Shoots incoming down'},
+    'Anti-missile, laser':       {tl:10, sp:0.5, cost:1000,  t:'Better against missiles'},
+    'Anti-missile, gauss':       {tl:11, sp:1, cost:3000,  t:'Stops shells too'},
+    'Anti-missile, advanced laser':{tl:13, sp:1, cost:2000, t:'Stops anything solid'}
+  },
+  'Electronics': {
+    'Stealth, basic':      {tl:7,  sp:0, perSpace:5000,  t:'DM-1 to sensors, takes no Spaces'},
+    'Stealth, improved':   {tl:9,  sp:0, perSpace:10000, t:'DM-2'},
+    'Stealth, advanced':   {tl:13, sp:0, perSpace:20000, t:'DM-4'},
+    'Camouflage':          {tl:5,  sp:0, perSpace:500,   t:'Against the eye, not the sensor'},
+    'Electronic countermeasures':{tl:9, sp:1, cost:20000, t:'Cannot be combined with stealth'},
+    'Navigation system':   {tl:8,  sp:0, cost:2000,  t:'Knows where it is'},
+    'Sensor suite, basic':  {tl:7, sp:1, cost:5000,  t:'Sees a little'},
+    'Sensor suite, military':{tl:10, sp:2, cost:50000, t:'Sees properly'}
+  },
+  'Environment': {
+    'Airlock':              {tl:6,  sp:2, cost:2000,  t:'In and out without venting'},
+    'Hostile environment':  {tl:6,  sp:0, perSpace:5000,  t:'Sealed and life-supported'},
+    'Corrosive environment':{tl:9,  sp:0, perSpace:10000, t:'Ceramics and resistant materials'},
+    'Insidious environment':{tl:11, sp:0, perSpace:50000, t:'Against atmospheres that find a way'},
+    'Vacuum protection':    {tl:8,  sp:0, perSpace:5000,  t:'Works in vacuum'},
+    'Submersible':          {tl:6,  sp:0, perSpace:10000, t:'Rated to a safe depth'}
+  },
+  'Comfort and utility': {
+    'Autodoc':          {tl:13, sp:2, cost:100000, t:'Medic checks without a medic'},
+    'Cryoberth':        {tl:10, sp:1, cost:50000,  t:'One sleeper'},
+    'Galley':           {tl:5,  sp:2, cost:5000,   t:'Somewhere to eat'},
+    'Workshop':         {tl:6,  sp:3, cost:10000,  t:'Repairs at no penalty'},
+    'Digger blade':     {tl:5,  sp:2, cost:5000,   t:'Moves earth'},
+    'Cutting tool':     {tl:5,  sp:1, cost:2000,   t:'Through a wall'},
+    'Ejection cocoon':  {tl:8,  sp:2, cost:25000,  t:'Gets one crew out'},
+    'Winch':            {tl:5,  sp:1, cost:2000,   t:'Pulls itself out of trouble'}
+  }
+};
+function vfCustFitted(){ S.vfCust=S.vfCust||[]; return S.vfCust; }
+function vfAddCustom(){
+  const cat=(document.getElementById('vfCustCat')||{}).value;
+  const name=(document.getElementById('vfCust')||{}).value;
+  if(!(VF_CUSTOM[cat]||{})[name]) return;
+  vfCustFitted().push({cat, name});
+  vfRender(); queueSave();
+}
+function vfDropCustom(i){ vfCustFitted().splice(i,1); vfRender(); queueSave(); }
+function vfCustCatChanged(){
+  const cat=(document.getElementById('vfCustCat')||{}).value;
+  const sel=document.getElementById('vfCust');
+  if(sel) sel.innerHTML=Object.keys(VF_CUSTOM[cat]||{}).map(k=>`<option>${k}</option>`).join('');
+}
+function vfCustTotals(spaces){
+  let sp=0, cost=0, tl=0, agility=0;
+  const rows=vfCustFitted().map(e=>{
+    const o=(VF_CUSTOM[e.cat]||{})[e.name]; if(!o) return null;
+    let s = o.pctSp ? Math.max(o.minSp||0, spaces*o.pctSp/100) : (o.sp||0);
+    let c = o.perSpace ? o.perSpace*(o.pctSp?s:spaces) : (o.cost||0);
+    sp+=s; cost+=c; tl=Math.max(tl,o.tl);
+    if(o.agility) agility+=o.agility;
+    return {name:e.name, sp:Math.round(s*100)/100, cost:Math.round(c), tl:o.tl, t:o.t};
+  }).filter(Boolean);
+  return {rows, sp:Math.round(sp*100)/100, cost:Math.round(cost), tl, agility};
+}
+function vfCustBlock(spaces){
+  const t=vfCustTotals(spaces);
+  if(!t.rows.length) return '<div class="hint" style="margin-top:5px">Nothing fitted.</div>';
+  return `<div class="sysrow" style="margin-top:8px"><span>Customisation</span>
+      <b>${t.rows.length}</b> <span class="hint">${t.sp} Spaces &middot; Cr${t.cost.toLocaleString()}</span></div>
+    <div class="legs" style="display:block;margin-top:5px">${t.rows.map((r,i)=>
+      `<div class="sysrow"><span>${r.sp?r.sp+' sp':'\u2014'}</span><b>${r.name}</b>
+        <span class="hint">TL${r.tl} &middot; Cr${r.cost.toLocaleString()} &middot; ${r.t}</span>
+        <span class="grow"></span>
+        <button class="mini" onclick="vfDropCustom(${i})">&times;</button></div>`).join('')}</div>`;
+}
+
 const VF_CHASSIS = {
   'Light ground vehicle': {tl:4, sk:'Drive (wheel)',        ag:0,  min:1,  max:20,  cost:750,    hull:2,     ship:0.5,  tr:''},
   'Heavy ground vehicle': {tl:4, sk:'Drive (wheel)',        ag:-2, min:20, max:200, cost:3000,   hull:3,     ship:0.5,  tr:''},
@@ -3747,17 +4258,22 @@ function vfBuild(){
     if(f.note) notes.push(e.value+' — '+f.note);
   });
 
+  const cust=vfCustTotals(spaces);
+  used += cust.sp; cost += cust.cost;
   const hull = Math.max(1, Math.round(ch.hull * spaces));
   const free = Math.round((spaces - used)*100)/100;
 
+  const perf = vfSpeedFor(g('vfChassis'), tl) || {band:'\u2014', range:0, kph:''};
   return {
     name: g('vfName') || g('vfChassis'),
-    chassis: g('vfChassis'), tl, skill: ch.sk, agility: ch.ag,
+    chassis: g('vfChassis'), tl:Math.max(tl,cust.tl), skill: ch.sk,
+    agility: ch.ag + (cust.agility||0),
+    speed: perf.band, speedKph: perf.kph, range: perf.range,
     spaces, used: Math.round(used*100)/100, free, over: free < 0,
     hull, armour, cargo, crew, pax,
     shipping: Math.round(ch.ship * spaces * 10)/10,
     traits: ch.tr, cost: Math.round(cost), notes: notes.join(' · '),
-    range: ch.min+'–'+ch.max
+    spaceRange: ch.min+'–'+ch.max
   };
 }
 function vfRender(){
@@ -3771,9 +4287,13 @@ function vfRender(){
       ${v.over?'<span class="zone red">over its Spaces</span>':''}</div>
     <div class="sysgrid">
       <div class="sysrow"><span>Spaces</span><b class="${v.over?'redc':''}">${v.used} of ${v.spaces}</b>
-        <span class="hint">${v.free>=0?v.free+' free':Math.abs(v.free)+' over'} &middot; chassis takes ${v.range}</span></div>
+        <span class="hint">${v.free>=0?v.free+' free':Math.abs(v.free)+' over'} &middot; chassis takes ${v.spaceRange}</span></div>
       <div class="sysrow"><span>Skill</span><b>${v.skill}</b></div>
       <div class="sysrow"><span>Agility</span><b>${v.agility>=0?'+':''}${v.agility}</b></div>
+      <div class="sysrow"><span>Speed</span><b>${v.speed}</b>
+        <span class="hint">${v.speedKph}</span></div>
+      <div class="sysrow"><span>Range</span><b>${v.range.toLocaleString()} km</b>
+        <span class="hint">on one load of fuel</span></div>
       <div class="sysrow"><span>Armour</span><b>${v.armour}</b></div>
       <div class="sysrow"><span>Crew</span><b>${v.crew}</b>
         <span class="hint">${v.pax} passengers</span></div>
@@ -3782,6 +4302,7 @@ function vfRender(){
         <span class="hint">aboard a ship</span></div>
       <div class="sysrow"><span>Cost</span><b>${money(v.cost)}</b></div>
     </div>
+    ${vfCustBlock(v.spaces)}
     ${v.traits?`<div class="rem">${v.traits}</div>`:''}
     ${v.notes?`<div class="hint" style="margin-top:5px">${v.notes}</div>`:''}`;
 }
@@ -3793,6 +4314,7 @@ function vfSend(){
   const rec={
     vhName:v.name, vhType:v.chassis, vhTL:v.tl, vhCost:'Cr'+v.cost,
     vhSkill:v.skill, vhAgility:(v.agility>=0?'+':'')+v.agility,
+    vhSpeed:v.speed, vhRange:v.range,
     vhHull:v.hull, vhHullNow:v.hull, vhArmF:v.armour, vhArmR:v.armour, vhArmS:v.armour,
     vhCrew:v.crew, vhPax:v.pax, vhCargo:v.cargo, vhShip:v.shipping,
     vhCond:'New', vhWhere:''
@@ -3815,6 +4337,11 @@ function vfBoot(){
   if(f && !f.children.length)
     f.innerHTML=Object.keys(VF_FIT).filter(k=>k!=='Armour, per point'&&k!=='Cargo space').map(k=>
       `<label class="mtd"><input type="checkbox" class="vff" value="${k}" onchange="vfRender()"> ${k}</label>`).join('');
+  { const cs=document.getElementById('vfCustCat');
+    if(cs && !cs.options.length){
+      cs.innerHTML=Object.keys(VF_CUSTOM).map(k=>`<option>${k}</option>`).join('');
+      vfCustCatChanged();
+    } }
   vfRender();
 }
 
@@ -3852,6 +4379,263 @@ const SY_POWER  = {
   'Fusion (TL15)':     {tl:15, per:20,  cost:2},
   'Antimatter (TL20)': {tl:20, per:100, cost:10}
 };
+
+/* ---------------------------------------------------------------
+   Ship sensors and weapons, High Guard p.21 and p.27-33.
+
+   Steps 7 and 8 of the checklist, both missing. Every ship has
+   Basic sensors at DM-4 whether you fit anything or not, which is
+   why a merchant never sees the corsair until she is close.
+   --------------------------------------------------------------- */
+const SY_SENSORS = {
+  'Basic':          {tl:8,  dm:-4, power:0, tons:0, cost:0,    suite:'Lidar, Radar'},
+  'Civilian Grade': {tl:9,  dm:-2, power:1, tons:1, cost:3,    suite:'Lidar, Radar'},
+  'Military Grade': {tl:10, dm:0,  power:2, tons:2, cost:4.1,  suite:'Jammers, Lidar, Radar'},
+  'Improved':       {tl:12, dm:1,  power:4, tons:3, cost:4.3,  suite:'Densitometer, Jammers, Lidar, Radar'},
+  'Advanced':       {tl:15, dm:2,  power:6, tons:5, cost:5.3,  suite:'Densitometer, Jammers, Lidar, Neural Activity Sensor, Radar'}
+};
+const SY_MOUNTS = {
+  'Fixed mount':   {tl:0, tons:0, cost:0.1, slots:1},
+  'Single turret': {tl:7, tons:1, cost:0.2, slots:1},
+  'Double turret': {tl:8, tons:1, cost:0.5, slots:2},
+  'Triple turret': {tl:9, tons:1, cost:1,   slots:3}
+};
+const SY_WEAPONS = {
+  'Beam laser':    {tl:10, range:'Medium',    power:4,  dmg:'1D',      cost:0.5,  t:''},
+  'Pulse laser':   {tl:9,  range:'Long',      power:4,  dmg:'2D',      cost:1,    t:''},
+  'Railgun':       {tl:10, range:'Short',     power:2,  dmg:'2D',      cost:1,    t:'AP 4'},
+  'Missile rack':  {tl:7,  range:'Special',   power:0,  dmg:'4D',      cost:0.75, t:'Smart'},
+  'Sandcaster':    {tl:9,  range:'Special',   power:0,  dmg:'Special', cost:0.25, t:'defensive'},
+  'Plasma gun':    {tl:11, range:'Medium',    power:6,  dmg:'3D',      cost:2.5,  t:''},
+  'Particle beam': {tl:12, range:'Very Long', power:8,  dmg:'3D',      cost:4,    t:'Radiation'},
+  'Fusion gun':    {tl:14, range:'Medium',    power:12, dmg:'4D',      cost:2,    t:'Radiation'},
+  'Laser drill':   {tl:8,  range:'Adjacent',  power:4,  dmg:'2D',      cost:0.15, t:'AP 4'}
+};
+
+/* ---------------------------------------------------------------
+   The rest of the shipyard's weaponry, High Guard p.27-46.
+
+   Turrets were enough for a pirate campaign. This is the whole
+   catalogue, because the tool is going to outlive one campaign:
+   barbettes, three sizes of bay, spinal mounts and screens.
+
+   Damage multiples matter and are easy to miss — a barbette does
+   x3, a small bay x10, a medium x20, a large x100. That is what
+   makes bay weapons worth their tonnage.
+   --------------------------------------------------------------- */
+const SY_MOUNTS_ALL = {
+  'Fixed mount':   {tl:0,  tons:0,   cost:0.1, slots:3, mult:1,   cls:'turret'},
+  'Single turret': {tl:7,  tons:1,   cost:0.2, slots:1, mult:1,   cls:'turret'},
+  'Double turret': {tl:8,  tons:1,   cost:0.5, slots:2, mult:1,   cls:'turret'},
+  'Triple turret': {tl:9,  tons:1,   cost:1,   slots:3, mult:1,   cls:'turret'},
+  'Barbette':      {tl:10, tons:5,   cost:0,   slots:1, mult:3,   cls:'barbette'},
+  'Small bay':     {tl:10, tons:50,  cost:0,   slots:1, mult:10,  cls:'small'},
+  'Medium bay':    {tl:11, tons:100, cost:0,   slots:1, mult:20,  cls:'medium'},
+  'Large bay':     {tl:12, tons:400, cost:0,   slots:1, mult:100, cls:'large'}
+};
+const SY_BARBETTES = {
+  'Beam laser barbette':  {tl:10, range:'Medium',    power:12, dmg:'2D', cost:3, t:''},
+  'Pulse laser barbette': {tl:9,  range:'Long',      power:12, dmg:'3D', cost:6, t:''},
+  'Fusion barbette':      {tl:12, range:'Medium',    power:20, dmg:'5D', cost:4, t:'AP 3, Radiation'},
+  'Ion cannon':           {tl:12, range:'Medium',    power:10, dmg:'7D', cost:6, t:'Ion'},
+  'Missile barbette':     {tl:7,  range:'Special',   power:0,  dmg:'4D', cost:4, t:'Smart'},
+  'Particle barbette':    {tl:11, range:'Very Long', power:15, dmg:'4D', cost:8, t:'Radiation'},
+  'Plasma barbette':      {tl:11, range:'Medium',    power:12, dmg:'4D', cost:5, t:'AP 2'},
+  'Railgun barbette':     {tl:10, range:'Medium',    power:5,  dmg:'3D', cost:2, t:'AP 5'},
+  'Torpedo':              {tl:7,  range:'Special',   power:2,  dmg:'6D', cost:3, t:'Smart'}
+};
+const SY_BAYS = {
+  small: {
+    'Fusion gun bay':   {tl:12, range:'Medium',    power:50,  dmg:'6D', cost:8,  t:'AP 6, Radiation'},
+    'Ion cannon bay':   {tl:12, range:'Medium',    power:20,  dmg:'6D', cost:15, t:'Ion'},
+    'Mass driver bay':  {tl:8,  range:'Short',     power:15,  dmg:'3D', cost:40, t:'Orbital Bombardment'},
+    'Meson gun bay':    {tl:11, range:'Long',      power:20,  dmg:'5D', cost:50, t:'AP \u221e, Radiation'},
+    'Missile bay':      {tl:7,  range:'Special',   power:5,   dmg:'4D', cost:12, t:'Smart'},
+    'Particle beam bay':{tl:11, range:'Very Long', power:30,  dmg:'6D', cost:20, t:'Radiation'},
+    'Railgun bay':      {tl:10, range:'Short',     power:10,  dmg:'3D', cost:30, t:'AP 10'},
+    'Repulsor bay':     {tl:15, range:'Short',     power:50,  dmg:'Special', cost:30, t:'holds 100 tons'},
+    'Torpedo bay':      {tl:7,  range:'Special',   power:2,   dmg:'6D', cost:3,  t:'Smart'}
+  },
+  medium: {
+    'Particle beam bay':{tl:12, range:'Very Long', power:50,  dmg:'8D',  cost:40, t:'Radiation'},
+    'Railgun bay':      {tl:10, range:'Short',     power:15,  dmg:'5D',  cost:50, t:'AP 10'},
+    'Repulsor bay':     {tl:14, range:'Short',     power:100, dmg:'Special', cost:60, t:'holds 200 tons'},
+    'Torpedo bay':      {tl:7,  range:'Special',   power:5,   dmg:'6D',  cost:6,  t:'Smart'},
+    'Orbital strike mass driver bay':{tl:10, range:'Short', power:50, dmg:'10D', cost:35, t:'Orbital Strike'},
+    'Orbital strike missile bay':    {tl:10, range:'Medium', power:15, dmg:'5D', cost:20, t:'Orbital Strike'}
+  },
+  large: {
+    'Fusion gun bay':   {tl:12, range:'Long',   power:100, dmg:'10D', cost:25,  t:'AP 8, Radiation'},
+    'Ion cannon bay':   {tl:12, range:'Long',   power:40,  dmg:'10D', cost:40,  t:'Ion'},
+    'Mass driver bay':  {tl:8,  range:'Medium', power:35,  dmg:'6D',  cost:80,  t:'Orbital Bombardment'},
+    'Meson gun bay':    {tl:13, range:'Long',   power:120, dmg:'6D',  cost:250, t:'AP \u221e, Radiation'}
+  }
+};
+const SY_SCREENS = {
+  'Nuclear damper': {tl:12, tons:20, power:10, cost:10, t:'Stops nuclear warheads'},
+  'Meson screen':   {tl:13, tons:30, power:10, cost:20, t:'Stops meson fire'},
+  'Black globe':    {tl:15, tons:50, power:50, cost:100, t:'Absorbs everything, and blinds you'}
+};
+/* the whole catalogue, keyed by what mount it belongs in */
+function syWeaponsFor(mountName){
+  const m=SY_MOUNTS_ALL[mountName];
+  if(!m) return {};
+  if(m.cls==='turret')   return SY_WEAPONS;
+  if(m.cls==='barbette') return SY_BARBETTES;
+  return SY_BAYS[m.cls] || {};
+}
+function syDamageMultiple(mountName){
+  return (SY_MOUNTS_ALL[mountName]||{mult:1}).mult;
+}
+
+
+/* ---------------------------------------------------------------
+   The rest of the checklist, High Guard p.13, 20, 21.
+
+   Hull options, computers and optional systems — steps 1, 6 and 9.
+   With these the shipyard covers all thirteen steps.
+   --------------------------------------------------------------- */
+const SY_HULLOPT = {
+  'Reinforced hull':    {costPct:10,  hp:10,  t:'+10% hull points'},
+  'Hamster cage':       {costPct:2,   hp:0,   t:'Crew can move about under thrust'},
+  'Heat shielding':     {costPct:10,  hp:0,   t:'Close approach to a star'},
+  'Radiation shielding':{costPct:0, perTon:0.025, hp:0, t:'Rad protection +500'},
+  'Reflec coating':     {costPct:0, perTon:0.1,  hp:0, t:'Halves laser damage'},
+  'Stealth coating':    {costPct:0, perTon:0.1,  hp:0, t:'DM-2 to detect, worse at higher TL'},
+  'Self-sealing':       {costPct:5,   hp:0,   t:'Hull seals its own breaches'}
+};
+const SY_COMPUTERS = {
+  'Computer/5':   {tl:7,  cost:0.03},
+  'Computer/10':  {tl:9,  cost:0.16},
+  'Computer/15':  {tl:11, cost:2},
+  'Computer/20':  {tl:12, cost:5},
+  'Computer/25':  {tl:13, cost:10},
+  'Computer/30':  {tl:14, cost:20},
+  'Computer/35':  {tl:15, cost:30},
+  'Core/40':      {tl:9,  cost:45},
+  'Core/50':      {tl:10, cost:60},
+  'Core/60':      {tl:11, cost:75},
+  'Core/70':      {tl:12, cost:80},
+  'Core/80':      {tl:13, cost:95},
+  'Core/90':      {tl:14, cost:120},
+  'Core/100':     {tl:15, cost:130}
+};
+const SY_OPTIONAL = {
+  'Fuel processor':  {tons:1,  cost:0.05, t:'Converts 20 tons of unrefined fuel a day, per ton'},
+  'Fuel scoop':      {tons:0,  cost:1,    t:'Skim a gas giant'},
+  'Probe drone':     {tons:1,  cost:0.2,  t:'Scouts ahead'},
+  'Repair drone':    {tons:1,  cost:0.2,  t:'Damage control without a crewman'},
+  'Docking space':   {tons:0,  cost:0,    t:'For a small craft — tonnage set by the craft'},
+  'Briefing room':   {tons:4,  cost:0.5,  t:'Somewhere to plan'},
+  'Medical bay':     {tons:4,  cost:2,    t:'Medic checks at DM+1'},
+  'Armoury':         {tons:2,  cost:0.5,  t:'Somewhere the guns are locked up'},
+  'Escape pods':     {tons:0.5,cost:0.1,  t:'Per pod, one person each'}
+};
+function syOptFitted(){ S.syOpts=S.syOpts||[]; return S.syOpts; }
+function syAddOpt(){
+  const n=(document.getElementById('syOpt')||{}).value;
+  const q=Math.max(1, +(document.getElementById('syOptQty')||{}).value||1);
+  if(!SY_OPTIONAL[n]) return;
+  syOptFitted().push({n, q});
+  syRender(); queueSave();
+}
+function syDropOpt(i){ syOptFitted().splice(i,1); syRender(); queueSave(); }
+function syOptTotals(tons){
+  let t=0, cost=0;
+  const rows=syOptFitted().map(o=>{
+    const s=SY_OPTIONAL[o.n]; if(!s) return null;
+    const tt=s.tons*o.q, cc=s.cost*o.q;
+    t+=tt; cost+=cc;
+    return {label:(o.q>1?o.q+'\u00d7 ':'')+o.n, tons:tt, cost:cc, note:s.t};
+  }).filter(Boolean);
+  return {rows, tons:t, cost};
+}
+function syHullOpts(){ S.syHull=S.syHull||[]; return S.syHull; }
+function syToggleHullOpt(name){
+  const a=syHullOpts(), i=a.indexOf(name);
+  if(i>=0) a.splice(i,1); else a.push(name);
+  syRender(); queueSave();
+}
+function syExtrasBlock(s){
+  const o=syOptTotals(s.tons);
+  const h=syHullOpts();
+  return `${h.length?`<div class="sysrow" style="margin-top:8px"><span>Hull options</span>
+      <b>${h.join(', ')}</b></div>`:''}
+    ${o.rows.length?`<div class="sysrow" style="margin-top:6px"><span>Fitted</span>
+        <b>${o.rows.length} system${o.rows.length===1?'':'s'}</b>
+        <span class="hint">${Math.round(o.tons*10)/10} tons &middot; MCr${Math.round(o.cost*100)/100}</span></div>
+      <div class="legs" style="display:block;margin-top:5px">${o.rows.map((r,i)=>
+        `<div class="sysrow"><span>${r.tons?r.tons+'t':'\u2014'}</span><b>${r.label}</b>
+          <span class="hint">${r.note}</span><span class="grow"></span>
+          <button class="mini" onclick="syDropOpt(${i})">&times;</button></div>`).join('')}</div>`:''}`;
+}
+
+function syMountChanged(){
+  const m=(document.getElementById('syMount')||{}).value;
+  const list=syWeaponsFor(m);
+  const sel=document.getElementById('syWeapon');
+  if(sel) sel.innerHTML=Object.keys(list).map(k=>`<option>${k}</option>`).join('');
+}
+function syArmed(){
+  S.syGuns = S.syGuns || [];
+  return S.syGuns;
+}
+function syAddMount(){
+  const m=(document.getElementById('syMount')||{}).value;
+  const w=(document.getElementById('syWeapon')||{}).value;
+  if(!SY_MOUNTS_ALL[m] || !(syWeaponsFor(m)||{})[w]) return;
+  syArmed().push({mount:m, weapon:w});
+  syRender(); queueSave();
+}
+function syDropMount(i){ syArmed().splice(i,1); syRender(); queueSave(); }
+function syGunTotals(){
+  let tons=0, cost=0, power=0, tl=0;
+  const rows=syArmed().map(g=>{
+    const m=SY_MOUNTS_ALL[g.mount]||SY_MOUNTS_ALL['Single turret'];
+    const w=(syWeaponsFor(g.mount)||{})[g.weapon];
+    if(!w) return null;
+    const guns=m.cls==='turret' ? m.slots : 1;     /* only turrets hold several */
+    const t=m.tons, c=m.cost + w.cost*guns, p=w.power*guns;
+    tons+=t; cost+=c; power+=p; tl=Math.max(tl, m.tl, w.tl);
+    return {label:`${guns>1?guns+'\u00d7 ':''}${g.weapon}${m.cls==='turret'?' in a '+g.mount.toLowerCase():''}`,
+            tons:t, cost:c, power:p, dmg:w.dmg, range:w.range, traits:w.t,
+            mult:m.mult, tl:Math.max(m.tl,w.tl)};
+  }).filter(Boolean);
+  /* screens are their own thing — they defend rather than shoot */
+  const screens=(S.syScreens||[]).map(name=>{
+    const s=SY_SCREENS[name]; if(!s) return null;
+    tons+=s.tons; cost+=s.cost; power+=s.power; tl=Math.max(tl,s.tl);
+    return {label:name, tons:s.tons, cost:s.cost, power:s.power, dmg:'\u2014',
+            range:'defensive', traits:s.t, mult:1, tl:s.tl};
+  }).filter(Boolean);
+  return {rows:rows.concat(screens), tons, cost, power, tl, guns:rows.length};
+}
+function syAddScreen(){
+  const n=(document.getElementById('syScreen')||{}).value;
+  if(!SY_SCREENS[n]) return;
+  S.syScreens=S.syScreens||[]; S.syScreens.push(n);
+  syRender(); queueSave();
+}
+function syDropScreen(i){ (S.syScreens||[]).splice(i,1); syRender(); queueSave(); }
+function syGunBlock(){
+  const g=syGunTotals();
+  const sName=(document.getElementById('sySensor')||{}).value||'Basic';
+  const s=SY_SENSORS[sName];
+  return `<div class="sysrow" style="margin-top:8px"><span>Sensors</span>
+      <b>${sName}</b> <span class="hint">DM${s.dm>=0?'+':''}${s.dm} &middot; ${s.suite}</span></div>
+    ${s.tons?`<div class="sysrow"><span></span><span class="hint">${s.tons} tons &middot; ${s.power} power &middot; MCr${s.cost}</span></div>`:''}
+    ${g.rows.length?`<div class="sysrow" style="margin-top:6px"><span>Weapons</span>
+        <b>${g.rows.length} mount${g.rows.length===1?'':'s'}</b>
+        <span class="hint">${g.tons} tons &middot; ${g.power} power &middot; MCr${(Math.round(g.cost*100)/100)}</span></div>
+      <div class="legs" style="display:block;margin-top:5px">${g.rows.map((r,i)=>
+        `<div class="sysrow"><span>${r.dmg}${r.mult>1?' \u00d7'+r.mult:''}</span><b>${r.label}</b>
+          <span class="hint">${r.range}${r.traits?' &middot; '+r.traits:''} &middot; TL${r.tl}${
+            r.tons?' &middot; '+r.tons+'t':''}</span>
+          <span class="grow"></span>
+          <button class="mini" onclick="syDropMount(${i})">&times;</button></div>`).join('')}</div>`
+      :'<div class="hint" style="margin-top:5px">Unarmed.</div>'}`;
+}
+
 function syBridge(tons){
   if(tons<=50)   return {t:3,  n:'or a 1.5-ton cockpit'};
   if(tons<=99)   return {t:6,  n:''};
@@ -3868,15 +4652,22 @@ function syBuild(){
   const thrust = Math.max(0, Math.min(11, +g('syThrust')||0));
   const jump   = Math.max(0, Math.min(9,  +g('syJump')||0));
   const armour = Math.max(0, +g('syArmour')||0);
-  const tl = Math.max(+g('syTL')||12, pp.tl, SY_MTL[thrust]||9, SY_JTL[jump]||0);
+  const tl = Math.max(+g('syTL')||12, pp.tl, SY_MTL[thrust]||9, SY_JTL[jump]||0,
+                      (SY_SENSORS[g('sySensor')]||{tl:8}).tl, syGunTotals().tl,
+                      (SY_COMPUTERS[g('syComputer')]||{tl:7}).tl);
 
   let used = 0, cost = 0, lines = [];
   const add = (what, t, mcr) => { used += t; cost += mcr; lines.push([what, t, mcr]); };
 
-  /* hull */
-  const hullCost = tons * 0.05 * (1 + cfg.cost/100);
+  /* hull, with its options */
+  const hopts=syHullOpts();
+  let hullPct=0, hullExtra=0, hpBonus=0;
+  hopts.forEach(n=>{ const o=SY_HULLOPT[n]; if(!o) return;
+    hullPct+=o.costPct||0; hpBonus+=o.hp||0;
+    if(o.perTon) hullExtra+=o.perTon*tons; });
+  const hullCost = tons * 0.05 * (1 + cfg.cost/100) * (1 + hullPct/100) + hullExtra;
   cost += hullCost;
-  let hullPts = Math.floor(tons/2.5) * (1 + cfg.hp/100);
+  let hullPts = Math.floor(tons/2.5) * (1 + cfg.hp/100) * (1 + hpBonus/100);
 
   /* armour — volume by config, 2.5% of hull per point at Cr50k a ton equivalent */
   if(armour){
@@ -3888,12 +4679,19 @@ function syBuild(){
   if(thrust){ const t = tons * SY_MDRIVE[thrust]/100; add('M-drive '+thrust, t, t*2); }
   if(jump){   const t = tons * SY_JUMP[jump]/100 + 5;  add('J-drive '+jump,  t, t*1.5); }
 
+  /* sensors and weapons — steps 7 and 8, before the power budget that needs them */
+  const sensorName=g('sySensor')||'Basic';
+  const sen=SY_SENSORS[sensorName]||SY_SENSORS['Basic'];
+  if(sen.tons) add('Sensors, '+sensorName.toLowerCase(), sen.tons, sen.cost);
+  const guns=syGunTotals();
+  if(guns.rows.length) add('Weapon mounts', guns.tons, guns.cost);
+
   /* power: 20% of hull for basic systems, plus drives and weapons */
   const needBasic = tons * 0.2;
   const needM     = thrust ? tons * SY_MDRIVE[thrust]/100 * 10 : 0;
   const needJ     = jump   ? tons * 0.1 * jump : 0;
-  const weapons   = Math.max(0, +g('syWeap')||0);
-  const needW     = weapons * 5;
+  const weapons   = 0;
+  const needW     = guns.power || weapons * 5;
   const needTotal = Math.round(needBasic + needM + needJ + needW);
   const ppTons    = Math.ceil(needTotal / pp.per);
   add('Power plant', ppTons, ppTons*pp.cost);
@@ -3907,16 +4705,20 @@ function syBuild(){
   /* bridge and computer */
   const br = syBridge(tons);
   add('Bridge', br.t, tons<=200 ? 0.5 : (tons<=1000 ? 1 : 2));
-  const comp = Math.max(0, +g('syComp')||0);
-  cost += comp*0.03;
+  const compName=g('syComputer')||'Computer/5';
+  const compSpec=SY_COMPUTERS[compName]||SY_COMPUTERS['Computer/5'];
+  cost += compSpec.cost;
+  const comp = parseInt(compName.replace(/\D/g,''),10)||5;
 
   /* accommodation */
   const rooms = Math.max(0, +g('syRooms')||0);
   const low   = Math.max(0, +g('syLow')||0);
   if(rooms) add('Staterooms '+rooms, rooms*4, rooms*0.5);
   if(low)   add('Low berths '+low,   low*0.5, low*0.05);
-  if(weapons) add('Turrets '+weapons, weapons*1, weapons*0.2);
+  /* the old blanket turret count is gone — mounts are itemised above */
 
+  const opts=syOptTotals(tons);
+  if(opts.rows.length) add('Optional systems', opts.tons, opts.cost);
   const cargo = Math.round((tons - used)*10)/10;
 
   return {
@@ -3926,6 +4728,8 @@ function syBuild(){
     thrust, jump, power:{type:g('syPower'), tons:ppTons, made:ppTons*pp.per, need:needTotal},
     used: Math.round(used*10)/10, cargo, over: cargo < 0,
     rooms, low, weapons, comp,
+    sensors:sensorName, sensorDM:sen.dm, guns:guns.guns||0, computer:compName,
+    hullOptions:hopts.slice(),
     cost: Math.round(cost*1000)/1000,
     standard: document.getElementById('syStd') && document.getElementById('syStd').checked,
     lines
@@ -3955,6 +4759,11 @@ function syRender(){
         <span class="hint">${s.low} low berths</span></div>
       <div class="sysrow"><span>Building time</span><b>about ${days} days</b></div>
     </div>
+    ${syGunBlock()}
+    ${syExtrasBlock(s)}
+    ${crewBlock({tons:s.tons, jump:s.jump, turrets:s.weapons,
+      driveTons:(s.lines.filter(l=>/drive|Power/i.test(l[0])).reduce((a,l)=>a+l[1],0)),
+      high:0, middle:s.rooms})}
     <div class="legs" style="margin-top:8px;display:block">${
       s.lines.map(([w,t,m])=>`<div class="sysrow"><span>${w}</span><b>${Math.round(t*10)/10} tons</b>
         <span class="hint">${m?'MCr'+(Math.round(m*100)/100):''}</span></div>`).join('')}</div>
@@ -3996,6 +4805,16 @@ function sySend(cls){
 function syBoot(){
   const sel=(id,html)=>{ const e=document.getElementById(id); if(e && !e.options.length) e.innerHTML=html; };
   sel('syConfig', Object.keys(SY_CONFIG).map(k=>`<option${k==='Standard'?' selected':''}>${k}</option>`).join(''));
+  sel('sySensor', Object.keys(SY_SENSORS).map(k=>`<option${k==='Basic'?' selected':''}>${k}</option>`).join(''));
+  sel('syMount',  Object.keys(SY_MOUNTS_ALL).map(k=>`<option${k==='Single turret'?' selected':''}>${k}</option>`).join(''));
+  sel('syScreen', Object.keys(SY_SCREENS).map(k=>`<option>${k}</option>`).join(''));
+  sel('syComputer', Object.keys(SY_COMPUTERS).map(k=>`<option${k==='Computer/15'?' selected':''}>${k}</option>`).join(''));
+  sel('syOpt', Object.keys(SY_OPTIONAL).map(k=>`<option>${k}</option>`).join(''));
+  const ho=document.getElementById('syHullOpts');
+  if(ho && !ho.children.length)
+    ho.innerHTML=Object.entries(SY_HULLOPT).map(([k,v])=>
+      `<label class="mtd" title="${v.t}"><input type="checkbox" onchange="syToggleHullOpt('${k}')"> ${k}</label>`).join('');
+  syMountChanged();
   sel('syPower',  Object.keys(SY_POWER).map(k=>`<option${k==='Fusion (TL12)'?' selected':''}>${k}</option>`).join(''));
   syRender();
 }
@@ -4207,7 +5026,7 @@ function saveCustom(){
   clearCustomForm();
   document.getElementById('ctNote').textContent=msg;
   S.tblSel={k:'c',i:id}; S.tblHit=null;
-  renderCustom(); renderTableBtns(); renderTable(); queueSave();
+  renderCustom(); renderTableGrid(); renderOpenTable(); queueSave();
 }
 function editCustom(id){ const t=S.custom.find(x=>x.id===id); ctEditing=id;
   document.getElementById('ctName').value=t.n; document.getElementById('ctMode').value=t.mode;
@@ -4217,7 +5036,7 @@ function delCustom(id){ const t=S.custom.find(x=>x.id===id);
   askConfirm('Delete the table <b>'+(t?t.n:'')+'</b>? Its entries go with it.',()=>delCustomNow(id)); }
 function delCustomNow(id){ S.custom=S.custom.filter(x=>x.id!==id);
   if(S.tblSel&&S.tblSel.k==='c'&&S.tblSel.i===id) S.tblSel=null;
-  renderCustom(); renderTableBtns(); renderTable(); queueSave(); }
+  renderCustom(); renderTableGrid(); renderOpenTable(); queueSave(); }
 function renderCustom(){
   const el=document.getElementById('ctList');
   el.innerHTML=(S.custom||[]).length ? S.custom.map(t=>
@@ -4658,6 +5477,234 @@ const LOOT_TABLES = {
   ['Garrotte',1,0,10,'1D · Silent',135],                 ['Sap',3,1,30,'1D+2 · Stun',137],
   ['Boarding Axe',7,4,200,'3D · AP 2',135],              ['Combat Knife',6,0.5,100,'2D',135],
   ['Machete',3,2,60,'2D+2',135]
+ ]},
+ augments: {label:'Augments', items:[
+  ['Prosthetic limb, basic',9,0,20000,'Restores function',56],
+  ['Prosthetic limb, improved',11,0,40000,'As a natural limb',56],
+  ['Cybernetic limb, basic',11,0,100000,'STR/DEX 9 in that limb',58],
+  ['Cybernetic limb, improved',13,0,200000,'STR/DEX 12',58],
+  ['Cybernetic limb, advanced',15,0,500000,'STR/DEX 15',58],
+  ['Razor claws, basic',11,0,20000,'2D, AP 3 crystaliron',57],
+  ['Razor claws, improved',13,0,35000,'2D, AP 8 monofilament',57],
+  ['Razor claws, advanced',15,0,50000,'4D, AP 20 arc-field',57],
+  ['Enhanced mobility, basic',8,0,10000,'+1.5m movement, DM+1 balance',57],
+  ['Enhanced mobility, improved',11,0,50000,'+3m, DM+2',57],
+  ['Enhanced mobility, advanced',13,0,150000,'+6m, DM+3',57],
+  ['Assisted ambulation, basic',13,0,100000,'4 hours sleep at 3x food',57],
+  ['Assisted ambulation, improved',14,0,300000,'2 hours at 2x food',57],
+  ['Assisted ambulation, advanced',15,0,500000,'1 hour at 1.5x food',57],
+  ['Cognitive augmentation +1',12,0,500000,'+1 INT',59],
+  ['Cognitive augmentation +2',14,0,1000000,'+2 INT',59],
+  ['Cognitive augmentation +3',16,0,5000000,'+3 INT',59],
+  ['Complex cranial processing unit',13,0,250000,'DM+1 to anything mathematical',59],
+  ['Cockpit sensory suite',10,0,500000,'DM+1 on high-speed checks',59],
+  ['Subdermal armour, basic',10,0,25000,'+2 Protection, stacks',55],
+  ['Subdermal armour, improved',12,0,50000,'+4 Protection',55],
+  ['Subdermal armour, advanced',14,0,100000,'+6 Protection',55],
+  ['Smuggling container',8,0,15000,'Concealed, Difficult (10+) to find',55],
+  ['Bio-fusion power port',13,0,10000,'Powers an energy pistol, 50 shots a day',52],
+  ['Cardiotrigger detonator',7,0,0,'Heart-triggered dead man\u2019s bomb',52],
+  ['Genetic aquamorph adaption',12,0,30000,'Amphibious',52],
+  ['Terminal stabilisation system',16,0,2500000,'+1D END when killed',55],
+  ['Video tattoo controller',12,0,20000,'Runs the tattoo',55],
+  ['Video tattoo, one limb',12,0,20000,'A limb, head or half a torso',55],
+  ['Video tattoo, full body',12,0,120000,'DM+2 Stealth if exposed',55],
+  ['Ballistic tracking lenses',12,0,20000,'DM+1 to ranged attacks',57],
+  ['Enhanced vision',10,0,15000,'Light intensification',57],
+  ['Enhanced hearing',10,0,10000,'DM+1 to hear',57],
+  ['Neural comm implant',12,0,15000,'Silent communication',59],
+  ['Neural jack',11,0,10000,'Direct link to a computer',59],
+  ['Internal air supply',11,0,25000,'Thirty minutes of air',55]
+ ]},
+ computers: {label:'Computers and software', items:[
+  ['Computer terminal',6,2,200,'Computer/0 and interface',67],
+  ['Computer interface',8,0,100,'Computer/0 and interface',67],
+  ['Portable computer/0',7,5,500,'Computer/0',67],
+  ['Portable computer/1',8,2,250,'Computer/1',67],
+  ['Portable computer/2',10,0.5,500,'Computer/2',67],
+  ['Portable computer/3',12,0.5,1000,'Computer/3',67],
+  ['Mid-sized computer, basic',6,500,500000,'Computer/0',67],
+  ['Mid-sized computer, improved',7,50,50000,'Computer/1',67],
+  ['Mid-sized computer, enhanced',8,10,10000,'Computer/2',67],
+  ['Mid-sized computer, advanced',9,5,10000,'Computer/3',67],
+  ['Mid-sized computer, superior',10,5,10000,'Computer/4',67],
+  ['Mainframe, basic',5,5000,2000000,'Computer/0',67],
+  ['Mainframe, improved',6,4000,4000000,'Computer/1',67],
+  ['Intelligent interface',8,0,0,'\u00d75 cost, DM+1 on relevant tasks',67],
+  ['Intellect',9,0,0,'\u00d710 cost, instructs the unskilled',67],
+  ['Agent/0',11,0,500,'Bandwidth 0, works unsupervised',69],
+  ['Agent/1',12,0,2000,'Bandwidth 1',69],
+  ['Agent/2',13,0,100000,'Bandwidth 2',69],
+  ['Agent/3',14,0,250000,'Bandwidth 3',69],
+  ['Database',7,0,1000,'Searchable, no bandwidth to store',69],
+  ['Expert/1',9,0,1000,'Bandwidth 1, skill 1',69],
+  ['Expert/2',11,0,10000,'Bandwidth 2, skill 2',69],
+  ['Expert/3',13,0,100000,'Bandwidth 3, skill 3',69],
+  ['Intellect software',12,0,10000,'Bandwidth 3, instructs the unskilled',69],
+  ['Intrusion/1',9,0,2000,'Bandwidth 1, breaks in',71],
+  ['Intrusion/2',11,0,20000,'Bandwidth 2',71],
+  ['Intrusion/3',13,0,200000,'Bandwidth 3',71],
+  ['Security/1',9,0,1000,'Bandwidth 1, keeps them out',71],
+  ['Security/2',11,0,10000,'Bandwidth 2',71],
+  ['Security/3',13,0,100000,'Bandwidth 3',71],
+  ['Translator/1',10,0,3000,'Bandwidth 1',71],
+  ['Translator/2',12,0,30000,'Bandwidth 2',71],
+  ['Data wafer',9,0,10,'Stores a database',67],
+  ['Wafer jack',13,0,10000,'Runs a wafer in your head',67],
+  ['Holographic display',10,1,2000,'Projects an image',67],
+  ['Personal comm',8,0.5,150,'Voice and data, planetary range',75]
+ ]},
+ electronics: {label:'Electronics and sensors', items:[
+  ['Flashlight, basic',6,0.5,10,'18m cone, six hours',75],
+  ['Flashlight, improved',7,0.5,10,'Adjustable beam',75],
+  ['Flashlight, advanced',8,0.5,10,'Multimode, 24 hours',75],
+  ['Infrared goggles',6,1,500,'Thermal vision',75],
+  ['Infrared goggles, improved',8,0,500,'Lightweight',75],
+  ['Light intensifier goggles',7,1,500,'Sees in near dark',75],
+  ['Light intensifier, improved',9,0,1250,'With thermal imaging',75],
+  ['Geiger counter',5,0.5,150,'Finds radiation',75],
+  ['EM probe',10,1,1000,'Finds bugs and emissions',79],
+  ['Metal detector, basic',5,5,250,'Coin-sized to 1m',79],
+  ['Metal detector, improved',7,3,150,'To 3m',79],
+  ['Metal detector, advanced',9,0,250,'To 10m',79],
+  ['Ground penetrating radar',7,5,5000,'Anomalies to 40m',79],
+  ['Ground penetrating radar, improved',9,4,8000,'Deeper, DM+2',79],
+  ['Neural activity scanner',13,4,50000,'Reads minds at 500m',79],
+  ['Bug, audio',8,0,100,'Listens',79],
+  ['Bug sweeper',9,1,500,'Finds them',79],
+  ['Motion sensor',9,0.5,300,'Movement within 50m',79],
+  ['Densitometer',14,3,20000,'Through walls',79],
+  ['Personal HUD',9,0,1500,'Overlays what you need',75],
+  ['Binoculars',5,1,200,'Distance',75],
+  ['Electronic binoculars',9,1,1500,'Distance, and records',75],
+  ['Portable scanner',10,2,3000,'Analyses what it sees',79],
+  ['Wafer, data',9,0,10,'Stores a database',67],
+  ['Transceiver, personal',8,0.5,150,'Planetary range',75],
+  ['Transceiver, long range',10,2,1500,'Continental range',75],
+  ['Satellite uplink',9,3,3000,'Orbit and beyond',75],
+  ['Signal jammer',10,4,10000,'Nobody calls for help',79],
+  ['Radiation detector',7,0.5,200,'Warns you',75],
+  ['Air sampler',8,1,500,'Says whether to breathe',79],
+  ['Chemical sniffer',9,1,1000,'Explosives and drugs',79],
+  ['Life sign scanner',12,2,25000,'Bodies through a bulkhead',79],
+  ['Recorder, audio-visual',7,0.5,200,'Evidence',75],
+  ['Translator, handheld',11,0.5,2000,'Speaks for you',75],
+  ['Lockpick, electronic',11,0.5,2000,'DM+2 to open a lock',79],
+  ['Toolkit, electronics',8,3,2000,'No penalty to repairs',79]
+ ]},
+ survival: {label:'Survival gear', items:[
+  ['Breather mask',8,0.5,100,'Tainted atmospheres',97],
+  ['Filter mask, basic',3,0,10,'Tainted 4, 7, 9',98],
+  ['Filter mask, improved',10,0,1000,'Nose plug or lung implant',98],
+  ['Face mask',4,0,20,'Dust and wind',98],
+  ['NBC suit',8,2,250,'Contaminants and fallout',98],
+  ['Oxygen tanks',5,12,500,'Two tanks, six hours',98],
+  ['Radiation suit',6,10,5000,'100 rads, +10 per TL above 6',99],
+  ['Rebreather',8,3,2000,'Six hours, any atmosphere',99],
+  ['Squirrel suit',7,1,500,'Semi-controlled descent',97],
+  ['Grav belt',12,8,100000,'Personal flight',97],
+  ['Parachute',5,10,100,'Down, slowly',97],
+  ['Survival kit',6,3,300,'A week of not dying',101],
+  ['Rations, one week',1,7,100,'Food',101],
+  ['Water purifier',7,1,200,'Makes it drinkable',101],
+  ['Tent, environmental',8,8,2000,'Somewhere to sleep',101],
+  ['Sleeping bag',3,2,50,'Warm enough',101],
+  ['Cold weather clothing',5,3,200,'Down to \u221250\u00b0C',101],
+  ['Desert clothing',5,2,150,'Reflects and holds water',101],
+  ['Climbing kit',5,8,500,'Up',101],
+  ['Grapple launcher',9,4,1000,'Up, faster',101],
+  ['Rope, 50m',1,5,50,'Standard',101],
+  ['Compass',3,0.5,20,'North',101],
+  ['Navigation system, personal',9,0.5,1000,'Knows where you are',101],
+  ['Beacon, emergency',8,0.5,200,'Come and find me',101],
+  ['Flares',5,0.5,50,'Signal, or light',101],
+  ['Stove, portable',6,2,100,'Hot food',101],
+  ['Water, 5 litres',0,5,5,'Heavy, and essential',101],
+  ['Medkit, basic',8,1,1000,'Medic at no penalty',105],
+  ['Medkit, advanced',12,2,5000,'DM+2 to Medic',105],
+  ['Antitoxin',8,0,50,'One dose',105],
+  ['Fast drug',10,0,200,'Slows metabolism',105],
+  ['Combat drug',10,0,300,'END +2 for ten minutes',105],
+  ['Stim',9,0,100,'No sleep tonight',105],
+  ['Panic button',10,0,500,'Says where the body is',101],
+  ['Snowshoes',3,2,50,'Across it, not through',101],
+  ['Machete, survival',3,2,60,'Through the undergrowth',101]
+ ]},
+ medical: {label:'Medical and drugs', items:[
+  ['Medkit, basic',8,1,1000,'Medic at no penalty',105],
+  ['Medical kit, field',10,2,2500,'DM+1 to Medic',105],
+  ['Medical kit, surgical',12,4,7500,'DM+2, and surgery',105],
+  ['Autodoc, portable',13,20,50000,'Medic 2 without a medic',105],
+  ['Slow drug',9,0,200,'Time passes differently',107],
+  ['Fast drug',10,0,200,'Slows the metabolism sixtyfold',107],
+  ['Combat drug',10,0,300,'END +2, then the crash',107],
+  ['Medicinal drug',8,0,100,'Heals 1D more',107],
+  ['Panacea',13,0,2000,'Cures most things',107],
+  ['Antitoxin',8,0,50,'One dose, one poison',107],
+  ['Anagathic',15,0,200000,'A year of not ageing',107],
+  ['Stim',9,0,100,'Awake, and paying for it',107],
+  ['Truth serum',9,0,300,'DM-2 to resist questioning',107],
+  ['Neural stimulator',12,1,25000,'Wakes the unconscious',105],
+  ['Cryoberth, portable',12,50,30000,'Keeps them alive to a surgeon',105],
+  ['Low berth, portable',10,40,20000,'Cheaper, riskier',105],
+  ['Bandages',1,0.5,10,'The oldest medicine',105],
+  ['Splint',3,1,20,'Holds it together',105],
+  ['Stretcher',5,5,100,'Carries them out',105],
+  ['Diagnostic scanner',11,2,10000,'Says what is wrong',105],
+  ['Surgical laser',12,1,5000,'Cuts and cauterises',105],
+  ['Nanite injector',14,0.5,20000,'Repairs from inside',105],
+  ['Blood pack',8,1,100,'Someone will need it',105],
+  ['Painkiller',7,0,20,'Keeps them moving',107],
+  ['Antibiotics',7,0,50,'After the wound',107],
+  ['Sedative',7,0,30,'Stops them moving',107],
+  ['Stimulant patch',10,0,150,'One more hour',107],
+  ['Psi drug',15,0,10000,'PSI +1 for an hour',107],
+  ['Anti-psi drug',15,0,15000,'Blocks a telepath',107],
+  ['Radiation treatment',11,0,1000,'After the reactor',107],
+  ['Regeneration therapy',14,0,100000,'Grows back what was lost',107],
+  ['Cybernetic maintenance kit',11,2,3000,'Keeps the augment working',105],
+  ['Medical scanner, handheld',10,1,3000,'Vital signs',105],
+  ['Trauma kit',9,3,4000,'Keeps them alive to the ship',105],
+  ['Decontamination kit',9,2,1500,'After the atmosphere',105],
+  ['Field autosurgeon',14,8,150000,'Surgery in a corridor',105]
+ ]},
+ tools: {label:'Tools and trade goods', items:[
+  ['Toolkit, basic',6,3,1000,'No penalty to repairs',87],
+  ['Toolkit, advanced',12,4,20000,'DM+1 to repairs',87],
+  ['Toolkit, electronics',8,3,2000,'For circuits',87],
+  ['Toolkit, mechanical',6,6,1500,'For engines',87],
+  ['Cutting torch',6,4,500,'Through a bulkhead, slowly',87],
+  ['Plasma torch',11,6,5000,'Through a bulkhead, quickly',87],
+  ['Powered tools',8,5,2500,'Faster, and louder',87],
+  ['Welder',7,4,800,'Puts it back together',87],
+  ['Grav lifter',11,10,15000,'Moves a container by hand',87],
+  ['Portable workbench',8,15,3000,'Somewhere to work',87],
+  ['Vacuum tools',9,4,3000,'Works outside',87],
+  ['Magnetic clamps',8,2,400,'Stays on the hull',87],
+  ['Line thrower',7,3,600,'Across a gap',87],
+  ['Winch, portable',7,8,1200,'Pulls it free',87],
+  ['Portable generator',8,20,5000,'Power where there is none',87],
+  ['Fuel bladder',7,3,300,'Carries what you siphon',87],
+  ['Cargo netting',5,4,150,'Nothing shifts in flight',87],
+  ['Container seal',8,0.5,50,'Says if it was opened',87],
+  ['Forged seal',10,0.5,2000,'Says it was not',87],
+  ['Lockpick set',5,0.5,200,'The old way',87],
+  ['Electronic lockpick',11,0.5,2000,'DM+2 to open',87],
+  ['Cutting wire',9,0.5,300,'Through a lock',87],
+  ['Portable airlock',11,30,25000,'Boarding without venting',87],
+  ['Breaching charge',8,2,1500,'A door, briefly',87],
+  ['Inflatable shelter',9,10,3000,'Pressure in a hurry',87],
+  ['Salvage cutter',10,12,8000,'Takes a ship apart',87],
+  ['Assay kit',9,2,2000,'Says what the ore is worth',87],
+  ['Trade goods sampler',8,1,500,'Says what the cargo is',87],
+  ['Counterfeit detector',10,0.5,1500,'Says whether the money is real',87],
+  ['Portable safe',9,15,4000,'Keeps the take',87],
+  ['Handcuffs',5,0.5,20,'For the crew you keep',87],
+  ['Restraint straps',3,0.5,10,'Cheaper',87],
+  ['Portable still',6,8,600,'Morale',87],
+  ['Camp kitchen',6,10,800,'Feeds a boarding party',87],
+  ['Repair patches',9,1,200,'Holds a hull breach',87],
+  ['Sealant foam',10,2,400,'Holds it better',87]
  ]}
 };
 function d66(){ return (d(6)-1)*6 + d(6) - 1; }   /* 0..35 */
@@ -5362,6 +6409,59 @@ function npcBlock(n){
     ${n.note?`<div class="rem">${n.note}</div>`:''}
     ${a&&a.t?`<div class="hint" style="margin-top:5px">${a.t[0]}</div>`:''}
   </div>`;
+}
+
+
+/* ---------------------------------------------------------------
+   Crew requirements, High Guard p.22.
+
+   A ship you cannot legally crew is a design error, and the salary
+   bill is half of what decides whether piracy pays. Adventurers
+   run thin — a pilot who also astrogates, a steward who can patch
+   a wound — so the total is what she *wants*, not what she has.
+   --------------------------------------------------------------- */
+const CREW_POSTS = [
+  ['Captain',        '\u2014',                  10000, s=>1,
+   'Usually the leading officer'],
+  ['Pilot',          'Pilot',                    6000, s=>1 + (s.craft||0),
+   '1, plus 1 for each small craft'],
+  ['Astrogator',     'Astrogation',              5000, s=>s.jump>0?1:0,
+   '1 if a jump drive is installed'],
+  ['Engineer',       'Engineer',                 4000, s=>Math.ceil(s.driveTons/35),
+   '1 per 35 tons of drives and power plant'],
+  ['Maintenance',    'Mechanic',                 1000, s=>Math.ceil(s.tons/1000),
+   '1 per 1,000 tons'],
+  ['Gunner',         'Gunner',                   2000, s=>s.turrets||0,
+   '1 per turret, barbette and screen'],
+  ['Steward',        'Steward',                  2000, s=>Math.ceil((s.high||0)/10) + Math.ceil((s.middle||0)/100),
+   '1 per 10 High or 100 Middle passengers'],
+  ['Administrator',  'Admin',                    1500, s=>Math.floor(s.tons/2000),
+   '1 per 2,000 tons'],
+  ['Sensor operator','Electronics (sensors)',    4000, s=>Math.floor(s.tons/7500),
+   '1 per 7,500 tons'],
+  ['Medic',          'Medic',                    4000, s=>Math.floor((s.crewSoFar||0)/120),
+   '1 per 120 crew and passengers']
+];
+function crewFor(spec){
+  const s=Object.assign({tons:200, jump:0, driveTons:0, turrets:0, craft:0, high:0, middle:0}, spec||{});
+  const rows=[]; let total=0, salary=0;
+  CREW_POSTS.forEach(([post,skill,pay,fn,note])=>{
+    if(post==='Medic') s.crewSoFar = total + (s.high||0) + (s.middle||0);
+    const n=Math.max(0, fn(s)|0);
+    if(n){ rows.push({post,skill,pay,n,note,cost:n*pay}); total+=n; salary+=n*pay; }
+  });
+  return {rows, total, salary};
+}
+function crewBlock(spec){
+  const c=crewFor(spec);
+  if(!c.rows.length) return '';
+  return `<div class="sysrow" style="margin-top:8px"><span>Crew wanted</span>
+      <b>${c.total}</b> <span class="hint">Cr${c.salary.toLocaleString()} a month in salary</span></div>
+    <div class="legs" style="display:block;margin-top:6px">${
+      c.rows.map(r=>`<div class="sysrow"><span>${r.post}</span>
+        <b>${r.n}</b> <span class="hint">${r.skill} &middot; Cr${r.cost.toLocaleString()} &middot; ${r.note}</span></div>`).join('')}</div>
+    <div class="hint" style="margin-top:5px">Adventurers run thin &mdash; one person often holds two
+      posts. This is what she wants, not what you must carry.</div>`;
 }
 
 /* ---- the robotics bay ---- */
@@ -6664,6 +7764,7 @@ function pane(p){
   if(p==='trackers') renderCamp();
   if(p==='sophonts') renderNPCs();
   if(p==='xenobiotes') renderXenoNamed();
+  if(p==='tables'){ renderTableGrid(); renderOpenTable(); renderRolls(); }
 }
 function renderSubbar(){
   const bar=document.getElementById('subbar'); if(!bar) return;
@@ -8150,11 +9251,152 @@ function wrapTables(root){
     t.parentNode.insertBefore(w,t); w.appendChild(t);
   });
 }
+
+/* ---------------------------------------------------------------
+   Energy weapons, Field Catalogue p.62-64.
+
+   A different animal from a slug thrower. There are no calibres —
+   output depends on how much power is available and what the beam
+   machinery can handle. So the powerpack is chosen first, then a
+   receiver, then the designer picks damage in whole dice up to
+   what the receiver can carry.
+   --------------------------------------------------------------- */
+const EW_RECEIVER = {
+  'Minimal': {cost:400,  wt:0.5, range:50,  max:'Weak'},
+  'Small':   {cost:800,  wt:1.5, range:100, max:'Light'},
+  'Medium':  {cost:2500, wt:3,   range:200, max:'Standard'},
+  'Large':   {cost:5000, wt:8,   range:500, max:'Heavy'}
+};
+const EW_CLASS = {                       /* what each class may put out */
+  'Weak':     {dice:2, cart:5,  cartWt:0.01},
+  'Light':    {dice:3, cart:8,  cartWt:0.01},
+  'Standard': {dice:5, cart:10, cartWt:0.02},
+  'Heavy':    {dice:8, cart:15, cartWt:0.025}
+};
+const EW_PACK_TL = [[8,100,'\u2014'],[9,300,'Weak'],[10,500,'Light'],[11,700,'Standard'],[12,1000,'Heavy']];
+const EW_BARREL = {                      /* short barrels waste the power */
+  'Short':   {r:-50, cap:2,    note:'Early beam spread caps this at 2D'},
+  'Assault': {r:-25, cap:2,    note:'Caps at 2D'},
+  'Carbine': {r:-10, cap:null},
+  'Rifle':   {r:0,   cap:null},
+  'Long':    {r:+25, cap:null}
+};
+const EW_OPTIONS = {
+  'Efficient beam generation': {tl:11, cost:25, t:'Half the power per shot'},
+  'Improved beam focus':       {tl:11, cost:20, t:'Damage +3 if already 2D or more'},
+  'Intensified pulse':         {tl:12, cost:10, t:'Penetration +1'}
+};
+function ewPackPerKg(tl){
+  let per=100;
+  EW_PACK_TL.forEach(([t,p])=>{ if(tl>=t) per=p; });
+  return per;
+}
+function ewBuild(){
+  const g = id => (document.getElementById(id)||{}).value;
+  const rec=EW_RECEIVER[g('ewRec')]; if(!rec) return null;
+  const cls=EW_CLASS[rec.max];
+  const bar=EW_BARREL[g('ewBar')]||EW_BARREL['Rifle'];
+  const tl=Math.max(8, +g('ewTL')||10);
+  const opts=[...document.querySelectorAll('.ewo:checked')].map(e=>e.value);
+
+  let dice=Math.max(1, Math.min(cls.dice, +g('ewDice')||2));
+  if(bar.cap) dice=Math.min(dice, bar.cap);
+  let dmgMod=0, pen=0;
+  if(opts.includes('Improved beam focus') && dice>=2) dmgMod+=3;
+  if(opts.includes('Intensified pulse')) pen+=1;
+
+  /* power drawn per shot rises with the dice thrown */
+  let perShot=dice*2;
+  if(opts.includes('Efficient beam generation')) perShot=Math.ceil(perShot/2);
+
+  const packKg=Math.max(0.1, +g('ewPack')||1);
+  const packPower=Math.round(ewPackPerKg(tl)*packKg);
+  const shots=Math.floor(packPower/Math.max(1,perShot));
+
+  let cost=rec.cost, wt=rec.wt;
+  opts.forEach(o=>{ const x=EW_OPTIONS[o]; cost+=rec.cost*x.cost/100; });
+  const packCost=Math.round(packKg*ewPackPerKg(tl)*0.5);
+
+  return {
+    name: g('ewName') || (rec.max.toLowerCase()+' laser'),
+    tl: Math.max(tl, ...opts.map(o=>EW_OPTIONS[o].tl||8)),
+    dmg: dice+'D'+(dmgMod?'+'+dmgMod:''),
+    range: Math.round(rec.range*(1+(bar.r||0)/100)),
+    cls: rec.max, perShot, packKg, packPower, shots,
+    weight: Math.round((wt+packKg)*100)/100,
+    cost: Math.round(cost+packCost),
+    pen, note: bar.cap?bar.note:'',
+    traits: [pen?'AP '+pen:'', 'Zero-G'].filter(Boolean).join(', ')
+  };
+}
+function ewRender(){
+  const w=ewBuild(); const el=document.getElementById('ewOut'); if(!el) return;
+  if(!w){ el.innerHTML=''; return; }
+  el.innerHTML=`
+    <div class="sysname"><b>${w.name}</b> <span class="uwpbig">${w.dmg}</span>
+      <span class="hint">TL${w.tl} &middot; ${w.cls.toLowerCase()} class</span></div>
+    <div class="sysgrid">
+      <div class="sysrow"><span>Damage</span><b>${w.dmg}</b></div>
+      <div class="sysrow"><span>Range</span><b>${w.range}m</b></div>
+      <div class="sysrow"><span>Power per shot</span><b>${w.perShot}</b></div>
+      <div class="sysrow"><span>Powerpack</span><b>${w.packKg}kg</b>
+        <span class="hint">${w.packPower} power</span></div>
+      <div class="sysrow"><span>Shots</span><b>${w.shots}</b>
+        <span class="hint">before a recharge</span></div>
+      <div class="sysrow"><span>Weight</span><b>${w.weight} kg</b>
+        <span class="hint">with the pack</span></div>
+      <div class="sysrow"><span>Price</span><b>Cr${w.cost.toLocaleString()}</b>
+        <span class="hint">a suggestion, per the book</span></div>
+      ${w.traits?`<div class="sysrow"><span>Traits</span><b>${w.traits}</b></div>`:''}
+    </div>
+    ${w.note?`<div class="hint" style="margin-top:5px">${w.note}</div>`:''}
+    <div class="hint" style="margin-top:5px">No recoil, so ideal in low gravity. A laser dumps its
+      energy into the first thing it touches &mdash; poor through cover, good through a bulkhead.</div>`;
+}
+function ewSend(){
+  const w=ewBuild(); if(!w) return;
+  const targets=(S.party||[]).filter(p=>p.remote&&p.uid);
+  if(!targets.length){ note('No linked characters to send it to'); return; }
+  askConfirm('Send <b>'+w.name+'</b> to&hellip;<br><br><select id="ewTo" style="width:100%">'+
+    targets.map(p=>`<option value="${p.uid}">${p.n}</option>`).join('')+'</select>',
+    ()=>{
+      const id=(document.getElementById('ewTo')||{}).value; if(!id) return;
+      const p=targets.find(x=>x.uid===id);
+      FB.db.ref('campaigns/'+campaignId()+'/players/'+id+'/sheet').once('value').then(s=>{
+        const t=s.val()||{};
+        let free=-1;
+        for(let i=0;i<8+(+t.wpnX||0);i++) if(!String(t['wN'+i]||'').trim()){ free=i; break; }
+        if(free<0){ note((p?p.n:'They')+' has no free weapon line'); return; }
+        const up={};
+        up['wN'+free]=w.name;      up['wTL'+free]=w.tl;
+        up['wR'+free]=w.range+'m'; up['wD'+free]=w.dmg;
+        up['wMx'+free]=w.shots;    up['wMn'+free]=w.shots;
+        up['wKg'+free]=w.weight;   up['wT'+free]=w.traits;
+        return FB.db.ref('campaigns/'+campaignId()+'/players/'+id+'/sheet').update(up).then(()=>{
+          logEvent(`<b>${w.name}</b> built and given to <b>${p?p.n:'a Traveller'}</b>`);
+          note('Sent to '+(p?p.n:'them'));
+        });
+      }).catch(e=>note('Could not send it — '+(e.code||e.message)));
+    }, 'Send it');
+}
+function ewBoot(){
+  const sel=(id,html)=>{ const e=document.getElementById(id); if(e && !e.options.length) e.innerHTML=html; };
+  sel('ewRec', Object.keys(EW_RECEIVER).map(k=>`<option${k==='Medium'?' selected':''}>${k}</option>`).join(''));
+  sel('ewBar', Object.keys(EW_BARREL).map(k=>`<option${k==='Rifle'?' selected':''}>${k}</option>`).join(''));
+  const o=document.getElementById('ewOpts');
+  if(o && !o.children.length)
+    o.innerHTML=Object.entries(EW_OPTIONS).map(([k,v])=>
+      `<label class="mtd" title="TL${v.tl} — ${v.t}"><input type="checkbox" class="ewo" value="${k}"
+        onchange="ewRender()"> ${k}</label>`).join('');
+  ewRender();
+}
+
 function wsBoot(){
   const o=wsOpts();
   const set=(id,html)=>{ const e=document.getElementById(id); if(e && !e.options.length) e.innerHTML=html; };
   set('wsAmmo',o.ammo); set('wsRec',o.rec); set('wsBar',o.bar); set('wsStock',o.stock);
   set('wsMech',o.mech);
+  ewBoot();
   rsBoot();
   vfBoot();
   syBoot();
@@ -8176,7 +9418,7 @@ function renderAll(){ S.party=S.party||[]; S.rolls=S.rolls||[]; S.custom=S.custo
   S.veh=S.veh||{}; S.garage=S.garage||{vehicles:{},active:''};
   S.rob=S.rob||{}; S.robotics=S.robotics||{robots:{},active:''};
   renderMode(); renderParty(); renderPersonal(); renderSpace(); renderCamp();
-  rules(S.rulePane||0); renderRolls(); renderCustom(); renderTableBtns(); renderTable();
+  rules(S.rulePane||0); renderRolls(); renderCustom(); renderTableGrid(); renderOpenTable();
   renderEvents(); renderShip(); renderClocks(); renderSessions(); wsBoot(); refreshUndoUI(); wrapTables(); }
 document.getElementById('helpBody').innerHTML=HELP.map(x=>
   `<div class="card"><h2>${x[0]}</h2><div class="hint" style="font-size:14px;line-height:1.7">${x[1]}</div></div>`).join('');
@@ -8186,17 +9428,14 @@ document.getElementById('gArch').innerHTML=
 /* creatures live on their own pane — they take Hits, not characteristics */
 { const xa=document.getElementById('xArch');
   if(xa) xa.innerHTML=MOBS.map((m,i)=>m.g==='C'?`<option value="${i}">${m.n}</option>`:'').join(''); }
-document.getElementById('lootArch').innerHTML=
-  '<optgroup label="Standard">'+MOBS.map((m,i)=>m.g==='S'?`<option value="${i}">${m.n}</option>`:'').join('')+'</optgroup>'+
-  '<optgroup label="Trojan Reach">'+MOBS.map((m,i)=>m.g==='R'?`<option value="${i}">${m.n}</option>`:'').join('')+'</optgroup>'+
-  '<optgroup label="Creatures">'+MOBS.map((m,i)=>m.g==='C'?`<option value="${i}">${m.n}</option>`:'').join('')+'</optgroup>';
-document.getElementById('lootArch').value=MOBS.findIndex(m=>m.n==='Merchant crew');
+/* lootArch only exists once its tile is opened, so it is filled by bootLootArch */
+/* set when the tile opens instead */
 document.getElementById('bArch').innerHTML=
   '<optgroup label="Standard">'+MOBS.map((m,i)=>m.g==='S'?`<option value="${i}">${m.n}</option>`:'').join('')+'</optgroup>'+
   '<optgroup label="Trojan Reach">'+MOBS.map((m,i)=>m.g==='R'?`<option value="${i}">${m.n}</option>`:'').join('')+'</optgroup>'+
   '<optgroup label="Creatures">'+MOBS.map((m,i)=>m.g==='C'?`<option value="${i}">${m.n}</option>`:'').join('')+'</optgroup>';
 document.getElementById('bArch').value=MOBS.findIndex(m=>m.n==='Merchant crew');
-document.getElementById('nmSp').innerHTML=SPECIES.map(s=>`<option>${s}</option>`).join('');
+/* nmSp lives in a tile now — bootNameCard fills it */
 document.getElementById('sArch').innerHTML=SHIPS.map((s,i)=>`<option value="${i}">${s.n} &mdash; ${s.t}</option>`).join('');
 applyTheme(); typeChanged(); loadAll(); restoreTab(); setTimeout(gateBoot,700);
 </script>
