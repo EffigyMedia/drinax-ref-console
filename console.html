@@ -470,6 +470,13 @@ nav{gap:6px;align-items:center;}
 /* and a pill row where a third level is unavoidable */
 .pills{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px;}
 .ordbar{display:flex;gap:6px;flex-wrap:wrap;margin-top:9px;}
+.verdict{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin-top:9px;
+  padding:7px 0;border-top:1px solid var(--line);}
+.verdict .vlab{flex:0 0 auto;font-size:8.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--dim);}
+.verdict b{font-size:14px;flex:0 0 auto;}
+.verdict .hint{flex:1 1 260px;min-width:0;text-transform:none;letter-spacing:0;}
+.note2{margin-top:9px;padding:9px 11px;background:var(--panel2);border:1px solid var(--line);
+  font-size:12.5px;line-height:1.5;}
 .dutyrow{display:flex;gap:9px;align-items:center;padding:4px 0;border-bottom:1px solid var(--hair,#1a1213);}
 .dutyrow:last-of-type{border-bottom:none;}
 .dutylabel{flex:0 0 120px;font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--dim);}
@@ -688,10 +695,37 @@ input[type="checkbox"]{
 
 <!-- ============================ NPCS ============================ -->
 <section class="tab" id="pane-sophonts">
-  <div class="cols">
-    <div>
-      <div class="card">
-        <h2>Mob generator</h2>
+
+  <div class="sectionhead"><b>Named</b><hr></div>
+<div class="card">
+        <h2>Named sophonts</h2>
+        <div id="npcList" class="hint">None yet. Roll an archetype below and press &#9733; to name one, or Save a mob out of a fight.</div>
+
+      </div>
+<div class="card">
+        <h2>Add combatant</h2>
+        <div class="row">
+          <input class="grow" id="nName" placeholder="Name" style="min-width:130px">
+          <select id="nType" onchange="typeChanged()">
+            <option value="pc">PC</option>
+            <option value="npc">Named NPC</option>
+            <option value="mob">Mob</option>
+          </select>
+        </div>
+        <div class="row" style="margin-top:6px">
+          <input id="nInit" type="number" placeholder="Init" style="width:78px">
+          <input id="nEnd" type="number" placeholder="END" style="width:84px">
+          <input id="nArm" type="number" placeholder="Armour" style="width:92px">
+          <input id="nPips" type="number" placeholder="Bodies" style="width:96px">
+          <input id="nHits" type="number" placeholder="Hits each" style="width:110px">
+          <select id="nZone"></select>
+          <button onclick="addCombatant()">Add</button>
+        </div>
+      </div>
+
+  <div class="sectionhead"><b>Generic</b><hr></div>
+<div class="card">
+        <h2>Archetypes <span class="hint" style="letter-spacing:0;text-transform:none;font-weight:400">roll a group, or name one of them</span></h2>
         <div class="row">
           <select id="gArch" class="grow"></select>
         </div>
@@ -715,48 +749,13 @@ input[type="checkbox"]{
           <button class="mini" onclick="genMob()">Re-roll</button>
         </div>
       </div>
-
-      <div class="card">
-        <h2>Add combatant</h2>
-        <div class="row">
-          <input class="grow" id="nName" placeholder="Name" style="min-width:130px">
-          <select id="nType" onchange="typeChanged()">
-            <option value="pc">PC</option>
-            <option value="npc">Named NPC</option>
-            <option value="mob">Mob</option>
-          </select>
-        </div>
-        <div class="row" style="margin-top:6px">
-          <input id="nInit" type="number" placeholder="Init" style="width:78px">
-          <input id="nEnd" type="number" placeholder="END" style="width:84px">
-          <input id="nArm" type="number" placeholder="Armour" style="width:92px">
-          <input id="nPips" type="number" placeholder="Bodies" style="width:96px">
-          <input id="nHits" type="number" placeholder="Hits each" style="width:110px">
-          <select id="nZone"></select>
-          <button onclick="addCombatant()">Add</button>
-        </div>
-      </div>
-    </div>
-    <div>
-      <div class="card">
-        <h2>Saved NPCs</h2>
-        <div id="npcList" class="hint">None saved.</div>
-
-      </div>
-
-      <div class="card">
+<div class="card">
         <h2>Mob reaction &mdash; roll each contested round</h2>
         <div class="row"><button onclick="defenderAct()">Roll D6</button>
           <span class="grow hint" id="defOut">&mdash;</span></div>
       </div>
-    </div>
-  </div>
-  <div class="pgfoot">&copy; 2026 Effigy Media. All rights reserved.
-    <span>Traveller is a trademark of Far Future Enterprises. Contains material &copy; Mongoose Publishing,
-    used under the Community Content Agreement for The Travellers' Aid Society.</span></div>
 </section>
 
-<!-- ============================ PARTY ============================ -->
 <section class="tab" id="pane-travellers">
   <div class="card">
     <h2>Add a Traveller by hand
@@ -835,8 +834,45 @@ input[type="checkbox"]{
 
 <!-- ============================ SMITH ============================ -->
 <section class="tab" id="pane-xenobiotes">
-  <div class="card"><h2>Xenobiotes</h2>
-    <div id="xenoBody"></div>
+<div class="sectionhead"><b>Named</b><hr></div>
+  <div class="card">
+    <h2>Named xenobiotes</h2>
+    <div id="xenoNamed"></div>
+  </div>
+
+  <div class="sectionhead"><b>Generic</b><hr></div>
+  <div class="card">
+    <h2>Creatures <span class="hint" style="letter-spacing:0;text-transform:none;font-weight:400">
+      roll a pack, or name one of them</span></h2>
+    <div class="row">
+      <select id="xArch" class="grow"></select>
+    </div>
+    <div class="row" style="margin-top:6px">
+      <select id="xTier">
+        <option value="0">Weak</option><option value="1" selected>Typical</option>
+        <option value="2">Strong</option><option value="3">Monstrous</option>
+      </select>
+      <select id="xSize">
+        <option value="0">Lone</option><option value="1" selected>A few</option>
+        <option value="2">A pack</option><option value="3">A swarm</option>
+      </select>
+      <button onclick="rollXeno()">Roll a pack</button>
+      <button class="mini" onclick="rollXeno(true)">&#9733; Name one</button>
+    </div>
+    <div id="xenoOut" class="astrobox" style="margin-top:9px"></div>
+    <div class="row" id="xenoAdd" style="display:none;margin-top:8px">
+      <button onclick="addXenoToFight()">Add to order of battle</button>
+      <button class="mini" onclick="saveXeno()">Save to the roster</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Reaction <span class="hint" style="letter-spacing:0;text-transform:none;font-weight:400">
+      2D, and what a beast does about you</span></h2>
+    <div class="row">
+      <button onclick="xenoReaction()">Roll reaction</button>
+      <span class="hint" id="xenoReact"></span>
+    </div>
   </div>
 </section>
 
@@ -918,6 +954,31 @@ input[type="checkbox"]{
   </div>
   </div>
 
+  <div class="makerbox" id="maker-creature">
+  <div class="card">
+    <h2>Gene sequencer <span class="hint" style="letter-spacing:0;text-transform:none;font-weight:400">
+      Core Rulebook &mdash; Hits sets the size, behaviour sets the skills</span></h2>
+    <div class="row">
+      <input id="gsName" class="grow" placeholder="What it will be called" oninput="gsRender()">
+      <label class="hint">Hits <input id="gsHits" type="number" value="14" style="width:78px" oninput="gsRender()"></label>
+    </div>
+    <div class="row" style="margin-top:7px" id="gsBands"></div>
+    <div class="row" style="margin-top:8px">
+      <label class="hint">Diet <select id="gsDiet" onchange="gsRender()"></select></label>
+      <label class="hint">Behaviour <select id="gsBehave" onchange="gsRender()"></select></label>
+      <label class="hint">Speed <input id="gsSpeed" value="6m" style="width:80px" oninput="gsRender()"></label>
+      <label class="hint">Armour <input id="gsArm" type="number" value="0" style="width:74px" oninput="gsRender()"></label>
+    </div>
+    <div class="row" style="margin-top:8px" id="gsTraits"></div>
+    <div id="gsOut" class="astrobox" style="margin-top:9px"></div>
+    <div class="row" style="margin-top:9px">
+      <button onclick="gsSaveNamed()">Save as a named beast</button>
+      <button onclick="gsSaveArchetype()">Save as an archetype</button>
+      <button class="mini" onclick="gsRender()">Recalculate</button>
+    </div>
+  </div>
+  </div>
+
   <div class="makerbox" id="maker-ship">
   <div class="card">
     <h2>Shipyard</h2>
@@ -991,6 +1052,12 @@ input[type="checkbox"]{
 
   <div class="card" id="cardPhase">
     <div id="scPhase" class="pills" style="margin-bottom:0"></div>
+  </div>
+
+  <div class="card" id="cardIntercept">
+    <h2>Taking a prize <span class="hint" style="letter-spacing:0;text-transform:none;font-weight:400">
+      Pirates of Drinax p.16&ndash;18</span></h2>
+    <div id="icBox"></div>
   </div>
 
   <div class="card" id="cardDuties">
@@ -4692,6 +4759,251 @@ function makerPill(id){
 }
 function bootPills(){ assetPill(curAsset); makerPill(curMaker); }
 
+
+/* ---------------------------------------------------------------
+   Xenobiotes. They take Hits, as the Core Rulebook has it, and
+   damage falls on that rather than on characteristics.
+   --------------------------------------------------------------- */
+
+/* a beast is named for what it is and what marks it, not from the name tables */
+const BEAST_MARK=['Scarred','Pale','One-eyed','Broken-tusked','Grey','Old','Black','Ashen',
+  'Split-crest','Long','Red','Ragged','Hollow','Bent-horn','White'];
+const BEAST_TITLE=['of the deep shafts','of the north ridge','that took the surveyor',
+  'the port never caught','of the tailings','the miners call it','of the salt flats',
+  'that follows the convoys','the herders fear','of the wreck fields'];
+function beastName(base){
+  const mark=BEAST_MARK[d(BEAST_MARK.length)-1];
+  const b=String(base||'beast').toLowerCase();
+  return d(6)>=5 ? `${mark} ${b} ${BEAST_TITLE[d(BEAST_TITLE.length)-1]}`
+                 : `${mark} ${b}`;
+}
+
+const XSIZE=[['Lone',1],['A few',3],['A pack',6],['A swarm',12]];
+const XREACT=[[2,'Attacks at once, and will not be reasoned with'],
+  [3,'Attacks'],[5,'Threatens, and attacks if you come on'],
+  [7,'Wary. Watches you, and follows'],[9,'Cautious. Keeps its distance'],
+  [11,'Uninterested'],[12,'Flees']];
+let lastXeno=null;
+function rollXeno(named){
+  const i=+(document.getElementById('xArch')||{}).value;
+  const a=MOBS[i]; if(!a){ note('No creature chosen'); return; }
+  const t=+(document.getElementById('xTier')||{}).value||1;
+  const sz=+(document.getElementById('xSize')||{}).value||1;
+  const bodies=Math.max(1, XSIZE[sz][1] + (sz?d(3)-2:0));
+  const hits=Math.max(1, Math.round((a.hits||14) * [0.6,1,1.5,2.5][t]));
+  lastXeno={arch:i, name:(named?beastName(a.n):null), tier:t, bodies:named?1:bodies,
+            hits, arm:(a.arm||[0,1,2,3])[t]||0, w:(a.w&&a.w[t])||[], note:(a.t&&a.t[d(3)-1])||''};
+  const el=document.getElementById('xenoOut');
+  const band=hitsBand(hits);
+  el.innerHTML=`
+    <div class="sysname"><b>${lastXeno.name||a.n}</b>
+      <span class="uwpbig">${hits} hits</span>
+      <span class="hint">${['weak','typical','strong','monstrous'][t]}${named?'':' &middot; '+lastXeno.bodies+' of them'}</span></div>
+    <div class="sysgrid">
+      <div class="sysrow"><span>Hits each</span><b>${hits}</b>
+        <span class="hint">dead at 0, out at ${Math.max(1,Math.round(hits*0.1))} or less</span></div>
+      <div class="sysrow"><span>Size trait</span><b>${band.trait||'&mdash;'}</b></div>
+      <div class="sysrow"><span>Natural attack</span><b>${band.dmg}</b></div>
+      <div class="sysrow"><span>Armour</span><b>${lastXeno.arm}</b></div>
+      <div class="sysrow"><span>Stunned at</span><b>${Math.ceil(hits/2)}</b>
+        <span class="hint">cumulative</span></div>
+      <div class="sysrow"><span>Skills</span><b>Athletics 0, Survival 0</b></div>
+    </div>
+    ${lastXeno.note?`<div class="rem">${lastXeno.note}</div>`:''}`;
+  document.getElementById('xenoAdd').style.display='';
+}
+/* the Animal Size table, Core Rulebook p.88 */
+const HITBANDS=[[2,'Small (-4)','1'],[5,'Small (-3)','D3'],[7,'Small (-2)','D3'],
+  [13,'Small (-1)','1D'],[28,'','1D'],[35,'Large (+1)','2D'],[49,'Large (+2)','3D'],
+  [70,'Large (+3)','4D'],[90,'Large (+4)','5D'],[125,'Large (+5)','6D'],[9999,'Large (+6)','7D']];
+function hitsBand(h){
+  for(const [max,trait,dmg] of HITBANDS) if(h<=max) return {trait,dmg};
+  return {trait:'Large (+6)',dmg:'7D'};
+}
+function addXenoToFight(){
+  if(!lastXeno) return;
+  const a=MOBS[lastXeno.arch];
+  const m={id:uid(), t:'mob', n:lastXeno.name||a.n, arch:lastXeno.arch, tier:lastXeno.tier,
+    bodies:lastXeno.bodies, hitsEach:lastXeno.hits, arm:lastXeno.arm,
+    dm:[0,1,2,3][lastXeno.tier], init:null,
+    zone:(ZONES[S.personal.mode||'ground'])[0], w:lastXeno.w.slice(0,2), note:lastXeno.note};
+  ensureMembers(m);
+  S.personal.list.push(m);
+  renderPersonal(); queueSave();
+  logEvent(`<b>${m.n}</b> &mdash; ${m.bodies} of them, ${lastXeno.hits} hits each`);
+  note('Sent to Personal combat');
+}
+function saveXeno(){
+  if(!lastXeno) return;
+  const a=MOBS[lastXeno.arch];
+  S.xenos=S.xenos||[];
+  S.xenos.push({n:lastXeno.name||a.n, arch:lastXeno.arch, tier:lastXeno.tier,
+    hits:lastXeno.hits, arm:lastXeno.arm, bodies:lastXeno.bodies});
+  renderXenoNamed(); queueSave();
+  note('Saved');
+}
+function renderXenoNamed(){
+  const el=document.getElementById('xenoNamed'); if(!el) return;
+  const L=S.xenos||[];
+  el.innerHTML = L.length ? L.map((x,i)=>
+    `<div class="row" style="border-top:1px solid #1e1516;padding:5px 0">
+      <b class="grow">${x.n}</b>
+      <span class="hint">${x.hits} hits &middot; armour ${x.arm}</span>
+      <button class="mini" onclick="dropXeno(${i})">Add to fight</button>
+      <button class="mini x" onclick="forgetXeno(${i})">&times;</button>
+    </div>`).join('') : '<span class="hint">None saved.</span>';
+}
+function dropXeno(i){
+  const x=(S.xenos||[])[i]; if(!x) return;
+  lastXeno={arch:x.arch, name:x.n, tier:x.tier, bodies:x.bodies, hits:x.hits, arm:x.arm,
+            w:(MOBS[x.arch].w&&MOBS[x.arch].w[x.tier])||[], note:''};
+  addXenoToFight();
+}
+function forgetXeno(i){
+  const x=(S.xenos||[])[i]; if(!x) return;
+  askConfirm('Forget <b>'+x.n+'</b>?',()=>{ S.xenos.splice(i,1); renderXenoNamed(); queueSave(); });
+}
+function xenoReaction(){
+  const r=d(6)+d(6);
+  let text='';
+  for(const [max,t] of XREACT){ if(r<=max){ text=t; break; } }
+  const el=document.getElementById('xenoReact');
+  if(el) el.innerHTML=`<b>${r}</b> &mdash; ${text}`;
+  logEvent(`Creature reaction <b>${r}</b> &mdash; ${text}`);
+}
+
+
+/* ---------------------------------------------------------------
+   The Gene Sequencer. Core Rulebook, animal creation.
+
+   Hits is the input, not an afterthought: the size band you pick
+   fixes the size trait and the damage its natural attacks do.
+   Behaviour brings its own skills. Every animal has Athletics 0
+   and Survival 0 whatever else it has.
+
+   Output goes two ways — a named beast, or a reusable archetype
+   you can roll packs from for the rest of the campaign.
+   --------------------------------------------------------------- */
+const GS_SIZE = [
+  {lo:1,   hi:2,   trait:'Small (-4)', dmg:'1',  eg:'Rat'},
+  {lo:3,   hi:5,   trait:'Small (-3)', dmg:'D3', eg:'Cat'},
+  {lo:6,   hi:7,   trait:'Small (-2)', dmg:'D3', eg:'Dog'},
+  {lo:8,   hi:13,  trait:'Small (-1)', dmg:'1D', eg:'Goat'},
+  {lo:14,  hi:28,  trait:'',           dmg:'1D', eg:'Human'},
+  {lo:29,  hi:35,  trait:'Large (+1)', dmg:'2D', eg:'Horse'},
+  {lo:36,  hi:49,  trait:'Large (+2)', dmg:'3D', eg:'Shark'},
+  {lo:50,  hi:70,  trait:'Large (+3)', dmg:'4D', eg:'Rhino'},
+  {lo:71,  hi:90,  trait:'Large (+4)', dmg:'5D', eg:'Elephant'},
+  {lo:91,  hi:125, trait:'Large (+5)', dmg:'6D', eg:'Carnosaur'},
+  {lo:126, hi:400, trait:'Large (+6)', dmg:'7D', eg:'Whale'}
+];
+const GS_BEHAVE = {
+  'Carrion-eater': {eg:'vulture',        skills:['Recon']},
+  'Chaser':        {eg:'wolf',           skills:['Athletics (dexterity)','Athletics (endurance)']},
+  'Eater':         {eg:'army ant',       skills:[]},
+  'Filter':        {eg:'earthworm',      skills:[]},
+  'Gatherer':      {eg:'raccoon',        skills:['Stealth']},
+  'Grazer':        {eg:'antelope',       skills:[]},
+  'Hijacker':      {eg:'lion',           skills:['Recon']},
+  'Hunter':        {eg:'baboon',         skills:['Survival']},
+  'Intermittent':  {eg:'elephant',       skills:[]},
+  'Intimidator':   {eg:'coyote',         skills:['Persuade']},
+  'Killer':        {eg:'shark',          skills:['Melee (natural)']},
+  'Pouncer':       {eg:'cat',            skills:['Stealth','Recon','Athletics (dexterity)']},
+  'Reducer':       {eg:'vermin',         skills:[]},
+  'Siren':         {eg:'Venus fly-trap', skills:['Deception']},
+  'Trapper':       {eg:'spider',         skills:['Stealth']}
+};
+const GS_DIET = ['Herbivore','Omnivore','Carnivore','Scavenger'];
+const GS_TRAITS = ['Alarm','Amphibious','Armour','Bioelectricity','Camouflaged','Diseased',
+  'Fast Metabolism','Flyer','Heightened Senses','Poison','Psionic','Slow Metabolism','Stealthy'];
+
+function gsBand(hits){
+  return GS_SIZE.find(b=>hits>=b.lo && hits<=b.hi) || GS_SIZE[GS_SIZE.length-1];
+}
+function gsBuild(){
+  const g = id => (document.getElementById(id)||{}).value;
+  const hits=Math.max(1, +g('gsHits')||14);
+  const band=gsBand(hits);
+  const behave=g('gsBehave')||'Hunter';
+  const B=GS_BEHAVE[behave]||{skills:[]};
+  const traits=[...document.querySelectorAll('.gst:checked')].map(e=>e.value);
+  const armour=Math.max(0, +g('gsArm')||0);
+  const speed=g('gsSpeed')||'6m';
+  const skills=['Athletics 0','Survival 0'].concat(B.skills.map(s=>s+' 1'));
+  return {
+    name: g('gsName') || (behave+' '+band.eg.toLowerCase()),
+    hits, band, behave, diet:g('gsDiet')||'Carnivore',
+    trait: band.trait, dmg: band.dmg, speed, armour,
+    traits: [band.trait, ...traits].filter(Boolean),
+    skills,
+    note: g('gsNote')||''
+  };
+}
+function gsRender(){
+  const x=gsBuild(); const el=document.getElementById('gsOut'); if(!el) return;
+  el.innerHTML=`
+    <div class="sysname"><b>${x.name}</b>
+      <span class="uwpbig">${x.hits} hits</span>
+      <span class="hint">${x.band.eg}-sized${x.trait?' · '+x.trait:''}</span></div>
+    <div class="sysgrid">
+      <div class="sysrow"><span>Behaviour</span><b>${x.diet}, ${x.behave}</b>
+        <span class="hint">like a ${GS_BEHAVE[x.behave].eg}</span></div>
+      <div class="sysrow"><span>Natural attack</span><b>${x.dmg}</b></div>
+      <div class="sysrow"><span>Speed</span><b>${x.speed}</b></div>
+      <div class="sysrow"><span>Armour</span><b>${x.armour}</b></div>
+      <div class="sysrow"><span>Skills</span><b>${x.skills.join(', ')}</b></div>
+      <div class="sysrow"><span>Traits</span><b>${x.traits.join(', ')||'&mdash;'}</b></div>
+    </div>
+    <div class="hint" style="margin-top:6px">All damage falls on Hits. Zero is dead; unconscious at
+      ${Math.max(1,Math.round(x.hits*0.1))} or less if you use that rule; a stun weapon puts it down
+      at ${Math.ceil(x.hits/2)} cumulative.</div>`;
+}
+/* a named beast, straight into the roster */
+function gsSaveNamed(){
+  const x=gsBuild();
+  S.npcs=S.npcs||[];
+  S.npcs.push({ n:x.name, t:'mob', beast:true, bodies:1, hitsEach:x.hits,
+    arm:x.armour, dm:1, w:[x.dmg+' natural'], zone:'Close',
+    note:`${x.diet}, ${x.behave}. ${x.traits.join(', ')}` });
+  renderNPCs(); queueSave();
+  logEvent(`<b>${x.name}</b> sequenced \u2014 ${x.hits} hits, ${x.dmg} natural`);
+  note('Saved to the named xenobiotes');
+}
+/* or an archetype you can roll packs from forever */
+function gsSaveArchetype(){
+  const x=gsBuild();
+  const step=Math.max(1,Math.round(x.hits*0.15));
+  MOBS.push({ n:x.name, g:'C', hits:x.hits,
+    arm:[Math.max(0,x.armour-1),x.armour,x.armour+1,x.armour+2],
+    w:[[x.dmg+' natural'],[x.dmg+' natural'],[x.dmg+' natural'],[x.dmg+' natural']],
+    t:[`${x.diet}, ${x.behave}`, x.traits.join(', ')||'No special traits',
+       `Speed ${x.speed}. ${x.skills.join(', ')}`] });
+  S.custom=S.custom||{};
+  S.custom.beasts=S.custom.beasts||[];
+  S.custom.beasts.push(MOBS[MOBS.length-1]);
+  const xa=document.getElementById('xArch');
+  if(xa) xa.innerHTML=MOBS.map((m,i)=>m.g==='C'?`<option value="${i}">${m.n}</option>`:'').join('');
+  queueSave();
+  logEvent(`<b>${x.name}</b> added to the creature archetypes`);
+  note('You can roll packs of them now');
+}
+function gsBoot(){
+  const sel=(id,html)=>{ const e=document.getElementById(id); if(e && !e.options.length) e.innerHTML=html; };
+  sel('gsBehave', Object.keys(GS_BEHAVE).map(k=>`<option${k==='Hunter'?' selected':''}>${k}</option>`).join(''));
+  sel('gsDiet', GS_DIET.map(k=>`<option${k==='Carnivore'?' selected':''}>${k}</option>`).join(''));
+  const t=document.getElementById('gsTraits');
+  if(t && !t.children.length)
+    t.innerHTML=GS_TRAITS.map(k=>
+      `<label class="mtd"><input type="checkbox" class="gst" value="${k}" onchange="gsRender()"> ${k}</label>`).join('');
+  const tbl=document.getElementById('gsBands');
+  if(tbl && !tbl.children.length)
+    tbl.innerHTML=GS_SIZE.map(b=>
+      `<button class="mini" onclick="document.getElementById('gsHits').value=${b.lo};gsRender()"
+        title="${b.trait||'no size trait'} · ${b.dmg} damage">${b.lo}&ndash;${b.hi} ${b.eg}</button>`).join('');
+  gsRender();
+}
+
 /* ---- the robotics bay ---- */
 const ROBFIELDS=[
  ['Identity',[['rbName','Name',2],['rbChassis','Chassis',2],['rbTL','TL',1],['rbCost','Cost',1]]],
@@ -5989,6 +6301,7 @@ function pane(p){
   if(p==='assets') renderShip();
   if(p==='trackers') renderCamp();
   if(p==='sophonts') renderNPCs();
+  if(p==='xenobiotes') renderXenoNamed();
 }
 function renderSubbar(){
   const bar=document.getElementById('subbar'); if(!bar) return;
@@ -6326,7 +6639,7 @@ function renderNPCs(){
       <span class="hint">${n.t==='mob'?((n.mem||[]).length||n.bodies||1)+' bodies':'END '+n.endMax}</span>
       <button class="mini" onclick="dropNPC(${i})">Add to fight</button>
       <button class="mini x" onclick="delSavedNPC(${i})">&times;</button>
-    </div>`).join('') : 'None saved.';
+    </div>`).join('') : 'None yet. Roll an archetype below and press \u2605 to name one, or Save a mob out of a fight.';
 }
 function condPanel(id){ S.personal.condFor=(S.personal.condFor===id?null:id); renderPersonal(); }
 function tickConds(){
@@ -6875,6 +7188,142 @@ const SC_MANOEUVRES = [
    THE BATTLE is six minutes a round. Initiative, Thrust budgets,
    the step order. You drop into it the moment the gig is up.
    --------------------------------------------------------------- */
+
+/* ---------------------------------------------------------------
+   The intercept, Pirates of Drinax book 1 p.16-18.
+
+   Not my invention this time. The sequence is intercept, stop her,
+   board, loot, escape, and each step has its own checks. The two
+   things that decide an intercept are the Thrust difference and
+   whether you are inside 100,000km — past that she is very
+   unlikely to get away.
+   --------------------------------------------------------------- */
+const PIRATE_STEPS = [
+  ['intercept','Intercept','Get in range and match velocity'],
+  ['stop','Stop her','Called shots, or demand she heaves to'],
+  ['board','Board','Dock or breach, then fight through'],
+  ['loot','Loot','Find it, open it, carry it'],
+  ['escape','Escape','Reach the hundred-diameter limit']
+];
+function icState(){
+  S.space.ic = S.space.ic || {step:0, ourTh:2, theirTh:1, km:400000, log:[]};
+  return S.space.ic;
+}
+function icSet(k,v){ const s=icState(); s[k]=(k==='step')?+v:(+v||0); renderIntercept(); queueSave(); }
+function icVerdict(){
+  const s=icState();
+  const faster = s.ourTh > s.theirTh;
+  const close  = s.km <= 100000;
+  if(faster && close) return ['redc','Escape is very difficult indeed.',
+    'You are faster and inside 100,000km. The book says she is caught.'];
+  if(faster) return ['hotc','You are gaining.',
+    'Close to 100,000km and escape becomes very difficult for her.'];
+  if(s.ourTh === s.theirTh) return ['','Matched drives.',
+    'Neither of you closes. Something else has to change — a called shot at her manoeuvre drive.'];
+  return ['greenc','She is faster than you.',
+    'You will not catch her on thrust alone. Cut her drive or her fuel.'];
+}
+function icRollOpposed(){
+  const a=d(6)+d(6), b=d(6)+d(6);
+  const s=icState();
+  s.log.unshift(`Opposed Pilot \u2014 you <b>${a}</b> + skill, her <b>${b}</b> + skill`);
+  s.log=s.log.slice(0,6);
+  logEvent(`Opposed Pilot checks at Short &mdash; ${a} against ${b}, before skill`);
+  renderIntercept(); queueSave();
+}
+function icSurrender(){
+  const s=icState();
+  const roll=d(6)+d(6);
+  const mor=+(document.getElementById('icMorale')||{}).value||0;
+  const eff=roll-mor;
+  const ok=eff>=8;
+  s.log.unshift(`Surrender demand \u2014 <b>${roll}</b> minus her Morale ${mor} = <b>${eff}</b>, ${ok?'<b class="greenc">she yields</b>':'<b class="hotc">she does not</b>'}`);
+  s.log=s.log.slice(0,6);
+  logEvent(`Demanded surrender: ${roll} &minus; Morale ${mor} = ${eff} &mdash; ${ok?'she yields':'she refuses'}`);
+  renderIntercept(); queueSave();
+}
+function icCalledShot(target){
+  const s=icState();
+  s.log.unshift(`Called shot at her <b>${target}</b>`);
+  s.log=s.log.slice(0,6);
+  logEvent(`Called shot at the ${target}`);
+  renderIntercept(); queueSave();
+}
+function renderIntercept(){
+  const el=document.getElementById('icBox'); if(!el) return;
+  if(scPhase()!=='approach'){ el.innerHTML=''; return; }
+  const s=icState();
+  const [cls,verdict,why]=icVerdict();
+  el.innerHTML=`
+    <div class="pills">${PIRATE_STEPS.map(([k,label,why],i)=>
+      `<button class="pill-btn${i===s.step?' on':''}" onclick="icSet('step',${i})"
+        title="${why}">${i+1}. ${label}</button>`).join('')}</div>
+
+    <div class="row">
+      <label class="hint">Our Thrust <input type="number" value="${s.ourTh}" style="width:70px"
+        onchange="icSet('ourTh',this.value)"></label>
+      <label class="hint">Her Thrust <input type="number" value="${s.theirTh}" style="width:70px"
+        onchange="icSet('theirTh',this.value)"></label>
+      <label class="hint">Range, km <input type="number" value="${s.km}" style="width:104px"
+        onchange="icSet('km',this.value)"></label>
+      <button class="mini" onclick="icSet('km',Math.max(0,${s.km}-100000))">&minus;100,000</button>
+      <button class="mini" onclick="icSet('km',${s.km}+100000)">+100,000</button>
+    </div>
+    <div class="verdict"><span class="vlab">Verdict</span>
+      <b class="${cls}">${verdict}</b><span class="hint">${why}</span></div>
+
+    ${s.step===0 ? `<div class="note2">
+        She must be caught <b>and matched for velocity</b> — getting in range is not enough if you
+        mean to board. Every evasion she makes adds to her own time to destination.
+        <div class="row" style="margin-top:7px">
+          <button onclick="icRollOpposed()">Opposed Pilot &mdash; at Short or less</button>
+        </div></div>` : ''}
+
+    ${s.step===1 ? `<div class="note2">
+        Called shots need <b>Short or less</b> and direct fire — no missiles or torpedoes.
+        <div class="row" style="margin-top:7px">
+          <button class="mini" onclick="icCalledShot('manoeuvre drive')">Shoot her drive</button>
+          <button class="mini" onclick="icCalledShot('fuel tanks')">Shoot her fuel</button>
+          <span class="hint">Her drive cuts her Thrust. Her fuel stops her jumping.</span>
+        </div>
+        <div class="row" style="margin-top:7px">
+          <label class="hint">Her Morale <input id="icMorale" type="number" value="7" style="width:70px"></label>
+          <button onclick="icSurrender()">Demand surrender &mdash; 8+ comms, minus Morale</button>
+        </div>
+        <div class="hint" style="margin-top:5px">Breach the hull and you risk the cargo you came for.
+          Surrenders are rarely unconditional — she will want safe passage for part of the cargo.</div>
+      </div>` : ''}
+
+    ${s.step===2 ? `<div class="note2">
+        <b>Dock with a crippled ship</b> — Pilot 6+, 1D minutes.
+        <b>Breaching charge</b> — Explosives 8+, 1D minutes.
+        <b>Moving in zero-g</b> — DEX 8+.
+        <b>Find the hold</b> — Recon 8+, 1D minutes.<br>
+        Nobody resists without vacc suits and the internal doors shut.
+        <div class="row" style="margin-top:7px">
+          <button onclick="crewToFight()">Her crew to Personal combat</button>
+        </div></div>` : ''}
+
+    ${s.step===3 ? `<div class="note2">
+        <b>Ship&rsquo;s locker</b> — Electronics (computers) 12+, 1D&times;10 minutes.
+        <b>The right cargo</b> — Recon 8+, 1D minutes.
+        <b>Shifting a container by hand</b> — STR 12+, 1D minutes.<br>
+        Take the valuable things first and leave what you cannot safely carry.
+        <div class="row" style="margin-top:7px">
+          <button class="mini" onclick="tab('ref');pane('tables')">Roll the loot</button>
+        </div></div>` : ''}
+
+    ${s.step===4 ? `<div class="note2">
+        You still have to reach the <b>hundred-diameter jump limit</b>. Chasing her too far into a
+        planet&rsquo;s shadow means you cannot leave — jumping inside the limit is <b>DM&minus;4</b>.
+        <div class="row" style="margin-top:7px">
+          <button class="mini" onclick="buildOutShip()">Build the prize out</button>
+        </div></div>` : ''}
+
+    ${s.log.length ? `<div class="legs" style="margin-top:9px;display:block">${
+      s.log.map(l=>`<div class="sysrow"><span>&middot;</span><b>${l}</b></div>`).join('')}</div>` : ''}`;
+}
+
 function scPhase(){ return S.space.phase || 'approach'; }
 function scSetPhase(p){
   S.space.phase = p;
@@ -6902,7 +7351,7 @@ function renderPhaseBar(){
   const battleOnly=['cardTurnOrder','cardDuties'];
   battleOnly.forEach(id=>{ const n=document.getElementById(id);
     if(n) n.style.display = p==='battle' ? '' : 'none'; });
-  const approachOnly=['cardAsk'];
+  const approachOnly=['cardAsk','cardIntercept'];
   approachOnly.forEach(id=>{ const n=document.getElementById(id);
     if(n) n.style.display = p==='approach' ? '' : 'none'; });
 }
@@ -7157,6 +7606,7 @@ function renderSpace(){
   (S.space.contacts||[]).forEach(ensureHull);
   renderSpaceOrder();
   renderPhaseBar();
+  renderIntercept();
   renderSpaceSteps();
   renderDuties();
   document.getElementById('ladder').innerHTML=BANDS.map((b,i)=>{
@@ -7318,6 +7768,7 @@ function wsBoot(){
   rsBoot();
   vfBoot();
   syBoot();
+  gsBoot();
   bootPills();
   lootBoot();
   const f=document.getElementById('wsFeatures');
@@ -7341,8 +7792,10 @@ document.getElementById('helpBody').innerHTML=HELP.map(x=>
   `<div class="card"><h2>${x[0]}</h2><div class="hint" style="font-size:14px;line-height:1.7">${x[1]}</div></div>`).join('');
 document.getElementById('gArch').innerHTML=
   '<optgroup label="Standard">'+MOBS.map((m,i)=>m.g==='S'?`<option value="${i}">${m.n}</option>`:'').join('')+'</optgroup>'+
-  '<optgroup label="Trojan Reach">'+MOBS.map((m,i)=>m.g==='R'?`<option value="${i}">${m.n}</option>`:'').join('')+'</optgroup>'+
-  '<optgroup label="Creatures">'+MOBS.map((m,i)=>m.g==='C'?`<option value="${i}">${m.n}</option>`:'').join('')+'</optgroup>';
+  '<optgroup label="Trojan Reach">'+MOBS.map((m,i)=>m.g==='R'?`<option value="${i}">${m.n}</option>`:'').join('')+'</optgroup>';
+/* creatures live on their own pane — they take Hits, not characteristics */
+{ const xa=document.getElementById('xArch');
+  if(xa) xa.innerHTML=MOBS.map((m,i)=>m.g==='C'?`<option value="${i}">${m.n}</option>`:'').join(''); }
 document.getElementById('lootArch').innerHTML=
   '<optgroup label="Standard">'+MOBS.map((m,i)=>m.g==='S'?`<option value="${i}">${m.n}</option>`:'').join('')+'</optgroup>'+
   '<optgroup label="Trojan Reach">'+MOBS.map((m,i)=>m.g==='R'?`<option value="${i}">${m.n}</option>`:'').join('')+'</optgroup>'+

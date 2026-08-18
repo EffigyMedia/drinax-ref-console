@@ -192,6 +192,21 @@ body.over input.calc:focus{outline-color:#c98a00;}
 .astrogrid span{min-width:96px;font-size:8px;letter-spacing:.12em;text-transform:uppercase;
   color:var(--dim);font-weight:700;padding-top:3px;}
 .rem{margin-top:5px;font-style:italic;color:var(--dim);}
+.stationwrap{display:flex;align-items:center;gap:6px;}
+.stationwrap span{font-size:8.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--dim);
+  font-weight:700;}
+.stationwrap select{width:auto;min-width:132px;background:#1d3346;color:#e8eef4;
+  border:1px solid #2f4c63;font-size:12px;}
+html.dark .stationwrap select{background:var(--row2);color:var(--ink);border-color:var(--line);}
+@media (max-width:760px){
+  .stationwrap select{min-width:0;max-width:104px;font-size:11px;}
+  header{gap:4px;}
+  .stationwrap span{display:none;}
+  #stationNote{display:none;}
+  #save{display:none;}
+  #ovBtn{display:none;}
+}
+@media (min-width:761px){ .ovmenu{display:none;} }
 .stationbar{display:flex;gap:8px;align-items:center;margin-bottom:6px;padding:6px 8px;
   background:var(--band2);border:1px solid var(--line);}
 .stationbar label{font-size:8px;letter-spacing:.13em;text-transform:uppercase;font-weight:700;color:var(--dim);}
@@ -205,6 +220,10 @@ body.over input.calc:focus{outline-color:#c98a00;}
 .addrow button:hover{border-color:var(--red);color:var(--red);}
 .addrow .hint{font-size:10px;}
 tr.xtrarow td{background:#f4f8fb;}
+.hiddenwhileprinting{display:none!important;}
+@media screen{ .printclone{display:none;} }
+tr.printfill td{height:19px;}
+@media screen{ tr.printfill{display:none;} }
 .xcell{width:30px;text-align:center;padding:0!important;}
 .xfer{width:24px;height:22px;min-height:22px;padding:0;line-height:1;font-size:13px;
   background:var(--band2);border:1px solid var(--line);color:var(--band);cursor:pointer;}
@@ -395,10 +414,10 @@ header b{white-space:nowrap;}
 #headMenu .danger{border-color:#7a2b28;color:#ff9a92;}
 @media (max-width:760px){
   header{padding:calc(6px + var(--sat)) 9px 6px;gap:5px;}
-  header b{font-size:11px;letter-spacing:.16em;}
+  header b{font-size:10px;letter-spacing:.08em;}
   .hsub{display:none;}                 /* the page banner already says it */
   #save{display:none;}                 /* the status word covers this */
-  .campbit #campIn{width:82px;}
+  .campbit #campIn{width:58px;}
   header button,header a{font-size:11px;padding:5px 8px;min-height:30px;}
   #headMenu button{min-height:36px;}
 }
@@ -444,12 +463,19 @@ input[type="checkbox"]:focus-visible{outline:1px solid var(--red);outline-offset
 @page{size:Letter;margin:.3in;}
 @media print{
   body{background:#fff;padding:0;}
+  /* placeholders are hints for the screen; paper wants the space clear */
+  input::placeholder,textarea::placeholder{color:transparent!important;opacity:0!important;}
+  /* paper never gets a control. Inputs stay — they are the blanks you write in. */
+  button,select,.addrow,.stationwrap,.trainbar .stp,.xfer{display:none!important;}
   header,nav.jump,.noprint{display:none!important;}
   /* paper always gets the title block, whatever the narrow-screen rules say */
   .page > .banner{display:flex!important;}
   /* Safari and Chrome disagree about how much of a Letter page you actually get once the
      print dialog has had its say. Shrink each page slightly so there is real slack, rather
      than betting on exact inch arithmetic and spilling a few lines onto a second sheet. */
+  .printclone .grid{gap:3px 10px;}
+  .printclone table td,.printclone table th{padding:1px 5px;}
+  .printclone .note{padding:3px 6px;}
   .page{width:auto;min-height:0;margin:0;padding:0 .16in;box-shadow:none;overflow:hidden;
     zoom:.93;-webkit-transform-origin:top left;
     break-after:page;page-break-after:always;break-inside:avoid;page-break-inside:avoid;}
@@ -523,6 +549,11 @@ input[type="radio"]:focus-visible{outline:1px solid var(--red);outline-offset:1p
   <span id="save">&mdash;</span>
   <select id="refSwitch" onchange="refJump(this.value)" title="Switch character"></select>
   <a id="backBtn" href="./console.html">&lsaquo; Console</a>
+  <label class="stationwrap noprint" title="Show only what this station needs">
+    <span>Station</span>
+    <select id="stationPick" class="noprint" onchange="setStation(this.value)"></select>
+  </label>
+  <span class="hint noprint" id="stationNote"></span>
   <button id="themeBtn" onclick="toggleTheme()" title="Light or dark">&#9789;</button>
   <button id="ovBtn" onclick="toggleOver()" title="Type into calculated fields">Override</button>
   <button class="hmore" onclick="toggleHeadMenu()" title="More" aria-label="More">&#8943;</button>
@@ -531,6 +562,7 @@ input[type="radio"]:focus-visible{outline:1px solid var(--red);outline-offset:1p
     <button onclick="document.getElementById('ld').click();closeHeadMenu()">&#8679; Load</button>
     <button onclick="window.print();closeHeadMenu()">Print</button>
     <button id="hlpBtn" onclick="toggleHelp();closeHeadMenu()">? Help</button>
+    <button class="ovmenu" onclick="toggleOver();closeHeadMenu()">Override calculated fields</button>
     <button onclick="switchChar();closeHeadMenu()">Switch</button>
     <button class="danger" onclick="wipe();closeHeadMenu()">Clear</button>
   </div>
@@ -562,9 +594,7 @@ input[type="radio"]:focus-visible{outline:1px solid var(--red);outline-offset:1p
 </div>
 
 <nav class="jump">
-  <a href="#p1">1 · Character</a><a href="#p2">2 · Skills</a><a href="#p3">3 · Combat</a>
-  <a href="#p4">4 · Equipment</a><a href="#p5">5 · Lifepath</a><a href="#p6">6 · Species</a>
-  <a href="#p7">7 · Background</a><a href="#p8">8 · Ship</a><a href="#p9">9 · Astro</a><a href="#p10">10 · Hold</a><a href="#p11">11 · Vehicle</a><a href="#p12">12 · Robot</a><a href="#p12">12 · Rules</a><a href="#p13">13 · Combat</a><a href="#p14">14 · Space</a><a href="#p15">15 · Psionics</a><a href="#p16">16 · Zhodani</a><a href="#how" style="border-color:#5a3a3a;color:#e0a0a0">How to use this</a>
+  <a href="#p1">1 · Character</a><a href="#p2">2 · Skills</a><a href="#p3">3 · Combat</a><a href="#p4">4 · Equipment</a><a href="#p5">5 · Lifepath</a><a href="#p6">6 · Species</a><a href="#p7">7 · Background</a><a href="#p8">8 · Ship</a><a href="#p9">9 · My station</a><a href="#p10">10 · Astro</a><a href="#p11">11 · Hold</a><a href="#p12">12 · Vehicle</a><a href="#p13">13 · Robot</a><a href="#p14">14 · Rules</a><a href="#p15">15 · Personal combat</a><a href="#p16">16 · Space combat</a><a href="#p17">17 · Taking a prize</a><a href="#p18">18 · Psionics</a><a href="#p19">19 · Zhodani</a><a href="#how" style="border-color:#5a3a3a;color:#e0a0a0">How to use this</a>
 </nav>
 </div>
 
@@ -669,7 +699,7 @@ input[type="radio"]:focus-visible{outline:1px solid var(--red);outline-offset:1p
   <textarea data-k="descr" style="min-height:30px"></textarea>
   <div class="foot"><div>This work contains material copyright Mongoose Publishing, used under the
     Community Content Agreement for The Travellers' Aid Society. Traveller is a trademark of Far Future Enterprises.</div>
-    <div class="r">Sheet layout &copy; Effigy Media<br>Traveller MgT2e sheet<br>Page 1 of 17</div></div>
+    <div class="r">Sheet layout &copy; Effigy Media<br>Traveller MgT2e sheet<br>Page 1 of 18</div></div>
 </section>
 
 <!-- ============ PAGE 2 ============ -->
@@ -682,13 +712,13 @@ input[type="radio"]:focus-visible{outline:1px solid var(--red);outline-offset:1p
       <div class="trainbar">
         <label class="mtd" title="A mentor rolls this skill for you — two study weeks per week">
           <input type="checkbox" data-k="trMentored" onchange="calc()"> mentored</label>
-        <select data-k="trMentor" id="trMentor" title="Who is teaching you"></select>
+        <select class="noprint" data-k="trMentor" id="trMentor" title="Who is teaching you"></select>
       </div>
     </div>
     <div class="f"><label>Study weeks &mdash; performed / required</label>
       <div class="trainbar">
-        <button type="button" class="stp" onclick="studyStep(1)" title="Another week of study">+</button>
-        <button type="button" class="stp" onclick="studyStep(-1)" title="Take a week back">&minus;</button>
+        <button type="button" class="stp noprint" onclick="studyStep(-1)" title="Take a week back">&minus;</button>
+        <button type="button" class="stp noprint" onclick="studyStep(1)" title="Another week of study">+</button>
         <input data-k="trDone" id="trDone" class="wk" type="number" title="Weeks performed" onchange="calc()">
         <span class="slash">of</span>
         <input data-k="trReq" class="wk calc" title="Weeks required" readonly>
@@ -701,7 +731,7 @@ input[type="radio"]:focus-visible{outline:1px solid var(--red);outline-offset:1p
     A mentor banks two a week.</div>
   <div class="grid" style="grid-template-columns:1fr 1fr 1fr;gap:9px" id="skCols"></div>
   <div class="foot"><div>Created under license · Community Content Agreement for The Travellers' Aid Society</div>
-    <div class="r">Sheet layout &copy; Effigy Media<br>Page 2 of 17</div></div>
+    <div class="r">Sheet layout &copy; Effigy Media<br>Page 2 of 18</div></div>
 </section>
 
 <!-- ============ PAGE 3 ============ -->
@@ -753,7 +783,7 @@ input[type="radio"]:focus-visible{outline:1px solid var(--red);outline-offset:1p
     <th style="width:38px">TL</th><th style="width:88px">Cost (Cr)</th></tr></thead>
     <tbody id="augBody"></tbody></table>
   <div class="foot"><div>Created under license · Community Content Agreement for The Travellers' Aid Society</div>
-    <div class="r">Sheet layout &copy; Effigy Media<br>Page 3 of 17</div></div>
+    <div class="r">Sheet layout &copy; Effigy Media<br>Page 3 of 18</div></div>
 </section>
 
 <!-- ============ PAGE 4 ============ -->
@@ -779,7 +809,7 @@ input[type="radio"]:focus-visible{outline:1px solid var(--red);outline-offset:1p
       <th style="padding:0"><input data-k="stCr" class="calc" readonly style="text-align:center"></th></tr></tfoot></table>
   <div class="addrow noprint"><button type="button" onclick="addRow('st')">+ another stashed line</button></div>
   <div class="foot"><div>Created under license · Community Content Agreement for The Travellers' Aid Society</div>
-    <div class="r">Sheet layout &copy; Effigy Media<br>Page 4 of 17</div></div>
+    <div class="r">Sheet layout &copy; Effigy Media<br>Page 4 of 18</div></div>
 </section>
 
 <!-- ============ PAGE 5 ============ -->
@@ -829,7 +859,7 @@ input[type="radio"]:focus-visible{outline:1px solid var(--red);outline-offset:1p
   <h2 class="sec">CHARACTER NOTES</h2>
   <textarea data-k="charNotes" style="min-height:70px"></textarea>
   <div class="foot"><div>Created under license · Community Content Agreement for The Travellers' Aid Society</div>
-    <div class="r">Sheet layout &copy; Effigy Media<br>Page 5 of 17</div></div>
+    <div class="r">Sheet layout &copy; Effigy Media<br>Page 5 of 18</div></div>
 </section>
 
 <!-- ============ PAGE 6 ============ -->
@@ -891,7 +921,7 @@ input[type="radio"]:focus-visible{outline:1px solid var(--red);outline-offset:1p
     </div>
   </div>
   <div class="foot"><div>Created under license · Community Content Agreement for The Travellers' Aid Society</div>
-    <div class="r">Sheet layout &copy; Effigy Media<br>Page 6 of 17</div></div>
+    <div class="r">Sheet layout &copy; Effigy Media<br>Page 6 of 18</div></div>
 </section>
 
 <!-- ============ PAGE 7 ============ -->
@@ -936,23 +966,23 @@ input[type="radio"]:focus-visible{outline:1px solid var(--red);outline-offset:1p
   <table><thead><tr><th style="width:150px">Name</th><th style="width:100px">Type</th><th style="width:140px">Player / location</th>
     <th>Description &amp; notes</th><th style="width:44px">Dead</th></tr></thead><tbody id="cmpBody"></tbody></table>
   <div class="foot"><div>Created under license · Community Content Agreement for The Travellers' Aid Society</div>
-    <div class="r">Sheet layout &copy; Effigy Media<br>Page 7 of 17</div></div>
+    <div class="r">Sheet layout &copy; Effigy Media<br>Page 7 of 18</div></div>
 </section>
 
 <section class="page" id="p8">
   <div class="banner plain"><div><h1>SHIP RECORD</h1></div><div class="use">FOR USE WITH<br>MONGOOSE 2E</div></div>
 
-  <div class="row noprint stationbar">
-    <label>Your station</label>
-    <select id="stationPick" onchange="setStation(this.value)"></select>
-    <span class="hint" id="stationNote"></span>
+  <div class="grid" style="grid-template-columns:1fr 1fr 1fr;margin-bottom:6px">
+    <div class="f"><label>My station aboard</label><input data-k="shMyStation"></div>
+    <div class="f"><label>My watch</label><input data-k="shMyWatch"></div>
+    <div class="f"><label>In a fight I am</label><input data-k="shMyBattle"></div>
   </div>
   <h2 class="sec">THE SHIP <span id="shSync"></span></h2>
   <div class="row noprint" style="display:flex;gap:6px;align-items:center;margin-top:5px">
     <label class="hint" style="font-size:8px;letter-spacing:.13em;text-transform:uppercase;font-weight:700">Ship</label>
-    <select id="shipPick" onchange="pickShip(this.value)" style="flex:1;min-width:0"></select>
-    <button type="button" onclick="newShip()">New</button>
-    <button type="button" onclick="dropShip()">&times;</button>
+    <select id="shipPick" class="noprint" onchange="pickShip(this.value)" style="flex:1;min-width:0"></select>
+    <button type="button" onclick="newShip()" class="noprint">New</button>
+    <button type="button" onclick="dropShip()" class="noprint">&times;</button>
   </div>
   <div class="grid" style="grid-template-columns:auto 1.5fr 2fr .5fr .9fr;margin-top:4px;align-items:start">
     <div class="f"><label>Ship<span class="cap-hint noprint">tap</span></label>
@@ -1063,83 +1093,80 @@ input[type="radio"]:focus-visible{outline:1px solid var(--red);outline-offset:1p
       </tbody></table>
 
   <div class="foot"><div>Created under license · Community Content Agreement for The Travellers' Aid Society</div>
-    <div class="r">Sheet layout &copy; Effigy Media<br>Ship record<br>Page 8 of 17</div></div>
+    <div class="r">Sheet layout &copy; Effigy Media<br>Ship record<br>Page 8 of 18</div></div>
 </section>
 
-<section class="page" id="p9">
-  <div class="banner plain"><div><h1>ASTROGATION &amp; JUMP LOG</h1></div><div class="use">FOR USE WITH<br>MONGOOSE 2E</div></div>
+<section class="page" id="pStationPage">
+  <div class="banner plain"><div><h1>MY STATION</h1></div><div class="use">FOR USE WITH<br>MONGOOSE 2E</div></div>
 
-  <h2 class="sec">JUMP &amp; FUEL</h2>
-  <div class="grid" style="grid-template-columns:1.3fr 1.3fr .7fr .8fr .8fr .8fr .8fr">
-    <div class="f"><label>Currently at</label><input data-k="shAt"></div>
-    <div class="f"><label>Bound for</label><input data-k="shTo"></div>
-    <div class="f"><label>Parsecs</label><input data-k="shPar"></div>
-    <div class="f"><label>Fuel aboard</label><input data-k="shFuelNow2" class="calc" readonly></div>
-    <div class="f"><label>Jump needs</label><input data-k="shJNeed" class="calc" readonly></div>
-    <div class="f"><label>Left after</label><input data-k="shJAfter" class="calc" readonly></div>
-    <div class="f"><label>Days out</label><input data-k="shDays"></div>
-  </div>
-  <div class="note">Jump fuel is <b>10% of hull tonnage per parsec</b> &mdash; 20 tons a parsec for a 200 ton hull.
-    A jump takes about a week either way.</div>
-
-  <h2 class="sec">ASTROGATION <span class="noprint">looked up on Traveller Map</span></h2>
-  <div class="grid" style="grid-template-columns:1.6fr .8fr auto;align-items:end">
-    <div class="f"><label>Sector</label><input data-k="shAstSec" placeholder="Trojan Reach"></div>
-    <div class="f"><label>Hex</label><input data-k="shAstHex" placeholder="1910"></div>
-    <div class="f noprint"><label>&nbsp;</label><button type="button" onclick="astroLookup()">Look it up</button></div>
-  </div>
-  <div class="row noprint" style="display:flex;gap:6px;margin-top:5px">
-    <input id="astroFind" placeholder="…or search by name — Marduk, Theev, Exocet"
-           onkeyup="if(event.key==='Enter')sysSearch('here')" style="flex:1;min-width:0">
-    <button type="button" onclick="sysSearch('here')">Find</button>
-  </div>
-  <div id="astroOut" class="astrobox"></div>
-  <div class="grid" style="grid-template-columns:1.3fr 1fr 1.6fr 1fr">
-    <div class="f"><label>World</label>
-      <div style="display:flex;gap:4px">
-        <input data-k="shAstName" style="min-width:0">
-        <button type="button" class="info noprint" onclick="openWiki('shAstName')"
-                title="Open this world on the Traveller wiki">info &nearr;</button>
-      </div></div>
-    <div class="f"><label>UWP</label><input data-k="shAstUWP"></div>
-    <div class="f"><label>Trade codes &amp; remarks</label><input data-k="shAstRem"></div>
-    <div class="f"><label>Bases</label><input data-k="shAstBase"></div>
-  </div>
-  <div class="grid" style="grid-template-columns:.7fr .8fr 1fr 1.4fr">
-    <div class="f"><label>Zone</label><input data-k="shAstZone"></div>
-    <div class="f"><label>PBG</label><input data-k="shAstPBG"></div>
-    <div class="f"><label>Allegiance</label><input data-k="shAstAll"></div>
-    <div class="f"><label>Stars</label><input data-k="shAstStar"></div>
+  <div class="row noprint" style="display:flex;gap:8px;align-items:center;margin-bottom:8px;flex-wrap:wrap">
+    <label class="hint" style="font-size:8px;letter-spacing:.13em;text-transform:uppercase;font-weight:700">Ship</label>
+    <select id="stShip" class="noprint" onchange="pickShip(this.value)" style="width:auto;min-width:150px"></select>
+    <label class="hint" style="font-size:8px;letter-spacing:.13em;text-transform:uppercase;font-weight:700">Role</label>
+    <select id="rolePick" class="noprint" onchange="setRole(this.value)" style="width:auto;min-width:170px"></select>
+    <span class="hint">Your station on that hull. The controls below are the ones this job touches.</span>
   </div>
 
-  <h2 class="sec">WHERE NEXT <span class="noprint">jumping files the old position into the log</span></h2>
-  <div class="grid" style="grid-template-columns:1.5fr .8fr auto auto;align-items:end">
-    <div class="f"><label>Bound for &mdash; sector</label>
-      <div style="display:flex;gap:4px">
-        <input data-k="shNextSec" placeholder="Trojan Reach" style="min-width:0">
-        <button type="button" class="info noprint" onclick="openWiki('next')"
-                title="Open the destination on the Traveller wiki">info &nearr;</button>
-      </div></div>
-    <div class="f"><label>Hex</label><input data-k="shNextHex" placeholder="2124"></div>
-    <div class="f noprint"><label>&nbsp;</label><button type="button" onclick="astroLookupNext()">Check it</button></div>
-    <div class="f noprint"><label>&nbsp;</label><button type="button" onclick="plotCourse()">Plot a course</button></div>
-    <div class="f noprint"><label>&nbsp;</label><button type="button" onclick="doJump()">Jump &rsaquo;</button></div>
-  </div>
-  <div class="row noprint" style="display:flex;gap:6px;margin-top:5px">
-    <input id="nextFind" placeholder="…or search by name" onkeyup="if(event.key==='Enter')sysSearch('next')"
-           style="flex:1;min-width:0">
-    <button type="button" onclick="sysSearch('next')">Find</button>
-  </div>
-  <div id="nextOut" class="astrobox" style="min-height:0"></div>
-  <div id="routeOut" class="routebox"></div>
-  <input type="hidden" data-k="shRoute">
+  <div class="grid" style="grid-template-columns:1fr 1fr;align-items:start">
+    <div class="stleft">
+      <h2 class="sec">WHAT I DO <span id="roleName"></span></h2>
+      <div id="roleDuty"></div>
 
-  <h2 class="sec">JUMP LOG</h2>
-  <div id="jumpLog" class="jumplog"></div>
-  <input type="hidden" data-k="shLog">
+      <h2 class="sec">MY CHECKS</h2>
+      <table><thead><tr><th>What</th><th style="width:96px">Check</th>
+        <th style="width:54px">My DM</th></tr></thead>
+        <tbody id="roleChecks"></tbody></table>
+
+      <h2 class="sec">IN A PERSONAL FIGHT</h2>
+      <div id="rolePersonal" class="note"></div>
+
+      <div class="postkit">
+      <h2 class="sec">WHAT I KEEP AT THIS POST</h2>
+      <table><thead><tr><th>Item</th><th style="width:52px">Qty</th>
+        <th style="width:110px">Where</th></tr></thead><tbody>
+        <tr><td><input data-k="stI0"></td><td class="mid"><input data-k="stQ0"></td><td><input data-k="stW0"></td></tr>
+        <tr><td><input data-k="stI1"></td><td class="mid"><input data-k="stQ1"></td><td><input data-k="stW1"></td></tr>
+        <tr><td><input data-k="stI2"></td><td class="mid"><input data-k="stQ2"></td><td><input data-k="stW2"></td></tr>
+        <tr><td><input data-k="stI3"></td><td class="mid"><input data-k="stQ3"></td><td><input data-k="stW3"></td></tr>
+        <tr><td><input data-k="stI4"></td><td class="mid"><input data-k="stQ4"></td><td><input data-k="stW4"></td></tr>
+        <tr><td><input data-k="stI5"></td><td class="mid"><input data-k="stQ5"></td><td><input data-k="stW5"></td></tr>
+      </tbody></table>
+      </div>
+    </div>
+
+    <div class="stright">
+      <h2 class="sec">AT MY CONSOLE <span class="noprint">live</span></h2>
+      <div id="roleLive"></div>
+
+      <h2 class="sec">WHAT I WATCH</h2>
+      <div id="roleWatch"></div>
+
+      <div id="roleExtra"></div>
+
+      <h2 class="sec">MY NOTES THIS VOYAGE</h2>
+      <div class="grid" style="grid-template-columns:1fr 1fr">
+        <div class="f"><label>Station</label><input data-k="stRole"></div>
+        <div class="f"><label>Watch</label><input data-k="stWatch"></div>
+        <div class="f"><label>My mount or post</label><input data-k="stMount"></div>
+        <div class="f"><label>Standing orders</label><input data-k="stOrders"></div>
+      </div>
+      <textarea data-k="stNotes" style="min-height:150px"></textarea>
+
+      <div class="watchrota">
+      <h2 class="sec">MY WATCH ROTA</h2>
+      <table><thead><tr><th style="width:88px">Watch</th><th>Who else is up</th>
+        <th style="width:96px">Handover</th></tr></thead><tbody>
+        <tr><td><input data-k="stR0"></td><td><input data-k="stRw0"></td><td><input data-k="stRh0"></td></tr>
+        <tr><td><input data-k="stR1"></td><td><input data-k="stRw1"></td><td><input data-k="stRh1"></td></tr>
+        <tr><td><input data-k="stR2"></td><td><input data-k="stRw2"></td><td><input data-k="stRh2"></td></tr>
+        <tr><td><input data-k="stR3"></td><td><input data-k="stRw3"></td><td><input data-k="stRh3"></td></tr>
+      </tbody></table>
+      </div>
+    </div>
+  </div>
 
   <div class="foot"><div>Created under license · Community Content Agreement for The Travellers' Aid Society</div>
-    <div class="r">Sheet layout &copy; Effigy Media<br>Astrogation<br>Page 9 of 17</div></div>
+    <div class="r">Sheet layout &copy; Effigy Media<br>My station<br>Page 9 of 18</div></div>
 </section>
 
 <section class="page" id="p10">
@@ -1192,7 +1219,7 @@ input[type="radio"]:focus-visible{outline:1px solid var(--red);outline-offset:1p
    </div>
 
   <div class="foot"><div>Created under license · Community Content Agreement for The Travellers' Aid Society</div>
-    <div class="r">Sheet layout &copy; Effigy Media<br>Hold and stash<br>Page 10 of 17</div></div>
+    <div class="r">Sheet layout &copy; Effigy Media<br>Hold and stash<br>Page 10 of 18</div></div>
 </section>
 
 <section class="page" id="p11">
@@ -1201,9 +1228,9 @@ input[type="radio"]:focus-visible{outline:1px solid var(--red);outline-offset:1p
   <h2 class="sec">THE VEHICLE <span id="vhSync"></span></h2>
   <div class="row noprint" style="display:flex;gap:6px;align-items:center;margin-top:5px">
     <label class="hint" style="font-size:8px;letter-spacing:.13em;text-transform:uppercase;font-weight:700">Vehicle</label>
-    <select id="vehPick" onchange="pickVeh(this.value)" style="flex:1;min-width:0"></select>
-    <button type="button" onclick="newVeh()">New</button>
-    <button type="button" onclick="dropVeh()">&times;</button>
+    <select id="vehPick" class="noprint" onchange="pickVeh(this.value)" style="flex:1;min-width:0"></select>
+    <button type="button" onclick="newVeh()" class="noprint">New</button>
+    <button type="button" onclick="dropVeh()" class="noprint">&times;</button>
   </div>
   <div class="grid" style="grid-template-columns:auto 1.5fr 1.9fr .5fr 1.1fr;margin-top:4px;align-items:start">
     <div class="f"><label>Vehicle<span class="cap-hint noprint">tap</span></label>
@@ -1301,7 +1328,7 @@ input[type="radio"]:focus-visible{outline:1px solid var(--red);outline-offset:1p
   <textarea data-k="vhNotes" style="min-height:44px"></textarea>
 
   <div class="foot"><div>Created under license · Community Content Agreement for The Travellers' Aid Society</div>
-    <div class="r">Sheet layout &copy; Effigy Media<br>Vehicle record<br>Page 11 of 17</div></div>
+    <div class="r">Sheet layout &copy; Effigy Media<br>Vehicle record<br>Page 11 of 18</div></div>
 </section>
 
 <section class="page" id="p12">
@@ -1310,9 +1337,9 @@ input[type="radio"]:focus-visible{outline:1px solid var(--red);outline-offset:1p
   <h2 class="sec">THE ROBOT <span id="rbSync"></span></h2>
   <div class="row noprint" style="display:flex;gap:6px;align-items:center;margin-top:5px">
     <label class="hint" style="font-size:8px;letter-spacing:.13em;text-transform:uppercase;font-weight:700">Robot</label>
-    <select id="robPick" onchange="pickRob(this.value)" style="flex:1;min-width:0"></select>
-    <button type="button" onclick="newRob()">New</button>
-    <button type="button" onclick="dropRob()">&times;</button>
+    <select id="robPick" class="noprint" onchange="pickRob(this.value)" style="flex:1;min-width:0"></select>
+    <button type="button" onclick="newRob()" class="noprint">New</button>
+    <button type="button" onclick="dropRob()" class="noprint">&times;</button>
   </div>
   <div class="grid" style="grid-template-columns:auto 1.5fr 1.4fr .5fr .9fr;margin-top:4px;align-items:start">
     <div class="f"><label>Robot<span class="cap-hint noprint">tap</span></label>
@@ -1441,7 +1468,7 @@ input[type="radio"]:focus-visible{outline:1px solid var(--red);outline-offset:1p
   <textarea data-k="rbNotes" style="min-height:40px"></textarea>
 
   <div class="foot"><div>Created under license · Community Content Agreement for The Travellers' Aid Society</div>
-    <div class="r">Sheet layout &copy; Effigy Media<br>Robot record<br>Page 12 of 17</div></div>
+    <div class="r">Sheet layout &copy; Effigy Media<br>Robot record<br>Page 12 of 18</div></div>
 </section>
 
 <section class="page" id="p13">
@@ -1535,10 +1562,91 @@ input[type="radio"]:focus-visible{outline:1px solid var(--red);outline-offset:1p
   </div>
 
   <div class="foot"><div>Created under license · Community Content Agreement for The Travellers' Aid Society</div>
-    <div class="r">Sheet layout &copy; Effigy Media<br>Rules reference<br>Page 13 of 17</div></div>
+    <div class="r">Sheet layout &copy; Effigy Media<br>Rules reference<br>Page 13 of 18</div></div>
 </section>
 
 <section class="page" id="p14">
+  <div class="banner plain"><div><h1>PERSONAL COMBAT AT A GLANCE</h1></div><div class="use">FOR USE WITH<br>MONGOOSE 2E</div></div>
+  <div class="grid" style="grid-template-columns:1.15fr 1fr;align-items:start">
+    <div>
+      <h2 class="sec">YOUR ROUND</h2>
+      <div class="note" style="margin-top:6px">
+        One <b>Major</b> action and one <b>Minor</b> — or <b>three Minor</b> actions instead.<br>
+        Plus any number of <b>Reactions</b> and <b>Free</b> actions.
+      </div>
+      <table><thead><tr><th style="width:96px">Major</th><th>What it is</th></tr></thead><tbody>
+        <tr><td class="mid">Attack</td><td>Melee: 2D + Melee + STR or DEX DM. Ranged: 2D + Gun Combat + DEX DM. Usually 8+</td></tr>
+        <tr><td class="mid">Leadership</td><td>Effect = that many <b>DM+1</b> bonuses handed out. A negative Effect hands the enemy that many <b>DM&minus;1</b> against you</td></tr>
+        <tr><td class="mid">Anything absorbing</td><td>First aid, bypassing a security system, using a psionic talent, taking a crew position, calling in ortillery</td></tr>
+        <tr><td class="mid">Two Minors</td><td>Trade it for two more Minor actions</td></tr>
+      </tbody></table>
+      <table><thead><tr><th style="width:96px">Minor</th><th>What it is</th></tr></thead><tbody>
+        <tr><td class="mid">Aim</td><td><b>DM+1</b> to your next ranged attack on that target. Consecutive aims stack to <b>DM+6</b>, if you do nothing else</td></tr>
+        <tr><td class="mid">Move</td><td>Up to your Movement, usually 6m. Halved in rough going, quartered while prone</td></tr>
+        <tr><td class="mid">Change stance</td><td>Stand, crouch or go prone</td></tr>
+        <tr><td class="mid">Draw or reload</td><td>One weapon readied, or one magazine changed</td></tr>
+        <tr><td class="mid">Something quick</td><td>Spot a firing position, identify an enemy's kit, pick something up</td></tr>
+      </tbody></table>
+      <table><thead><tr><th style="width:96px">Reaction</th><th>Unlimited &mdash; but each costs <b>DM&minus;1</b> on your next actions</th></tr></thead><tbody>
+        <tr><td class="mid">Dodge</td><td>Attacker takes a penalty equal to your <b>DEX DM or Athletics (dex)</b>, whichever is higher. Melee or ranged. Each attack dodged separately</td></tr>
+        <tr><td class="mid">Dive for cover</td><td><b>DM&minus;2</b> to every attacker this round and possibly better Protection. <b>House rule:</b> you lose your next <b>Minor</b> action, not the whole turn &mdash; you keep the Major. Attack from the floor, or spend the Major as two Minors to <b>stand</b> and <b>move</b>. Prone until you stand. Ranged attacks only. Cover within 1.5m, or DM&minus;1 for being prone</td></tr>
+        <tr><td class="mid">Parry</td><td>In close combat: attacker takes your <b>Melee skill</b> as a penalty</td></tr>
+      </tbody></table>
+      <div class="note" style="margin-top:5px"><b>Free actions</b> — shouting a warning, pressing a button. As many as the referee will wear.</div>
+      <table><thead><tr><th>Personal range</th><th style="width:70px">Distance</th></tr></thead><tbody>
+        <tr><td class="mid">Personal</td><td class="mid">1.5m</td></tr>
+        <tr><td class="mid">Close</td><td class="mid">3m</td></tr>
+        <tr><td class="mid">Short</td><td class="mid">12m</td></tr>
+        <tr><td class="mid">Medium</td><td class="mid">50m</td></tr>
+        <tr><td class="mid">Long</td><td class="mid">250m</td></tr>
+        <tr><td class="mid">Very Long</td><td class="mid">500m</td></tr>
+        <tr><td class="mid">Distant</td><td class="mid">beyond</td></tr>
+      </tbody></table>
+
+    </div>
+    <div>
+      <h2 class="sec">ATTACK MODIFIERS</h2>
+      <table><thead><tr><th>Helping you</th><th style="width:52px">DM</th><th>Against you</th><th style="width:52px">DM</th></tr></thead><tbody>
+        <tr><td class="mid">Aiming</td><td class="mid">+1 each</td><td class="mid">Long range</td><td class="mid">&minus;2</td></tr>
+        <tr><td class="mid">Laser sight, if aiming</td><td class="mid">+1</td><td class="mid">Extreme range</td><td class="mid">&minus;4</td></tr>
+        <tr><td class="mid">Short range</td><td class="mid">+1</td><td class="mid">Target in cover</td><td class="mid">&minus;2</td></tr>
+        <tr><td class="mid">&mdash;</td><td class="mid"></td><td class="mid">Prone target</td><td class="mid">&minus;1</td></tr>
+        <tr><td class="mid">&mdash;</td><td class="mid"></td><td class="mid">Fast mover</td><td class="mid">&minus;1 per 10m</td></tr>
+      </tbody></table>
+      <div class="note" style="margin-top:5px">Short range is within a quarter of the weapon's Range. Long is beyond
+        Range but under twice it. In close combat only one-handed weapons fire; rifles are clubs. Move while locked
+        in melee and your enemy gets a free swing at <b>DM+2</b>.</div>
+
+      <h2 class="sec">HITS &amp; HARM</h2>
+      <div class="note" style="margin-top:6px">
+        <b>Damage</b> = the weapon's dice <b>+ Effect</b>. Armour subtracts from every hit.<br>
+        It falls on <b>END</b> first; when END is gone it comes off <b>STR or DEX</b>, your choice.
+        One physical characteristic at zero and you are down. Two means a serious wound needing surgery.
+      </div>
+
+
+      <h2 class="sec">CLOSE COMBAT</h2>
+      <div class="note" style="margin-top:6px">
+        Neither of you may attack anyone else while locked together.<br>
+        Only one-handed weapons fire; a pistol can be <b>parried</b> aside.<br>
+        Rifles and anything larger are used as clubs.<br>
+        Break away and your enemy gets an immediate free attack at <b>DM+2</b>.
+      </div>
+
+      <h2 class="sec">WHEN IT RUNS LONG</h2>
+      <div class="note" style="margin-top:6px">
+        Some tasks take more than a round. Roll the timeframe, and keep working.<br>
+        Take damage mid-task and you must make the skill check again immediately, with the
+        <b>damage as a negative DM</b>. Fail and this round's work is wasted;
+        fail by <b>&minus;6</b> and start again from nothing.
+      </div>
+    </div>
+  </div>
+  <div class="foot"><div>Created under license · Community Content Agreement for The Travellers' Aid Society</div>
+    <div class="r">Sheet layout &copy; Effigy Media<br>Combat reference<br>Page 14 of 18</div></div>
+</section>
+
+<section class="page" id="p15">
   <div class="banner plain"><div><h1>SPACE COMBAT AT A GLANCE</h1></div><div class="use">FOR USE WITH<br>MONGOOSE 2E</div></div>
 
   <div class="grid" style="grid-template-columns:1fr 1fr;align-items:start">
@@ -1630,91 +1738,107 @@ input[type="radio"]:focus-visible{outline:1px solid var(--red);outline-offset:1p
   </div>
 
   <div class="foot"><div>Created under license · Community Content Agreement for The Travellers' Aid Society</div>
-    <div class="r">Sheet layout &copy; Effigy Media<br>Space combat reference<br>Page 14 of 17</div></div>
-</section>
-
-<section class="page" id="p15">
-  <div class="banner plain"><div><h1>COMBAT AT A GLANCE</h1></div><div class="use">FOR USE WITH<br>MONGOOSE 2E</div></div>
-  <div class="grid" style="grid-template-columns:1.15fr 1fr;align-items:start">
-    <div>
-      <h2 class="sec">YOUR ROUND</h2>
-      <div class="note" style="margin-top:6px">
-        One <b>Major</b> action and one <b>Minor</b> — or <b>three Minor</b> actions instead.<br>
-        Plus any number of <b>Reactions</b> and <b>Free</b> actions.
-      </div>
-      <table><thead><tr><th style="width:96px">Major</th><th>What it is</th></tr></thead><tbody>
-        <tr><td class="mid">Attack</td><td>Melee: 2D + Melee + STR or DEX DM. Ranged: 2D + Gun Combat + DEX DM. Usually 8+</td></tr>
-        <tr><td class="mid">Leadership</td><td>Effect = that many <b>DM+1</b> bonuses handed out. A negative Effect hands the enemy that many <b>DM&minus;1</b> against you</td></tr>
-        <tr><td class="mid">Anything absorbing</td><td>First aid, bypassing a security system, using a psionic talent, taking a crew position, calling in ortillery</td></tr>
-        <tr><td class="mid">Two Minors</td><td>Trade it for two more Minor actions</td></tr>
-      </tbody></table>
-      <table><thead><tr><th style="width:96px">Minor</th><th>What it is</th></tr></thead><tbody>
-        <tr><td class="mid">Aim</td><td><b>DM+1</b> to your next ranged attack on that target. Consecutive aims stack to <b>DM+6</b>, if you do nothing else</td></tr>
-        <tr><td class="mid">Move</td><td>Up to your Movement, usually 6m. Halved in rough going, quartered while prone</td></tr>
-        <tr><td class="mid">Change stance</td><td>Stand, crouch or go prone</td></tr>
-        <tr><td class="mid">Draw or reload</td><td>One weapon readied, or one magazine changed</td></tr>
-        <tr><td class="mid">Something quick</td><td>Spot a firing position, identify an enemy's kit, pick something up</td></tr>
-      </tbody></table>
-      <table><thead><tr><th style="width:96px">Reaction</th><th>Unlimited &mdash; but each costs <b>DM&minus;1</b> on your next actions</th></tr></thead><tbody>
-        <tr><td class="mid">Dodge</td><td>Attacker takes a penalty equal to your <b>DEX DM or Athletics (dex)</b>, whichever is higher. Melee or ranged. Each attack dodged separately</td></tr>
-        <tr><td class="mid">Dive for cover</td><td><b>DM&minus;2</b> to every attacker this round and possibly better Protection. <b>House rule:</b> you lose your next <b>Minor</b> action, not the whole turn &mdash; you keep the Major. Attack from the floor, or spend the Major as two Minors to <b>stand</b> and <b>move</b>. Prone until you stand. Ranged attacks only. Cover within 1.5m, or DM&minus;1 for being prone</td></tr>
-        <tr><td class="mid">Parry</td><td>In close combat: attacker takes your <b>Melee skill</b> as a penalty</td></tr>
-      </tbody></table>
-      <div class="note" style="margin-top:5px"><b>Free actions</b> — shouting a warning, pressing a button. As many as the referee will wear.</div>
-      <table><thead><tr><th>Personal range</th><th style="width:70px">Distance</th></tr></thead><tbody>
-        <tr><td class="mid">Personal</td><td class="mid">1.5m</td></tr>
-        <tr><td class="mid">Close</td><td class="mid">3m</td></tr>
-        <tr><td class="mid">Short</td><td class="mid">12m</td></tr>
-        <tr><td class="mid">Medium</td><td class="mid">50m</td></tr>
-        <tr><td class="mid">Long</td><td class="mid">250m</td></tr>
-        <tr><td class="mid">Very Long</td><td class="mid">500m</td></tr>
-        <tr><td class="mid">Distant</td><td class="mid">beyond</td></tr>
-      </tbody></table>
-
-    </div>
-    <div>
-      <h2 class="sec">ATTACK MODIFIERS</h2>
-      <table><thead><tr><th>Helping you</th><th style="width:52px">DM</th><th>Against you</th><th style="width:52px">DM</th></tr></thead><tbody>
-        <tr><td class="mid">Aiming</td><td class="mid">+1 each</td><td class="mid">Long range</td><td class="mid">&minus;2</td></tr>
-        <tr><td class="mid">Laser sight, if aiming</td><td class="mid">+1</td><td class="mid">Extreme range</td><td class="mid">&minus;4</td></tr>
-        <tr><td class="mid">Short range</td><td class="mid">+1</td><td class="mid">Target in cover</td><td class="mid">&minus;2</td></tr>
-        <tr><td class="mid">&mdash;</td><td class="mid"></td><td class="mid">Prone target</td><td class="mid">&minus;1</td></tr>
-        <tr><td class="mid">&mdash;</td><td class="mid"></td><td class="mid">Fast mover</td><td class="mid">&minus;1 per 10m</td></tr>
-      </tbody></table>
-      <div class="note" style="margin-top:5px">Short range is within a quarter of the weapon's Range. Long is beyond
-        Range but under twice it. In close combat only one-handed weapons fire; rifles are clubs. Move while locked
-        in melee and your enemy gets a free swing at <b>DM+2</b>.</div>
-
-      <h2 class="sec">HITS &amp; HARM</h2>
-      <div class="note" style="margin-top:6px">
-        <b>Damage</b> = the weapon's dice <b>+ Effect</b>. Armour subtracts from every hit.<br>
-        It falls on <b>END</b> first; when END is gone it comes off <b>STR or DEX</b>, your choice.
-        One physical characteristic at zero and you are down. Two means a serious wound needing surgery.
-      </div>
-
-
-      <h2 class="sec">CLOSE COMBAT</h2>
-      <div class="note" style="margin-top:6px">
-        Neither of you may attack anyone else while locked together.<br>
-        Only one-handed weapons fire; a pistol can be <b>parried</b> aside.<br>
-        Rifles and anything larger are used as clubs.<br>
-        Break away and your enemy gets an immediate free attack at <b>DM+2</b>.
-      </div>
-
-      <h2 class="sec">WHEN IT RUNS LONG</h2>
-      <div class="note" style="margin-top:6px">
-        Some tasks take more than a round. Roll the timeframe, and keep working.<br>
-        Take damage mid-task and you must make the skill check again immediately, with the
-        <b>damage as a negative DM</b>. Fail and this round's work is wasted;
-        fail by <b>&minus;6</b> and start again from nothing.
-      </div>
-    </div>
-  </div>
-  <div class="foot"><div>Created under license · Community Content Agreement for The Travellers' Aid Society</div>
-    <div class="r">Sheet layout &copy; Effigy Media<br>Combat reference<br>Page 15 of 17</div></div>
+    <div class="r">Sheet layout &copy; Effigy Media<br>Space combat reference<br>Page 15 of 18</div></div>
 </section>
 
 <section class="page" id="p16">
+  <div class="banner plain"><div><h1>TAKING A PRIZE</h1></div><div class="use">FOR USE WITH<br>MONGOOSE 2E</div></div>
+
+  <div class="grid" style="grid-template-columns:1fr 1fr;align-items:start">
+    <div>
+      <h2 class="sec">THE FIVE STEPS</h2>
+      <table><tbody>
+        <tr><td class="lbl" style="width:36px">1</td><td><b>Intercept</b> her.</td></tr>
+        <tr><td class="lbl">2</td><td><b>Attack</b>, or stop her running.</td></tr>
+        <tr><td class="lbl">3</td><td><b>Board</b> &mdash; optional, and where the money usually is.</td></tr>
+        <tr><td class="lbl">4</td><td><b>Loot</b> her.</td></tr>
+        <tr><td class="lbl">5</td><td><b>Escape.</b></td></tr>
+      </tbody></table>
+
+      <h2 class="sec">1 &middot; INTERCEPT</h2>
+      <div class="note">You must not only get in range &mdash; you must <b>match velocity</b>, or
+        there is nothing to board. She can dodge, but every evasion adds to her own time to
+        destination.</div>
+      <table><tbody>
+        <tr><td class="lbl" style="width:128px">IF YOU ARE FASTER</td>
+            <td>Higher Thrust than hers and inside <b>100,000km</b>: escape is very difficult
+              indeed.</td></tr>
+        <tr><td class="lbl">AT SHORT OR LESS</td>
+            <td><b>Opposed Pilot checks</b> as she jinks and dodges.</td></tr>
+        <tr><td class="lbl">THE CLOCK</td>
+            <td>Starts the moment you <b>open fire</b>. Somebody heard it.</td></tr>
+      </tbody></table>
+
+      <h2 class="sec">2 &middot; STOP HER</h2>
+      <table><tbody>
+        <tr><td class="lbl" style="width:128px">CALLED SHOTS</td>
+            <td>At <b>Short or less</b>, direct-fire only &mdash; no missiles or torpedoes.
+              Nominate the location, then roll.</td></tr>
+        <tr><td class="lbl">AIM FOR</td>
+            <td>The <b>manoeuvre drive</b>, which cuts her Thrust and makes the intercept easy.
+              Or the <b>fuel</b>, dumping it into space so she cannot jump away.</td></tr>
+        <tr><td class="lbl">DEMAND SURRENDER</td>
+            <td>Average <b>(8+) Electronics (comms)</b>, 1D&times;10 seconds, SOC.
+              <b>Subtract her current Morale.</b></td></tr>
+        <tr><td class="lbl">CARE</td>
+            <td>Breach the hull and you risk destroying the cargo you came for.</td></tr>
+      </tbody></table>
+      <div class="note">Surrenders are rarely unconditional. She will want safe passage for ship and
+        crew in exchange for part of the cargo &mdash; and many merchants keep a few tons of
+        sacrificial cargo aboard exactly for this.</div>
+    </div>
+
+    <div>
+      <h2 class="sec">3 &middot; BOARD</h2>
+      <table><tbody>
+        <tr><td class="lbl" style="width:128px">DOCK, CRIPPLED</td>
+            <td>Routine <b>(6+) Pilot</b>, 1D minutes, DEX.</td></tr>
+        <tr><td class="lbl">BREACHING CHARGE</td>
+            <td>Average <b>(8+) Explosives</b>, 1D minutes, EDU.</td></tr>
+        <tr><td class="lbl">MOVING IN ZERO-G</td>
+            <td>Average <b>(8+) DEX</b>, 1D seconds.</td></tr>
+        <tr><td class="lbl">FIND THE HOLD</td>
+            <td>Average <b>(8+) Recon</b>, 1D minutes, INT.</td></tr>
+      </tbody></table>
+      <div class="note">Nobody resists boarders without vacc suits on, or the internal doors shut
+        &mdash; a breach at the airlock or hold will otherwise vent the bridge. Assume both sides
+        are suited. The weapons that matter are <b>cutlasses, snub pistols</b> and anything else
+        that works in zero gravity and does not hole the hull.</div>
+
+      <h2 class="sec">4 &middot; LOOT</h2>
+      <table><tbody>
+        <tr><td class="lbl" style="width:128px">SHIP'S LOCKER</td>
+            <td>Very Difficult <b>(12+) Electronics (computers)</b>, 1D&times;10 minutes, EDU.</td></tr>
+        <tr><td class="lbl">THE RIGHT CARGO</td>
+            <td>Average <b>(8+) Recon</b>, 1D minutes, INT.</td></tr>
+        <tr><td class="lbl">SHIFTING A CONTAINER<small>by hand</small></td>
+            <td>Very Difficult <b>(12+) STR</b>, 1D minutes.</td></tr>
+      </tbody></table>
+      <div class="note">Hunt the valuable things first. Leave what you cannot safely take. Pirates
+        have been left aboard a crippled merchant by a captain who would rather run than fight for
+        them.</div>
+
+      <h2 class="sec">5 &middot; ESCAPE</h2>
+      <div class="note">You still have to reach the <b>hundred-diameter jump limit</b>. The common
+        mistake is chasing a target too far into a planet's jump shadow and finding you cannot
+        leave &mdash; jumping inside the limit is <b>DM&minus;4</b>.</div>
+
+      <h2 class="sec">THIS PRIZE</h2>
+      <div class="grid" style="grid-template-columns:1fr 1fr">
+        <div class="f"><label>Her name</label><input data-k="przName"></div>
+        <div class="f"><label>Her Thrust vs ours</label><input data-k="przThrust"></div>
+        <div class="f"><label>Her Morale</label><input data-k="przMor"></div>
+        <div class="f"><label>What we demanded</label><input data-k="przAsk"></div>
+      </div>
+      <textarea data-k="przNotes" style="min-height:44px"></textarea>
+    </div>
+  </div>
+
+  <div class="foot"><div>Created under license · Community Content Agreement for The Travellers' Aid Society</div>
+    <div class="r">Sheet layout &copy; Effigy Media<br>Taking a prize<br>Page 16 of 18</div></div>
+</section>
+
+<section class="page" id="p17">
   <div class="banner plain"><div><h1>PSIONICS</h1></div><div class="use">FOR USE WITH<br>MONGOOSE 2E</div></div>
 
   <div class="grid" style="grid-template-columns:1.35fr 1fr;align-items:start">
@@ -1783,10 +1907,10 @@ input[type="radio"]:focus-visible{outline:1px solid var(--red);outline-offset:1p
   </div>
 
   <div class="foot"><div>Created under license · Community Content Agreement for The Travellers' Aid Society</div>
-    <div class="r">Sheet layout &copy; Effigy Media<br>Psionics 1 of 2<br>Page 16 of 17</div></div>
+    <div class="r">Sheet layout &copy; Effigy Media<br>Psionics 1 of 2<br>Page 17 of 18</div></div>
 </section>
 
-<section class="page" id="p17">
+<section class="page" id="p18">
   <div class="banner plain"><div><h1>PSIONICS &mdash; ZHODANI &amp; REFERENCE</h1></div><div class="use">FOR USE WITH<br>MONGOOSE 2E</div></div>
   <div class="grid" style="grid-template-columns:1fr 1fr;align-items:start">
     <div><h2 class="sec">AWARENESS <span>your own body only — never others</span></h2>
@@ -1861,7 +1985,7 @@ input[type="radio"]:focus-visible{outline:1px solid var(--red);outline-offset:1p
   </tbody></table>
 
   <div class="foot"><div>Created under license · Community Content Agreement for The Travellers' Aid Society</div>
-    <div class="r">Sheet layout &copy; Effigy Media<br>Psionics 2 of 2<br>Page 17 of 17</div></div>
+    <div class="r">Sheet layout &copy; Effigy Media<br>Psionics 2 of 2<br>Page 18 of 18</div></div>
 </section>
 
 <section class="page noprint" id="how">
@@ -1957,7 +2081,7 @@ const SKILLS=[
  "Profession: ____","Profession: ____","Recon","Science: ____","Science: ____","Science: ____",
  "Seafarer: Ocean Ships","Seafarer: Personal","Seafarer: Sail","Seafarer: Submarine","Stealth","Steward",
  "Streetwise","Survival","Tactics: Military","Tactics: Naval","Vacc Suit","____","____","____","____"];
-const TALENTS=["Awareness","Clairvoyance","Telekinesis","Telepathy","Teleportation","Zhodani talent","",""];
+const TALENTS=["Awareness","Clairvoyance","Telekinesis","Telepathy","Teleportation","Zhodani","",""];
 const PERS=[["Diplomatic","Violent"],["Passive","Instigating"],["Cautious","Reckless"],["Selfless","Selfish"],
  ["Trusting","Suspicious"],["Logical","Emotional"],["Optimistic","Pessimistic"],["Extroverted","Introverted"],
  ["Neat","Messy"],["Confident","Shy"],["Works","Relaxes"]];
@@ -1978,7 +2102,7 @@ document.getElementById('chBody').innerHTML=CHARS.map(c=>`<tr>
 document.getElementById('chOpt').innerHTML=OPTC.map((c,i)=>`<tr>
   <td class="lbl" style="width:96px">${c[0]
     ? c[0]+'<small>'+c[1]+'</small>'
-    : '<input data-k="optN'+i+'" placeholder="—" style="font-weight:700;font-size:11px;padding:1px 3px;min-height:18px">'}</td>
+    : '<input data-k="optN'+i+'" class="optname" placeholder="—" style="font-weight:700;font-size:11px;padding:1px 3px;min-height:18px">'}</td>
   <td class="mid">${num('b'+(c[0]||'O'+i))}</td><td class="mid">${num('m'+(c[0]||'O'+i))}</td>
   <td class="mid">${num('i'+(c[0]||'O'+i))}</td>
   <td class="mid"><input data-k="c${c[0]||'O'+i}" class="calc" readonly></td>
@@ -2097,8 +2221,96 @@ function pageScale(el){
   if(!need) return 1;
   return Math.min(1, Math.max(MIN_SCALE, room / need));
 }
-function fitPages(){
+
+/* ---------------------------------------------------------------
+   Paper should not be half empty.
+
+   The live sheet grows its tables on demand; printing cannot ask.
+   So before printing, every table marked to fill gets blank rows
+   added until its page is full, and they are taken away again
+   afterwards. A printed inventory page is a full page of lines.
+   --------------------------------------------------------------- */
+const FILLERS = [
+  {body:'eqBody',   base:'e',  cols:['eN','eI','eTL','eQ','eK','eC'],   mid:[2,3,4,5]},
+  {body:'stBody',   base:'s',  cols:['sL','sN','sI','sTL','sQ','sK','sC'], mid:[3,4,5,6]},
+  {body:'wpnBody',  base:'w',  cols:['wN','wTL','wR','wS','wA','wD','wMn','wKg','wT'], mid:[1,4,5,6,7]},
+  {body:'armBody',  base:'a',  cols:['aW','aN','aTL','aP','aR','aKg','aT'], mid:[0,2,3,4,5]},
+  {body:'holdBody', base:'m',  cols:['shMi','shMq','shMv','shMw','shMn'], mid:[1,2,3]},
+  {body:'psiBody',  base:'t',  cols:['talX','talLX','talMX','talCX'], mid:[1,2,3]}
+];
+
+/* ---------------------------------------------------------------
+   One station page on screen, one page per station on paper.
+
+   The live sheet has a dropdown because a player is one thing at a
+   time. The printed sheet cannot ask, so every role gets its own
+   page — and the astrogator's page carries the astrogation panel
+   and the jump log, because that is their station.
+
+   The clones are stripped of data-k so nothing collides with the
+   real fields, and they are removed the moment printing is done.
+   --------------------------------------------------------------- */
+function expandStationsForPrint(){
+  window.__lastStation = null;
+  const page=document.getElementById('pStationPage') ||
+             document.querySelector('.page:has(#rolePick)');
+  if(!page) return;
+  const keep=(document.getElementById('rolePick')||{}).value;
+  Object.keys(ROLES).forEach((role,i)=>{
+    setRole(role);
+    const clone=page.cloneNode(true);
+    clone.id='stprint'+i;
+    clone.classList.add('printclone');
+    clone.querySelectorAll('[data-k]').forEach(el=>{
+      if(el.tagName==='INPUT'||el.tagName==='TEXTAREA'){
+        el.setAttribute('value', el.value||'');
+        if(el.tagName==='TEXTAREA') el.textContent=el.value||'';
+      }
+      el.removeAttribute('data-k');
+    });
+    clone.querySelectorAll('[data-mirror],[id]').forEach(el=>{
+      el.removeAttribute('data-mirror'); el.removeAttribute('id');
+    });
+    clone.querySelectorAll('.foot .r').forEach(f=>{
+      f.innerHTML=f.innerHTML.replace(/My station/, role);
+    });
+    (window.__lastStation || page).after(clone);
+    window.__lastStation = clone;
+  });
+  window.__lastStation = null;
+  setRole(keep);
+  page.classList.add('hiddenwhileprinting');
+}
+function collapseStations(){
+  document.querySelectorAll('.printclone').forEach(n=>n.remove());
+  const page=document.getElementById('pStationPage');
+  if(page) page.classList.remove('hiddenwhileprinting');
+}
+
+function fillForPrint(){
   const room = PAGE_INCHES * 96;
+  FILLERS.forEach(f=>{
+    const body=document.getElementById(f.body); if(!body) return;
+    const page=body.closest('.page'); if(!page) return;
+    const cells=f.cols.length;
+    let guard=0;
+    while(page.getBoundingClientRect().height < room - 26 && guard++ < 40){
+      const tr=document.createElement('tr');
+      tr.className='printfill';
+      tr.innerHTML=Array.from({length:cells},(_,i)=>
+        `<td${f.mid.indexOf(i)>=0?' class="mid"':''}>&nbsp;</td>`).join('');
+      body.appendChild(tr);
+    }
+  });
+}
+function unfillPrint(){
+  document.querySelectorAll('tr.printfill').forEach(tr=>tr.remove());
+}
+
+function fitPages(){
+  /* Chrome's print box rounds a little tighter than the arithmetic, and a page
+     one pixel over spills a whole extra sheet. Keep a few pixels back. */
+  const room = PAGE_INCHES * 96 - 12;
   document.querySelectorAll('.page').forEach(el=>{
     if(el.classList.contains('noprint')) return;
     el.style.zoom='';
@@ -2118,12 +2330,15 @@ function fitPages(){
 function unfitPages(){
   document.querySelectorAll('.page').forEach(el=>{ el.style.zoom=''; });
 }
-window.addEventListener('beforeprint', fitPages);
-window.addEventListener('afterprint', unfitPages);
+function preparePrint(){ collapseStations(); unfillPrint();
+  expandStationsForPrint(); fillForPrint(); fitPages(); }
+function releasePrint(){ unfitPages(); unfillPrint(); collapseStations(); }
+window.addEventListener('beforeprint', preparePrint);
+window.addEventListener('afterprint', releasePrint);
 /* Safari on iOS does not always fire beforeprint — catch the media change too */
 if(window.matchMedia){
   const mq=window.matchMedia('print');
-  const onchange=m=>{ m.matches ? fitPages() : unfitPages(); };
+  const onchange=m=>{ m.matches ? preparePrint() : releasePrint(); };
   if(mq.addEventListener) mq.addEventListener('change', onchange);
   else if(mq.addListener) mq.addListener(onchange);
 }
@@ -2653,13 +2868,16 @@ const STATIONS={
   'Gunner':       ['WEAPONS','POWER DRAW','THE SHIP','WHEN YOU ARE HIT'],
   'Steward':      ['ACCOMMODATION, HOLD & UPKEEP','HOLD & STASH'],
   'Broker':       ['HOLD & STASH','ACCOMMODATION, HOLD & UPKEEP'],
-  'Marine':       ['WEAPONS','THE VEHICLE','PROFILE','HULL & ARMOUR','EQUIPMENT ABOARD'],
+  'Marine':       ['WEAPONS','THE VEHICLE','PROFILE','HULL & ARMOUR','EQUIPMENT ABOARD',
+    'THE FIVE STEPS','3 · BOARD','4 · LOOT','THIS PRIZE'],
+  'Taking a prize':['THE FIVE STEPS','1 · INTERCEPT','2 · STOP HER','3 · BOARD','4 · LOOT',
+    '5 · ESCAPE','THIS PRIZE'],
   'Engineer, robotics':['THE ROBOT','PROFILE','BRAIN','SKILL PACKAGES','OPTIONS','ATTACKS'],
   'Medic':        ['ACCOMMODATION, HOLD & UPKEEP',"SHIP'S LOG"]
 };
 /* wrap each heading and the block beneath it, so a station can hide whole sections */
 function wrapPanes(){
-  ['p8','p9','p10','p11','p12','p13','p14'].forEach(pid=>{
+  ['p8','p9','p10','p11','p12','p13','p14','p15','p16','p17'].forEach(pid=>{
     const page=document.getElementById(pid); if(!page) return;
     [...page.querySelectorAll('h2.sec')].forEach(hd=>{
       if(hd.parentElement && hd.parentElement.classList.contains('rolepane')) return;
@@ -3067,6 +3285,225 @@ function showRobPortrait(d){
 }
 function clearRobPortrait(){ $('rbPortrait').value=''; showRobPortrait(''); queue(); robPush('rbPortrait'); }
 
+
+/* ---------------------------------------------------------------
+   One station page, and a dropdown that turns it into whichever
+   job you are doing. Print it and you get your own page rather
+   than eight you will never read.
+   --------------------------------------------------------------- */
+const ROLES = {
+ 'Pilot': {
+   duty:'Every point of movement and every combat manoeuvre. In the manoeuvre step you spend the '+
+        "ship's Thrust between closing, opening, and the manoeuvres below.",
+   checks:[['Aid gunners','Pilot','pilot'],['Docking','Pilot','pilot'],
+           ['Docking, unwilling','Pilot opposed, DM&minus;2','pilot'],
+           ['Docking, crippled','Pilot 6+','pilot'],
+           ['Evasive action','&mdash;','pilot'],
+           ['Initiative for the ship','2D + Pilot + Thrust','pilot']],
+   watch:[['Thrust left','What you have not yet spent this round'],
+          ['Range band','Close 1 &middot; Short 2 &middot; Medium 5 &middot; Long 10 &middot; Very Long 25 &middot; Distant 50'],
+          ['Evasion','Each unspent Thrust dodges one attack, at a negative DM equal to your Pilot skill'],
+          ['The jump limit','Do not chase so far in that you cannot leave. Inside it is DM&minus;4']],
+   personal:'Leaving the seat stops the ship manoeuvring.'},
+ 'Turret gunner': {
+   duty:'One turret, chosen at the start of the fight. You shoot in the attack step, after every '+
+        'ship has moved.',
+   checks:[['Attack','2D + Gunner (turret) + DEX DM','gunner'],
+           ['Point defence','Gunner (turret), once a round','gunner'],
+           ['Disperse sand','Gunner (turret)','gunner'],
+           ['Reload','&mdash;','gunner']],
+   watch:[['Which turret','The one you chose at the start. You cannot switch mid-round'],
+          ['Ammunition','Missiles and sand are finite. Reload is an action'],
+          ['Point defence','The Effect removes that many missiles from a salvo. Two lasers DM+1, three DM+2'],
+          ['One or the other','A weapon used for point defence cannot attack that round']],
+   personal:'Turrets are usually far from the airlock. Carry a sidearm anyway.'},
+ 'Engineer': {
+   duty:'Power plant, drives and damage control. You keep her running while other people break her.',
+   checks:[['Repair a system','Engineer or Mechanic','engineer'],
+           ['Reroute power','Engineer (power)','engineer'],
+           ['Jump preparation','Engineer (j-drive)','engineer']],
+   watch:[['Power draw','What is switched on, against what the plant makes'],
+          ['Damage and defects','What is broken and what it costs to put right'],
+          ['Fuel','Jump fuel is 10% of hull per parsec'],
+          ['Repair units','5 Cosmetic per Structural or Technical spent']],
+   personal:'Engineering is a boarding objective — the drives are here.'},
+ 'Sensor operator': {
+   duty:'Electronic warfare, and keeping track of every ship out there.',
+   checks:[['Sensor lock','Electronics (sensors)','sensors'],
+           ['Electronic warfare','Electronics (sensors) opposed','sensors'],
+           ['Identify a contact','Electronics (sensors)','sensors'],
+           ['Jamming','Electronics (comms)','sensors']],
+   watch:[['Contacts','Range, bearing and whether they have locked you'],
+          ['Sensor lock','Electronics (sensors). A task chain into your gunners'],
+          ['Their transmissions','A distress call brings company'],
+          ['Sensor range','Further than weapon range. You see them before you can hit them']],
+   personal:'You have the positions. Call them.'},
+ 'Commander': {
+   duty:'The ship acts on your word. Leadership and Tactics for everyone aboard.',
+   checks:[['Improve initiative','Tactics (naval)','tactics'],
+           ['Rally the crew','Leadership','leader'],
+           ['Demand surrender','Electronics (comms) 8+, minus her Morale','sensors']],
+   watch:[['Initiative','2D + Pilot + Thrust, once per ship at the start'],
+          ['Their morale','Subtracted from your surrender demand'],
+          ['Response clock','Starts the moment you open fire. Count it down every exchange'],
+          ['Cargo and value','What she carries, against the cost of taking her']],
+   personal:'Leadership and Tactics apply to the whole side.'},
+ 'Marine': {
+   duty:'Repel boarders, or be one. The fight that decides whether there is a prize.',
+   checks:[['Breaching charge','Explosives 8+','marine'],
+           ['Moving in zero-g','DEX 8+','marine'],
+           ['Find the cargo hold','Recon 8+','marine'],
+           ['Open the ship&rsquo;s locker','Electronics (computers) 12+','marine']],
+   watch:[['Vacc suit','Required. A breach vents anything not sealed'],
+          ['Internal doors','Shut them, or a breach vents the bridge'],
+          ['Zero-g weapons','Cutlass, snub pistol. Slug throwers risk holing the hull'],
+          ['Moving cargo','A container by hand is STR 12+, 1D minutes']],
+   personal:'Everything on the personal combat pages applies.'},
+ 'Astrogator': {
+   duty:'Where she is, where she is going, and whether the jump will arrive.',
+   checks:[['Plot a jump','Astrogation','astro'],
+           ['Astrogation, hurried','Astrogation, DM&minus;2','astro'],
+           ['Inside the jump limit','Astrogation, DM&minus;4','astro']],
+   watch:[['Fuel','10% of hull per parsec'],
+          ['The hundred-diameter limit','Jumping inside it is DM&minus;4'],
+          ['Destination','Sector, hex, and the parsecs between'],
+          ['Jump log','Filed automatically when you jump']],
+   personal:'No combat duty. Expect to be reassigned.'},
+ 'Steward / Medic / Broker': {
+   duty:'The parts of the trade that are not shooting: passengers, wounds and prices.',
+   checks:[['Treat a wound','Medic','medic'],
+           ['Keep the passengers calm','Steward','steward'],
+           ['Sell the cargo','Broker','broker'],
+           ['Find a buyer who asks nothing','Streetwise','streetwise']],
+   watch:[['Wounded','Who, and which characteristic took it'],
+          ['Passengers','High, middle and low. Each expects different treatment'],
+          ['Cargo value','Base price against what a fence will pay'],
+          ['The fence','Haven 30% &middot; Friendly 25% &middot; Tolerant 20% &middot; Neutral 10%']],
+   personal:'Medic checks treat wounds. See the personal combat pages.'}
+};
+const ROLE_SKILL = {
+  pilot:'Pilot: Spacecraft', gunner:'Gunner: Turret', engineer:'Engineer: Power Plant',
+  sensors:'Electronics: Sensors', tactics:'Tactics: Naval', leader:'Leadership',
+  marine:'Explosives', astro:'Astrogation', medic:'Medic', steward:'Steward',
+  broker:'Broker', streetwise:'Streetwise'
+};
+function roleDM(key){
+  const name=ROLE_SKILL[key]; if(!name) return '&mdash;';
+  const i=SKILLS.indexOf(name); if(i<0) return '&mdash;';
+  const lv=effLevel(i)+V('skM'+i);          /* untrained is a real DM, not a blank */
+  return sgn(lv);
+}
+
+/* ---------------------------------------------------------------
+   The controls each job actually touches, on the page they sit at.
+
+   These are the real ship fields, not copies — writing here writes
+   to the ship record and out to everyone else's sheet. The station
+   page is where a player works during a fight; the ship record is
+   where the whole picture lives.
+   --------------------------------------------------------------- */
+const ROLE_LIVE = {
+ 'Pilot':          [['shThrust','Thrust'],['shThrustNow','Thrust now'],['shPwM','M-drive on'],
+                    ['shAgility','Agility'],['shHullNow','Hull now'],['shHull','Hull']],
+ 'Turret gunner':  [['shW1','Mount 1'],['shW1A','Ammo 1'],['shW2','Mount 2'],['shW2A','Ammo 2'],
+                    ['shPwT','Turrets on'],['shSand','Sand left']],
+ 'Engineer':       [['shPower','Power made'],['shPowerNow','Power drawn'],['shPwB','Basics on'],
+                    ['shPwJ','J-drive on'],['shRU','Repair units'],['shHullNow','Hull now']],
+ 'Sensor operator':[['shSensors','Sensors'],['shPwS','Sensors on'],['shComputer','Computer'],
+                    ['shCM','Countermeasures']],
+ 'Commander':      [['shName','Ship'],['shCrew','Crew aboard'],['shMorale','Morale'],
+                    ['shHullNow','Hull now']],
+ 'Marine':         [['shBoard','Boarding kit'],['shCrew','Crew aboard']],
+ 'Astrogator':     [['shAstName','Where we are'],['shNextName','Where we are bound'],
+                    ['shJump','Jump'],['shFuel','Fuel'],['shFuelMax','Fuel max']],
+ 'Steward / Medic / Broker':[['shStater','Staterooms'],['shLow','Low berths'],
+                    ['shCargoNow','Cargo aboard'],['shCargo','Cargo space']]
+};
+function renderRoleLive(role){
+  const el=document.getElementById('roleLive'); if(!el) return;
+  const fields=(ROLE_LIVE[role]||[]).filter(([k])=>$(k));
+  if(!fields.length){ el.innerHTML='<div class="note">Nothing on the ship record for this post.</div>'; return; }
+  el.innerHTML='<div class="grid" style="grid-template-columns:1fr 1fr">'+
+    fields.map(([k,label])=>
+      `<div class="f"><label>${label}</label>
+        <input data-mirror="${k}" value="${($(k)||{}).value||''}"
+          oninput="mirrorWrite('${k}',this.value)"></div>`).join('')+'</div>';
+}
+/* writing here writes to the ship record, and out to the crew */
+function mirrorWrite(k,v){
+  const e=$(k); if(!e) return;
+  e.value=v;
+  if(k.indexOf('sh')===0) shipPush(k); else markDirty(k);
+  calc(); queue();
+}
+function refreshMirrors(){
+  document.querySelectorAll('[data-mirror]').forEach(m=>{
+    const src=$(m.dataset.mirror); if(!src) return;
+    if(document.activeElement!==m && m.value!==src.value) m.value=src.value;
+  });
+}
+function bootStationShip(){
+  const sel=document.getElementById('stShip'); if(!sel) return;
+  const ids=Object.keys((FLEET&&FLEET.ships)||{});
+  sel.innerHTML = ids.length
+    ? ids.map(id=>`<option value="${id}"${id===FLEET.active?' selected':''}>${(FLEET.ships[id]||{}).shName||'Unnamed'}</option>`).join('')
+    : '<option value="">No ship yet</option>';
+}
+
+function setRole(r){
+  if(!ROLES[r]) r=Object.keys(ROLES)[0];
+  try{ setCk('trole', r); }catch(e){}
+  const sel=document.getElementById('rolePick'); if(sel) sel.value=r;
+  const R=ROLES[r];
+  const nm=document.getElementById('roleName'); if(nm) nm.textContent=r;
+  const d=document.getElementById('roleDuty'); if(d) d.innerHTML='<div class="note">'+R.duty+'</div>';
+  const c=document.getElementById('roleChecks');
+  if(c) c.innerHTML=R.checks.map(([what,check,sk])=>{
+    const none = !check || check==='&mdash;';      /* nothing to roll, so nothing to modify */
+    return `<tr><td>${what}</td><td class="mid">${check}</td>
+      <td class="mid">${none?'':'<b>'+roleDM(sk)+'</b>'}</td></tr>`;}).join('');
+  const w=document.getElementById('roleWatch');
+  if(w) w.innerHTML='<table><tbody>'+R.watch.map(([k,v])=>
+    `<tr><td class="lbl" style="width:126px">${k}</td><td>${v}</td></tr>`).join('')+'</tbody></table>';
+  const p=document.getElementById('rolePersonal'); if(p) p.innerHTML=R.personal;
+  renderRoleLive(r);
+  bootStationShip();
+  const heavy = (r==='Astrogator');       /* their station brings the whole jump log with it */
+  /* scope to the live page — a global query would undo the trim on clones
+     already made for other roles */
+  const livePage=document.getElementById('pStationPage');
+  if(livePage){
+    livePage.querySelectorAll('.postkit,.watchrota').forEach(n=>{
+      n.style.display = heavy ? 'none' : '';
+    });
+    /* the astrogation panels are tall — send them to the left column so the
+       page reads as two balanced columns rather than one long one */
+    const left=livePage.querySelector('.stleft'), extra=document.getElementById('roleExtra');
+    const host=heavy ? left : livePage.querySelector('.stright');
+    if(extra && host && extra.parentNode!==host) host.appendChild(extra);
+  }
+  /* astrogation is the astrogator's station, so it lives here, not on a page of its own */
+  const extra=document.getElementById('roleExtra');
+  const store=document.getElementById('astroPark');
+  if(extra && store){
+    if(r==='Astrogator' && store.firstElementChild){
+      while(store.firstElementChild) extra.appendChild(store.firstElementChild);
+    } else if(r!=='Astrogator' && extra.firstElementChild){
+      while(extra.firstElementChild) store.appendChild(extra.firstElementChild);
+    }
+  }
+  const f=$('stRole'); if(f && f.value!==r){ f.value=r; markDirty('stRole'); }
+}
+function bootRoles(){
+  const sel=document.getElementById('rolePick'); if(!sel) return;
+  if(!sel.options.length)
+    sel.innerHTML=Object.keys(ROLES).map(k=>`<option>${k}</option>`).join('');
+  /* the character's own record is the durable memory — cookies do not survive
+     a file:// page, and the station belongs to the character anyway */
+  const saved=($('stRole')||{}).value;
+  setRole((saved && ROLES[saved]) ? saved : (ck('trole')||Object.keys(ROLES)[0]));
+}
+
 /* ================= field help ================= */
 const HELPMAP={
  portrait:"Tap the box to choose a picture. It is shrunk before it is saved, and it prints with the sheet.",
@@ -3101,7 +3538,7 @@ const HELPMAP={
  subderm:"Protection from subdermal armour or implants, worn or not.",
  miscProt:"Any other protection not listed in the armour rows.",
  armTotal:"Calculated. Worn armour plus subdermal plus misc. Subtract this from every hit.",
- initDM:"Calculated from DEX. Add Tactics for the whole side when you roll initiative.",
+ initDM:"Calculated. Initiative is a DEX or INT check, so this is the better of the two. Add Tactics for the whole side.",
  tacDM:"Your side's Tactics (Military) effect, added to everyone's initiative.",
  ldrDM:"Leadership bonus if someone is commanding you.",
  dodge:"The penalty you impose on attackers when you dodge — costs you a minor action.",
@@ -3420,7 +3857,9 @@ function calcChars(cur){
   set('upp', anyChar ? upp+psiHex : '');
 
   set('mvCur', ($('mvBase').value===''&&$('mvMisc').value==='') ? '' : V('mvBase')+V('mvMisc'));
-  set('initDM', $('bDEX').value==='' ? '' : sgn(chDM(cur.DEX)));
+  /* the book asks for a DEX or INT check, so the better of the two */
+  set('initDM', ($('bDEX').value===''&&$('bINT').value==='') ? ''
+      : sgn(Math.max(chDM(cur.DEX), chDM(cur.INT))));
   /* the three other DMs a fight keeps asking for */
   const lvlOf = name => { const n=SKILLS.indexOf(name); return n<0 ? -99 : effLevel(n)+V('skM'+n); };
   const tac = Math.max(lvlOf('Tactics: Military'), lvlOf('Tactics: Naval'));
@@ -3504,6 +3943,7 @@ function calcMoney(cur){
 }
 
 function calcShip(){
+  if(typeof refreshMirrors==='function') refreshMirrors();
   /* jump fuel */
   const hullTons=parseFloat(String(T('shHull')).replace(/[^0-9.]/g,''))||200;
   const par=V('shPar');
@@ -3907,10 +4347,12 @@ function applyShip(o){
   Object.entries(o||{}).forEach(([k,v])=>{ const e=$(k); if(!e) return;
     if(e.type==='checkbox') e.checked=!!v; else e.value=(v===null||v===undefined)?'':v; });
   showShipPortrait(($('shPortrait')||{}).value);
+  if(typeof refreshMirrors==='function') refreshMirrors();
   renderJumpLog(); renderRoute(); calc(); save();
   SH.applying=false;
 }
 function renderShipPicker(){
+  bootStationShip();
   const sel=document.getElementById('shipPick'); if(!sel) return;
   const ids=Object.keys(FLEET.ships||{});
   sel.innerHTML=ids.map(id=>{
@@ -4057,6 +4499,7 @@ function apply(o){
     if(e.type==='checkbox'||e.type==='radio') e.checked=!!v; else e.value=v; });
   showPortrait(($('portrait')||{}).value);
   showShipPortrait(($('shPortrait')||{}).value);
+  if(typeof refreshMirrors==='function') refreshMirrors();
   showVehPortrait(($('vhPortrait')||{}).value);
   showRobPortrait(($('rbPortrait')||{}).value);
   renderVehPicker(); renderRobPicker();
@@ -4107,6 +4550,7 @@ document.addEventListener('change',e=>{ const k=e.target.dataset.k; if(k===undef
   else if(k.indexOf('rb')===0) robPush(k); else markDirty(k); });
 applyTheme();
 wrapTables();
+bootRoles();
 restoreRows();
 bootStations();
 applyTips();
@@ -4116,5 +4560,75 @@ setTimeout(syncBarHeight,300);
 load();
 setTimeout(bootIdentity,500);
 </script>
+<div id="astroPark" style="display:none">
+<h2 class="sec">JUMP &amp; FUEL</h2>
+  <div class="grid" style="grid-template-columns:1.3fr 1.3fr .7fr .8fr .8fr .8fr .8fr">
+    <div class="f"><label>Currently at</label><input data-k="shAt"></div>
+    <div class="f"><label>Bound for</label><input data-k="shTo"></div>
+    <div class="f"><label>Parsecs</label><input data-k="shPar"></div>
+    <div class="f"><label>Fuel aboard</label><input data-k="shFuelNow2" class="calc" readonly></div>
+    <div class="f"><label>Jump needs</label><input data-k="shJNeed" class="calc" readonly></div>
+    <div class="f"><label>Left after</label><input data-k="shJAfter" class="calc" readonly></div>
+    <div class="f"><label>Days out</label><input data-k="shDays"></div>
+  </div>
+  <div class="note">Jump fuel is <b>10% of hull tonnage per parsec</b> &mdash; 20 tons a parsec for a 200 ton hull.
+    A jump takes about a week either way.</div>
+
+  <h2 class="sec">ASTROGATION <span class="noprint">looked up on Traveller Map</span></h2>
+  <div class="grid" style="grid-template-columns:1.6fr .8fr auto;align-items:end">
+    <div class="f"><label>Sector</label><input data-k="shAstSec" placeholder="Trojan Reach"></div>
+    <div class="f"><label>Hex</label><input data-k="shAstHex" placeholder="1910"></div>
+    <div class="f noprint"><label>&nbsp;</label><button class="noprint" type="button" onclick="astroLookup()">Look it up</button></div>
+  </div>
+  <div class="row noprint" style="display:flex;gap:6px;margin-top:5px">
+    <input id="astroFind" placeholder="…or search by name — Marduk, Theev, Exocet"
+           onkeyup="if(event.key==='Enter')sysSearch('here')" style="flex:1;min-width:0">
+    <button class="noprint" type="button" onclick="sysSearch('here')">Find</button>
+  </div>
+  <div id="astroOut" class="astrobox"></div>
+  <div class="grid" style="grid-template-columns:1.3fr 1fr 1.6fr 1fr">
+    <div class="f"><label>World</label>
+      <div style="display:flex;gap:4px">
+        <input data-k="shAstName" style="min-width:0">
+        <button type="button" class="info noprint" onclick="openWiki('shAstName')"
+                title="Open this world on the Traveller wiki">info &nearr;</button>
+      </div></div>
+    <div class="f"><label>UWP</label><input data-k="shAstUWP"></div>
+    <div class="f"><label>Trade codes &amp; remarks</label><input data-k="shAstRem"></div>
+    <div class="f"><label>Bases</label><input data-k="shAstBase"></div>
+  </div>
+  <div class="grid" style="grid-template-columns:.7fr .8fr 1fr 1.4fr">
+    <div class="f"><label>Zone</label><input data-k="shAstZone"></div>
+    <div class="f"><label>PBG</label><input data-k="shAstPBG"></div>
+    <div class="f"><label>Allegiance</label><input data-k="shAstAll"></div>
+    <div class="f"><label>Stars</label><input data-k="shAstStar"></div>
+  </div>
+
+  <h2 class="sec">WHERE NEXT <span class="noprint">jumping files the old position into the log</span></h2>
+  <div class="grid" style="grid-template-columns:1.5fr .8fr auto auto;align-items:end">
+    <div class="f"><label>Bound for &mdash; sector</label>
+      <div style="display:flex;gap:4px">
+        <input data-k="shNextSec" placeholder="Trojan Reach" style="min-width:0">
+        <button type="button" class="info noprint" onclick="openWiki('next')"
+                title="Open the destination on the Traveller wiki">info &nearr;</button>
+      </div></div>
+    <div class="f"><label>Hex</label><input data-k="shNextHex" placeholder="2124"></div>
+    <div class="f noprint"><label>&nbsp;</label><button type="button" onclick="astroLookupNext()">Check it</button></div>
+    <div class="f noprint"><label>&nbsp;</label><button class="noprint" type="button" onclick="plotCourse()">Plot a course</button></div>
+    <div class="f noprint"><label>&nbsp;</label><button class="noprint" type="button" onclick="doJump()">Jump &rsaquo;</button></div>
+  </div>
+  <div class="row noprint" style="display:flex;gap:6px;margin-top:5px">
+    <input id="nextFind" placeholder="…or search by name" onkeyup="if(event.key==='Enter')sysSearch('next')"
+           style="flex:1;min-width:0">
+    <button class="noprint" type="button" onclick="sysSearch('next')">Find</button>
+  </div>
+  <div id="nextOut" class="astrobox" style="min-height:0"></div>
+  <div id="routeOut" class="routebox"></div>
+  <input type="hidden" data-k="shRoute">
+
+  <h2 class="sec">JUMP LOG</h2>
+  <div id="jumpLog" class="jumplog"></div>
+  <input type="hidden" data-k="shLog">
+</div>
 </body>
 </html>
