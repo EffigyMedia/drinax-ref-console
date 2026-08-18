@@ -475,6 +475,19 @@ nav{gap:6px;align-items:center;}
 .verdict .vlab{flex:0 0 auto;font-size:8.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--dim);}
 .verdict b{font-size:14px;flex:0 0 auto;}
 .verdict .hint{flex:1 1 260px;min-width:0;text-transform:none;letter-spacing:0;}
+.qtywrap{display:inline-flex;gap:3px;align-items:center;}
+.qtywrap .mini{padding:0 7px;font-size:10px;}
+.statblock{margin:2px 0 9px;padding:9px 11px;background:var(--panel2);border:1px solid var(--line);}
+.statblock .sysgrid{grid-template-columns:1fr 1fr;}
+.rosteritem{border-bottom:1px solid #16100f;}
+.rosteritem:last-child{border-bottom:none;}
+.assetrow{display:flex;gap:9px;align-items:center;padding:6px 0;border-bottom:1px solid #1a1213;}
+.assetrow:last-child{border-bottom:none;}
+.assetrow b{font-size:14px;flex:1 1 140px;min-width:0;overflow:hidden;text-overflow:ellipsis;}
+.assetrow{flex-wrap:wrap;}
+.assetrow select{width:auto;min-width:104px;}
+.assetrow .tag{font-size:9px;letter-spacing:.12em;text-transform:uppercase;padding:1px 6px;
+  border:1px solid var(--line);color:var(--dim);}
 .note2{margin-top:9px;padding:9px 11px;background:var(--panel2);border:1px solid var(--line);
   font-size:12.5px;line-height:1.5;}
 .dutyrow{display:flex;gap:9px;align-items:center;padding:4px 0;border-bottom:1px solid var(--hair,#1a1213);}
@@ -746,6 +759,7 @@ input[type="checkbox"]{
         <div id="mobOut" class="hint" style="margin-top:9px">&mdash;</div>
         <div class="row" id="mobAddRow" style="display:none;margin-top:8px">
           <button onclick="addGenMob()">Add to order of battle</button>
+          <button class="mini" onclick="saveGenMob()">Save to the roster</button>
           <button class="mini" onclick="genMob()">Re-roll</button>
         </div>
       </div>
@@ -1005,6 +1019,8 @@ input[type="checkbox"]{
     <div id="syOut" class="astrobox" style="margin-top:9px"></div>
     <div class="row" style="margin-top:9px">
       <button onclick="sySend()">Launch her into the fleet</button>
+      <button class="mini" onclick="sySend('named')">File as a named hull</button>
+      <button class="mini" onclick="sySend('generic')">File as a template</button>
       <button class="mini" onclick="syRender()">Recalculate</button>
     </div>
   </div>
@@ -1018,6 +1034,7 @@ input[type="checkbox"]{
 <!-- ============================ SHIP ============================ -->
 <section class="tab" id="pane-assets">
   <div id="assetPills"></div>
+  <div class="card"><h2>What we have</h2><div id="assetList"></div></div>
   <div class="card">
     <div class="row">
       <select id="shipPickC" onchange="pickShipC(this.value)" style="width:auto;min-width:170px"></select>
@@ -3894,7 +3911,7 @@ function syRender(){
         <span class="hint">${m?'MCr'+(Math.round(m*100)/100):''}</span></div>`).join('')}</div>
     ${s.power.made < s.power.need ? '<div class="hint hotc" style="margin-top:6px">The plant cannot meet the draw.</div>':''}`;
 }
-function sySend(){
+function sySend(cls){
   const s=syBuild(); if(!s) return;
   if(s.over){ note('It is over tonnage — trim something first'); return; }
   S.fleet=S.fleet||{ships:{},active:''};
@@ -3909,7 +3926,16 @@ function sySend(){
     shStater:s.rooms, shLow:s.low, shCargo:s.cargo, shCargoNow:0,
     shComputer:s.comp?('Computer/'+s.comp):''
   };
-  S.fleet.ships[id]=rec; S.fleet.active=id; S.ship=Object.assign({},rec);
+  rec.cls = cls || 'party';
+  if(rec.cls==='generic'){
+    assetVault('ships')[id]=rec;
+    if(FB.db&&FB.ok) FB.db.ref('campaigns/'+campaignId()+'/vault/ships/'+id).set(rec).catch(()=>{});
+    renderShip(); queueSave();
+    logEvent(`<b>${rec.shName}</b> filed as a template`);
+    note('Filed in the vault'); return;
+  }
+  S.fleet.ships[id]=rec; if(rec.cls==='party') S.fleet.active=id;
+  S.ship=Object.assign({},rec);
   if(FB.db&&FB.ok){
     FB.db.ref('campaigns/'+campaignId()+'/fleet/ships/'+id).set(rec).catch(()=>{});
     FB.db.ref('campaigns/'+campaignId()+'/fleet/active').set(id).catch(()=>{});
@@ -4738,6 +4764,155 @@ function buildOutShip(contactId){
 let curAsset = ck('drinaxAsset') || 'ships';
 let curMaker = ck('drinaxMaker') || 'ship';
 
+
+/* ---------------------------------------------------------------
+   Assets, in three classes.
+
+   PARTY   the crew's own. Always on every player's sheet.
+   NAMED   things you have made that exist in the world. On a
+           player's sheet only once you send it to them.
+   GENERIC templates to roll from. Yours alone, always.
+
+   Database rules cannot filter on a field, so this is two nodes:
+   fleet is readable by everyone, vault is referee only. Sending
+   moves the record across; taking it back moves it home.
+   --------------------------------------------------------------- */
+const ASSET_KINDS = {
+  ships:    {label:'Ships',    node:'ships',    prefix:'sh', state:'fleet',    coll:'ships'},
+  vehicles: {label:'Vehicles', node:'vehicles', prefix:'vh', state:'garage',   coll:'vehicles'},
+  robots:   {label:'Robots',   node:'robots',   prefix:'rb', state:'robotics', coll:'robots'}
+};
+const ASSET_CLASSES = [['party','Party','The crew\u2019s own. Every player sees it.'],
+                       ['named','Named','Exists in the world. Sent to players one at a time.'],
+                       ['generic','Generic','A template to roll from. Yours alone.']];
+function assetColl(kind){
+  const k=ASSET_KINDS[kind]; if(!k) return {};
+  const st=S[k.state]||{};
+  return st[k.coll]||{};
+}
+function assetVault(kind){
+  S.vault=S.vault||{};
+  S.vault[kind]=S.vault[kind]||{};
+  return S.vault[kind];
+}
+function assetClass(rec){ return rec && rec.cls ? rec.cls : 'party'; }
+function setAssetClass(kind,id,cls,fromVault){
+  const src = fromVault ? assetVault(kind) : assetColl(kind);
+  const rec = src[id]; if(!rec) return;
+  rec.cls = cls;
+  /* party and named-when-sent live in the open node; generic lives in the vault */
+  const wantVault = (cls==='generic');
+  if(wantVault && !fromVault){ moveAsset(kind,id,'toVault'); return; }
+  if(!wantVault && fromVault){ moveAsset(kind,id,'toFleet'); return; }
+  saveAsset(kind,id,rec,fromVault);
+  renderShip(); queueSave();
+}
+function moveAsset(kind,id,dir){
+  const k=ASSET_KINDS[kind]; if(!k) return;
+  const open=assetColl(kind), vault=assetVault(kind);
+  const from = dir==='toVault' ? open : vault;
+  const to   = dir==='toVault' ? vault : open;
+  const rec=from[id]; if(!rec) return;
+  to[id]=rec; delete from[id];
+  if(FB.db&&FB.ok){
+    const openPath='campaigns/'+campaignId()+'/'+k.state+'/'+k.coll+'/'+id;
+    const vaultPath='campaigns/'+campaignId()+'/vault/'+kind+'/'+id;
+    const a = dir==='toVault' ? openPath : vaultPath;
+    const bPath = dir==='toVault' ? vaultPath : openPath;
+    FB.db.ref(bPath).set(rec).catch(()=>{});
+    FB.db.ref(a).remove().catch(()=>{});
+  }
+  logEvent(dir==='toVault'
+    ? `<b>${rec[k.prefix+'Name']||'An asset'}</b> taken back from the crew`
+    : `<b>${rec[k.prefix+'Name']||'An asset'}</b> sent to the crew`);
+  renderShip(); queueSave();
+}
+function saveAsset(kind,id,rec,inVault){
+  const k=ASSET_KINDS[kind]; if(!k||!FB.db||!FB.ok) return;
+  const path = inVault ? 'campaigns/'+campaignId()+'/vault/'+kind+'/'+id
+                       : 'campaigns/'+campaignId()+'/'+k.state+'/'+k.coll+'/'+id;
+  FB.db.ref(path).update({cls:rec.cls}).catch(()=>{});
+}
+function vaultWatch(){
+  if(!FB.db) return;
+  if(FB.vaultRef) FB.vaultRef.off();
+  FB.vaultRef=FB.db.ref('campaigns/'+campaignId()+'/vault');
+  FB.vaultRef.on('value', s=>{ S.vault=s.val()||{}; renderShip(); }, ()=>{});
+}
+/* the three sections under each pill */
+
+/* ---------------------------------------------------------------
+   A ship on the roster is a design too. Put one on the plot as
+   often as you like — a generic free trader is a template you
+   meet again and again; a named hull is a particular ship.
+   --------------------------------------------------------------- */
+function shipToPlot(kind,id,inVault,count){
+  if(kind!=='ships'){ note('Only ships go on the plot'); return; }
+  const src = inVault ? assetVault('ships') : assetColl('ships');
+  const r = src[id]; if(!r) return;
+  const n = Math.max(1, Math.min(12, count||1));
+  const tons = r.shHull || r.shTons || '200t';
+  /* several of the same design are a flight: one letter, numbered within it */
+  const letter = (typeof spaceNextTag==='function') ? spaceNextTag() : 'A';
+  for(let k=0;k<n;k++){
+    S.space.contacts.push({
+      id:uid(), n:r.shName||'Contact', band:6, res:+r.shRes||2,
+      tag:letter, num:k+1,
+      tons, armour:+r.shArmour||0, th:+r.shThrust||1, jmp:+r.shJump||1,
+      crew:+r.shStater||0, cargo:+r.shCargo||0,
+      hullMax: hullFromTons(tons), hull: hullFromTons(tons),
+      init:null
+    });
+  }
+  if(typeof tagContacts==='function') tagContacts();
+  renderSpace(); queueSave();
+  logEvent(`<b>${r.shName||'A ship'}</b> \u2014 ${n===1?'one hull':n+' hulls'} on the plot`);
+  note(n===1?'On the plot':n+' on the plot');
+  tab('combat'); pane('space');
+}
+function shipPlotQty(id){
+  const el=document.getElementById('plotQty'+id);
+  return Math.max(1, Math.min(12, +(el||{}).value||1));
+}
+
+function assetSections(kind){
+  const k=ASSET_KINDS[kind];
+  const open=assetColl(kind), vault=assetVault(kind);
+  const rows=[];
+  Object.entries(open).forEach(([id,r])=>rows.push([id,r,false]));
+  Object.entries(vault).forEach(([id,r])=>rows.push([id,r,true]));
+  return ASSET_CLASSES.map(([cls,label,why])=>{
+    const mine=rows.filter(([id,r])=>assetClass(r)===cls);
+    return `<div class="sectionhead"><b>${label}</b><hr>
+        <span class="hint" style="letter-spacing:0;text-transform:none">${why}</span></div>
+      ${mine.length ? mine.map(([id,r,inVault])=>{
+        const nm=r[k.prefix+'Name']||'Unnamed';
+        return `<div class="assetrow">
+          <b>${nm}</b>
+          ${inVault?'<span class="tag local">vault</span>':'<span class="tag">shared</span>'}
+          <select onchange="setAssetClass('${kind}','${id}',this.value,${inVault})">
+            ${ASSET_CLASSES.map(([c,l])=>`<option value="${c}"${c===cls?' selected':''}>${l}</option>`).join('')}
+          </select>
+          ${kind==='ships' ? `<span class="qtywrap">
+              <button class="mini" title="One hull" onclick="document.getElementById('plotQty${id}').value=1">1</button>
+              <button class="mini" title="A flight — 1D" onclick="document.getElementById('plotQty${id}').value=d(6)">1D</button>
+              <input id="plotQty${id}" type="number" value="1" min="1" max="12" style="width:52px"
+                title="How many hulls">
+            </span>
+            <button class="mini" onclick="shipToPlot('${kind}','${id}',${inVault},shipPlotQty('${id}'))"
+              title="Put her on the plot for a space fight">To the plot</button>` : ''}
+          ${cls==='named' ? (inVault
+            ? `<button class="mini" onclick="moveAsset('${kind}','${id}','toFleet')">Send to the crew</button>`
+            : `<button class="mini" onclick="moveAsset('${kind}','${id}','toVault')">Take it back</button>`) : ''}
+        </div>`; }).join('')
+      : '<span class="hint">None.</span>'}`;
+  }).join('');
+}
+function renderAssets(){
+  const el=document.getElementById('assetList'); if(!el) return;
+  el.innerHTML=assetSections(curAsset||'ships');
+}
+
 function assetPill(id){
   curAsset=id; setCk('drinaxAsset', id);
   pills('assetPills', [['ships','Ships'],['vehicles','Vehicles'],['robots','Robots']], id, 'assetPill');
@@ -4746,6 +4921,7 @@ function assetPill(id){
     if(el) el.style.display = k===id ? '' : 'none';
   });
   renderShip();
+  renderAssets();
 }
 const MAKERS = [['ship','Ship'],['vehicle','Vehicle'],['robot','Robot'],
                 ['weapon','Weapon'],['creature','Xeno']];
@@ -4822,15 +4998,15 @@ function hitsBand(h){
 }
 function addXenoToFight(){
   if(!lastXeno) return;
-  const a=MOBS[lastXeno.arch];
-  const m={id:uid(), t:'mob', n:lastXeno.name||a.n, arch:lastXeno.arch, tier:lastXeno.tier,
+  const a=MOBS[lastXeno.arch]||{n:'Xenobiote', hits:lastXeno.hits, arm:[0,0,0,0], w:[[],[],[],[]]};
+  const m={id:uid(), t:'mob', beast:true, n:lastXeno.name||a.n, arch:lastXeno.arch, tier:lastXeno.tier,
     bodies:lastXeno.bodies, hitsEach:lastXeno.hits, arm:lastXeno.arm,
     dm:[0,1,2,3][lastXeno.tier], init:null,
     zone:(ZONES[S.personal.mode||'ground'])[0], w:lastXeno.w.slice(0,2), note:lastXeno.note};
   ensureMembers(m);
   S.personal.list.push(m);
   renderPersonal(); queueSave();
-  logEvent(`<b>${m.n}</b> &mdash; ${m.bodies} of them, ${lastXeno.hits} hits each`);
+  logEvent(`<b>${m.n}</b> \u2014 ${m.bodies===1?'one of them':m.bodies+' of them'}, ${lastXeno.hits} hits each`);
   note('Sent to Personal combat');
 }
 function saveXeno(){
@@ -4838,25 +5014,33 @@ function saveXeno(){
   const a=MOBS[lastXeno.arch];
   S.xenos=S.xenos||[];
   S.xenos.push({n:lastXeno.name||a.n, arch:lastXeno.arch, tier:lastXeno.tier,
-    hits:lastXeno.hits, arm:lastXeno.arm, bodies:lastXeno.bodies});
+    hits:lastXeno.hits, arm:lastXeno.arm, note:lastXeno.note||''});
   renderXenoNamed(); queueSave();
   note('Saved');
 }
 function renderXenoNamed(){
   const el=document.getElementById('xenoNamed'); if(!el) return;
   const L=S.xenos||[];
+  S.open=S.open||{};
   el.innerHTML = L.length ? L.map((x,i)=>
-    `<div class="row" style="border-top:1px solid #1e1516;padding:5px 0">
-      <b class="grow">${x.n}</b>
-      <span class="hint">${x.hits} hits &middot; armour ${x.arm}</span>
-      <button class="mini" onclick="dropXeno(${i})">Add to fight</button>
-      <button class="mini x" onclick="forgetXeno(${i})">&times;</button>
+    `<div class="rosteritem">
+      <div class="row" style="border-top:1px solid #1e1516;padding:5px 0">
+        <button class="mini" onclick="rosterToggle('xeno',${i})"
+          title="Show the stat block">${S.open['xeno'+i]?'&#9662;':'&#9656;'}</button>
+        <b class="grow" style="cursor:pointer" onclick="rosterToggle('xeno',${i})">${x.n}</b>
+        <span class="hint">${x.hits} hits &middot; armour ${x.arm}</span>
+        ${qtyPicker('xeno',i)}
+        <button class="mini x" onclick="forgetXeno(${i})">&times;</button>
+      </div>
+      ${S.open['xeno'+i]?xenoBlock(x):''}
     </div>`).join('') : '<span class="hint">None saved.</span>';
 }
 function dropXeno(i){
   const x=(S.xenos||[])[i]; if(!x) return;
-  lastXeno={arch:x.arch, name:x.n, tier:x.tier, bodies:x.bodies, hits:x.hits, arm:x.arm,
-            w:(MOBS[x.arch].w&&MOBS[x.arch].w[x.tier])||[], note:''};
+  const a=MOBS[x.arch];                       /* sequenced beasts have no archetype */
+  lastXeno={arch:x.arch, name:x.n, tier:x.tier, bodies:rosterQty('xeno',i), hits:x.hits, arm:x.arm,
+            w:(a&&a.w&&a.w[x.tier])||[x.dmg?x.dmg+' natural':'Natural attack'],
+            note:x.note||''};
   addXenoToFight();
 }
 function forgetXeno(i){
@@ -4962,11 +5146,12 @@ function gsRender(){
 /* a named beast, straight into the roster */
 function gsSaveNamed(){
   const x=gsBuild();
-  S.npcs=S.npcs||[];
-  S.npcs.push({ n:x.name, t:'mob', beast:true, bodies:1, hitsEach:x.hits,
-    arm:x.armour, dm:1, w:[x.dmg+' natural'], zone:'Close',
-    note:`${x.diet}, ${x.behave}. ${x.traits.join(', ')}` });
-  renderNPCs(); queueSave();
+  S.xenos=S.xenos||[];
+  S.xenos.push({ n:x.name, arch:-1, tier:1, hits:x.hits, arm:x.armour,
+    dmg:x.dmg, note:`${x.diet}, ${x.behave}. ${x.traits.join(', ')}`,
+    skills:x.skills.join(', ') });
+  if(typeof renderXenoNamed==='function') renderXenoNamed();
+  queueSave();
   logEvent(`<b>${x.name}</b> sequenced \u2014 ${x.hits} hits, ${x.dmg} natural`);
   note('Saved to the named xenobiotes');
 }
@@ -5002,6 +5187,95 @@ function gsBoot(){
       `<button class="mini" onclick="document.getElementById('gsHits').value=${b.lo};gsRender()"
         title="${b.trait||'no size trait'} · ${b.dmg} damage">${b.lo}&ndash;${b.hi} ${b.eg}</button>`).join('');
   gsRender();
+}
+
+
+/* ---------------------------------------------------------------
+   A roster entry opens to its whole stat block.
+
+   A name and a hit count is not enough to run anything from. Tap a
+   saved sophont or xenobiote and it unfolds into what you would
+   actually read out at the table.
+   --------------------------------------------------------------- */
+
+/* how many turn up is a decision at the table, not a property of the design */
+function rosterQty(kind,i){
+  const el=document.getElementById(kind+'Qty'+i);
+  return Math.max(1, Math.min(60, +(el||{}).value || 1));
+}
+/* the sizes the generator uses, so a roster entry rolls the same way */
+const QTY_ROLLS = [
+  ['1',  'Lone',    'One of them'],
+  ['1D', 'A few',   '1D + 2'],
+  ['2D', 'A pack',  '2D + 4'],
+  ['3D', 'A swarm', '3D + 9']
+];
+function rollQty(kind,i,which){
+  const n = which==='1D' ? d(6)+2
+          : which==='2D' ? d(6)+d(6)+4
+          : which==='3D' ? d(6)+d(6)+d(6)+9
+          : 1;
+  const el=document.getElementById(kind+'Qty'+i);
+  if(el) el.value=n;
+  return n;
+}
+function qtyPicker(kind,i){
+  return `<span class="qtywrap">
+    ${QTY_ROLLS.map(([k,label,how])=>
+      `<button class="mini" title="${label} \u2014 ${how}"
+        onclick="rollQty('${kind}',${i},'${k}')">${k}</button>`).join('')}
+    <input id="${kind}Qty${i}" type="number" value="1" min="1" max="60"
+      style="width:58px" title="How many of them, or type your own">
+  </span>
+  <button class="mini" onclick="${kind==='xeno'?'dropXeno':'dropNPC'}(${i})">Add to fight</button>`;
+}
+
+function rosterToggle(kind,i){
+  S.open=S.open||{};
+  const k=kind+i;
+  S.open[k]=!S.open[k];
+  if(kind==='xeno') renderXenoNamed(); else renderNPCs();
+  queueSave();
+}
+function xenoBlock(x){
+  const a=MOBS[x.arch];
+  const band=hitsBand(x.hits);
+  const dmg=x.dmg || (a && a.w && (a.w[x.tier]||[])[0]) || band.dmg;
+  const line=(k,v,hint)=>v?`<div class="sysrow"><span>${k}</span><b>${v}</b>${hint?` <span class="hint">${hint}</span>`:''}</div>`:'';
+  return `<div class="statblock">
+    <div class="sysgrid">
+      ${line('Hits', x.hits, 'dead at 0 · out at '+Math.max(1,Math.round(x.hits*0.1))+' or less')}
+      ${line('Stunned at', Math.ceil(x.hits/2), 'cumulative')}
+      ${line('Size trait', band.trait || '—')}
+      ${line('Natural attack', dmg)}
+      ${line('Armour', x.arm===undefined?0:x.arm)}
+      ${line('Skills', x.skills || 'Athletics 0, Survival 0')}
+      ${line('Speed', x.speed)}
+    </div>
+    ${x.note?`<div class="rem">${x.note}</div>`:''}
+    ${a&&a.t?`<div class="hint" style="margin-top:5px">${a.t[0]}</div>`:''}
+  </div>`;
+}
+function npcBlock(n){
+  const a=MOBS[n.arch];
+  const line=(k,v,hint)=>(v||v===0)?`<div class="sysrow"><span>${k}</span><b>${v}</b>${hint?` <span class="hint">${hint}</span>`:''}</div>`:'';
+  const chars = n.mx ? ['STR','DEX','END','INT','EDU','SOC']
+      .filter(k=>n.mx[k]).map(k=>`${k} ${n.mx[k]}`).join(' · ') : '';
+  const weps = (n.wpn||[]).map(w=>w.n+(w.d?' '+w.d:'')).join(', ')
+            || (n.w||[]).join(', ');
+  return `<div class="statblock">
+    <div class="sysgrid">
+      ${line('Characteristics', chars)}
+      ${line('Hits each', n.hitsEach)}
+      ${line('Armour', n.arm===undefined?0:n.arm)}
+      ${line('Skill DM', n.dm===undefined?'':sgn(n.dm))}
+      ${line('Weapons', weps)}
+      ${line('Skills', n.skills)}
+      ${line('Role', n.role)}
+    </div>
+    ${n.note?`<div class="rem">${n.note}</div>`:''}
+    ${a&&a.t?`<div class="hint" style="margin-top:5px">${a.t[0]}</div>`:''}
+  </div>`;
 }
 
 /* ---- the robotics bay ---- */
@@ -5086,6 +5360,7 @@ function shipSeedConsole(){
     },'Load');
 }
 function renderShip(){
+  if(typeof renderAssets==='function') setTimeout(renderAssets,0);
   const el=document.getElementById('shipBody'); if(!el) return;
   S.ship=S.ship||{};
   renderShipPickC();
@@ -5246,6 +5521,7 @@ async function syncStart(){
     shipWatchConsole();
     garageWatchC();
     roboticsWatchC();
+    vaultWatch();
     setTimeout(pullConsole, 1200);
     FB.ref.on('value', snap=>{ applyRemote(snap.val()||{}); },
       err=>{ syncStatus('Cannot see the table — sign in as referee','hotc'); });
@@ -6374,7 +6650,8 @@ function groupMembers(c){
   const t=Math.max(0,Math.min(3,c.tier||1));
   const base=[6,7,8,9][t];
   const roll=()=>Math.max(2, base + d(3) - 2);
-  const beast=(a.g==='C');
+  /* a sequenced creature has no archetype, so trust its own flag or its Hits */
+  const beast=(a.g==='C') || c.beast===true || (c.arch===-1 && c.hitsEach>0);
   const n=c.bodies||c.pipsMax||1;
   const out=[];
   for(let i=1;i<=n;i++){
@@ -6615,6 +6892,24 @@ function renameRoll(id){
   const el=document.getElementById('ce-n-'+id); if(!el) return;
   el.value=makeName(SPECIES[Math.floor(Math.random()*SPECIES.length)]);
 }
+
+/* a rolled mob can be kept without ever entering a fight */
+function saveGenMob(){
+  if(!lastMob){ note('Roll a mob first'); return; }
+  const a=MOBS[lastMob.arch]||{};
+  S.npcs=S.npcs||[];
+  /* the roster keeps the design. How many of them is decided when they turn up. */
+  S.npcs.push({
+    n: lastMob.n || a.n, t:'mob', arch:lastMob.arch, tier:lastMob.tier,
+    hitsEach:lastMob.hitsEach||a.hits, arm:lastMob.arm,
+    dm:lastMob.dm, w:(lastMob.weps||[]).slice(), note:lastMob.trait||'',
+    psiMax:lastMob.psiEach||0
+  });
+  renderNPCs(); queueSave();
+  logEvent(`<b>${lastMob.n||a.n}</b> kept on the roster`);
+  note('Saved to the roster');
+}
+
 function saveNPC(id){
   const c=S.personal.list.find(x=>x.id===id); if(!c||c.pcId) return;
   S.npcs=S.npcs||[];
@@ -6625,20 +6920,29 @@ function dropNPC(i){
   const src=(S.npcs||[])[i]; if(!src) return;
   const n=JSON.parse(JSON.stringify(src));
   n.id=uid(); n.init=null; n.zone=(ZONES[S.personal.mode||'ground'])[0];
-  if(n.t==='mob'){ n.mem=null; n.tag=null; ensureMembers(n); }
-  else { n.end=n.endMax; }
+  if(n.t==='mob'){
+    n.bodies=rosterQty('npc',i);          /* however many turned up this time */
+    n.mem=null; n.tag=null; ensureMembers(n);
+  } else { n.end=n.endMax; }
   S.personal.list.push(n); renderPersonal(); queueSave();
+  logEvent(`<b>${n.n}</b> \u2014 ${n.t==='mob'?(n.bodies===1?'one of them':n.bodies+' of them'):'alone'}, into the fight`);
 }
 function delSavedNPC(i){ const n=(S.npcs||[])[i];
   askConfirm('Forget <b>'+(n?n.n:'this NPC')+'</b> permanently?',()=>{ S.npcs.splice(i,1); renderPersonal(); queueSave(); }); }
 function renderNPCs(){
   const el=document.getElementById('npcList'); if(!el) return;
+  S.open=S.open||{};
   el.innerHTML=(S.npcs||[]).length? S.npcs.map((n,i)=>
-    `<div class="row" style="border-top:1px solid #1e1516;padding:5px 0">
-      <b class="grow">${n.n}</b>
-      <span class="hint">${n.t==='mob'?((n.mem||[]).length||n.bodies||1)+' bodies':'END '+n.endMax}</span>
-      <button class="mini" onclick="dropNPC(${i})">Add to fight</button>
-      <button class="mini x" onclick="delSavedNPC(${i})">&times;</button>
+    `<div class="rosteritem">
+      <div class="row" style="border-top:1px solid #1e1516;padding:5px 0">
+        <button class="mini" onclick="rosterToggle('npc',${i})"
+          title="Show the stat block">${S.open['npc'+i]?'&#9662;':'&#9656;'}</button>
+        <b class="grow" style="cursor:pointer" onclick="rosterToggle('npc',${i})">${n.n}</b>
+        <span class="hint">${n.t==='mob'?n.hitsEach+' hits each':'END '+n.endMax}</span>
+        ${n.t==='mob'?qtyPicker('npc',i):`<button class="mini" onclick="dropNPC(${i})">Add to fight</button>`}
+        <button class="mini x" onclick="delSavedNPC(${i})">&times;</button>
+      </div>
+      ${S.open['npc'+i]?npcBlock(n):''}
     </div>`).join('') : 'None yet. Roll an archetype below and press \u2605 to name one, or Save a mob out of a fight.';
 }
 function condPanel(id){ S.personal.condFor=(S.personal.condFor===id?null:id); renderPersonal(); }
