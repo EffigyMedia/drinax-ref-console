@@ -573,6 +573,37 @@ input[type="checkbox"]{
     flex:0 0 20px!important;
   }
 }
+
+/* ---------------------------------------------------------------
+   Phone widths.
+
+   The range ladder lays seven bands side by side, and each lane has
+   a name and a distance in it, so the grid cannot compress below
+   about a thousand pixels — which dragged the whole console wide
+   and forced a zoom out. On a phone it becomes a stack: band on the
+   left, whatever is in it on the right, Adjacent at the top and
+   Distant at the bottom, so the order still reads as distance.
+   --------------------------------------------------------------- */
+@media (max-width:760px){
+  .tab, .card{min-width:0;max-width:100%;}
+
+  .ladder{grid-template-columns:1fr;gap:4px;}
+  .lane{min-height:0;display:flex;gap:8px;align-items:flex-start;padding:6px 8px;}
+  .lane > b,.lane > .bandname{flex:0 0 88px;font-size:11px;}
+  .lane .chip{margin:0;}
+  .lane .lanebody{flex:1 1 0;min-width:0;display:flex;flex-wrap:wrap;gap:4px;}
+
+  /* the tab strips scroll rather than stretching the page */
+  #topbar-nav{flex-wrap:nowrap;overflow-x:auto;max-width:100%;
+    -webkit-overflow-scrolling:touch;scrollbar-width:none;}
+  #topbar-nav::-webkit-scrollbar{display:none;}
+  #topbar-nav button{flex:0 0 auto;white-space:nowrap;}
+
+  .pills{overflow-x:auto;flex-wrap:nowrap;max-width:100%;}
+  .chip{max-width:100%;}
+  .sysgrid{grid-template-columns:1fr;}
+  .verdict .hint{flex-basis:100%;}
+}
 </style>
 <script src="https://www.gstatic.com/firebasejs/12.17.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/12.17.1/firebase-auth-compat.js"></script>
