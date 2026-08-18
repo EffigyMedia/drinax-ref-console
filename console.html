@@ -105,8 +105,11 @@ button:hover{border-color:var(--green);}
   text-decoration:underline;margin-top:14px;min-height:auto;padding:6px;}
 .glink:hover{color:var(--ink);border:none;}
 .gcopy{margin-top:26px;font-size:10px;letter-spacing:.1em;color:var(--green);}
+/* fluid, never wider than the screen it is on */
 #dicePanel{display:none;position:fixed;right:calc(12px + var(--sar));
-  top:calc(66px + var(--sat));z-index:130;width:280px;
+  top:calc(66px + var(--sat));z-index:130;
+  width:min(300px, calc(100vw - 24px - var(--sal) - var(--sar)));
+  box-sizing:border-box;
   background:var(--panel);border:1px solid var(--green);padding:12px;
   box-shadow:0 14px 40px rgba(0,0,0,.7);}
 #dicePanel.on{display:block;}
@@ -383,7 +386,15 @@ button.danger:hover{background:var(--red);border-color:var(--red);}
   .row > button,.row > .mini,.row > span,.row > label{flex:0 0 auto;}
   button,input,select{min-height:40px;font-size:14px;}
   .mini{min-height:36px;}
-  #dicePanel,#undoPanel{left:8px;right:8px;width:auto;max-height:70vh;}
+  #dicePanel,#undoPanel{left:8px;right:8px;width:auto;max-height:70vh;overflow-y:auto;}
+  /* the rows have a lot in them; give the controls less to take up */
+  #dicePanel .row{gap:4px;flex-wrap:wrap;align-items:center;}
+  #dicePanel .row > .grow{flex:1 1 0;min-width:0;}
+  #dicePanel .mini{padding:0 8px;font-size:11px;flex:0 0 auto;}
+  #dicePanel button{flex:0 0 auto;}
+  #dicePanel input[type="number"]{width:60px!important;}
+  #dicePanel .hint{font-size:10px;}
+  #dicePanel #dExpr{min-width:0!important;}
   .lane{min-width:140px;}
   .plot{overflow-x:auto;-webkit-overflow-scrolling:touch;}
   .grid2{grid-template-columns:1fr!important;}
@@ -606,15 +617,14 @@ input[type="checkbox"]{
   </div>
 </div>
 <div id="dicePanel">
-  <div class="row" style="margin-bottom:8px">
-    <b style="letter-spacing:.16em;font-size:12px">DICE</b>
-    <div class="grow"></div>
-    <button class="mini" onclick="toggleDice()">&times;</button>
+  <div class="row" style="margin-bottom:8px;flex-wrap:nowrap">
+    <b style="letter-spacing:.16em;font-size:12px;flex:1 1 auto">DICE</b>
+    <button class="mini" onclick="toggleDice()" style="flex:0 0 auto">&times;</button>
   </div>
-  <div class="row">
-    <input id="dExpr" class="grow" placeholder="2D+2, 3D, 1D20, D66" style="min-width:110px"
+  <div class="row" style="flex-wrap:nowrap">
+    <input id="dExpr" class="grow" placeholder="2D+2, 3D, D66" style="min-width:0;flex:1 1 auto"
            onkeyup="if(event.key==='Enter')rollExpr()">
-    <button onclick="rollExpr()">Roll</button>
+    <button onclick="rollExpr()" style="flex:0 0 auto">Roll</button>
   </div>
   <div class="row" style="margin-top:6px">
     <button class="mini" onclick="quickRoll('1D')">1D</button>
@@ -631,9 +641,9 @@ input[type="checkbox"]{
     <button class="mini" id="dBoon" onclick="setBB(1)" title="3D keep the best two">Boon</button>
     <button class="mini" id="dBane" onclick="setBB(-1)" title="3D keep the worst two">Bane</button>
   </div>
-  <div class="row" style="margin-top:6px">
-    <span class="hint">Target</span>
-    <input id="dTgt" type="number" placeholder="8" style="width:74px">
+  <div class="row" style="margin-top:6px;flex-wrap:nowrap">
+    <span class="hint" style="flex:0 0 auto">Target</span>
+    <input id="dTgt" type="number" placeholder="8" style="width:74px;flex:0 1 74px">
     <button class="mini" onclick="clearTarget()" title="Clear the target — does not roll">Clear</button>
   </div>
   <div id="dOut" style="margin-top:10px;min-height:54px"></div>
@@ -4870,6 +4880,42 @@ function shipToPlot(kind,id,inVault,count){
   note(n===1?'On the plot':n+' on the plot');
   tab('combat'); pane('space');
 }
+
+/* ---------------------------------------------------------------
+   Any asset can be sent into a fight, the same way people are.
+
+   A ship goes on the plot. A vehicle or a robot walks into the
+   personal tracker — a robot fights, a vehicle is a thing on the
+   board with hull and armour that can be shot at.
+   --------------------------------------------------------------- */
+function assetToFight(kind,id,inVault,count){
+  const src = inVault ? assetVault(kind) : assetColl(kind);
+  const r = src[id]; if(!r) return;
+  const n = Math.max(1, Math.min(24, count||1));
+  if(kind==='ships') return shipToPlot(kind,id,inVault,n);
+
+  const isRobot = (kind==='robots');
+  const name = (isRobot ? r.rbName : r.vhName) || 'Asset';
+  const hits = isRobot ? (+r.rbHits||10) : (+r.vhHull||10);
+  const arm  = isRobot ? (+r.rbArm||0)   : (+r.vhArmF||0);
+  const m={ id:uid(), t:'mob', beast:true, n:name, arch:-1, tier:1,
+    bodies:n, hitsEach:hits, arm, dm:isRobot?(+r.rbADM||0):0,
+    init:null, zone:(ZONES[S.personal.mode||'ground'])[0],
+    w:[isRobot ? (r.rbA0n||'Manipulator strike') : 'Ram'],
+    note:isRobot ? `${r.rbChassis||''} ${r.rbBrain||''}`.trim()
+                 : `${r.vhType||''} ${r.vhSkill||''}`.trim() };
+  ensureMembers(m);
+  S.personal.list.push(m);
+  renderPersonal(); queueSave();
+  logEvent(`<b>${name}</b> \u2014 ${n===1?'one of them':n+' of them'}, ${hits} hits each`);
+  note('Sent to Personal combat');
+  tab('combat'); pane('personal');
+}
+function assetQty(id){
+  const el=document.getElementById('plotQty'+id);
+  return Math.max(1, Math.min(24, +(el||{}).value||1));
+}
+
 function shipPlotQty(id){
   const el=document.getElementById('plotQty'+id);
   return Math.max(1, Math.min(12, +(el||{}).value||1));
@@ -4893,14 +4939,15 @@ function assetSections(kind){
           <select onchange="setAssetClass('${kind}','${id}',this.value,${inVault})">
             ${ASSET_CLASSES.map(([c,l])=>`<option value="${c}"${c===cls?' selected':''}>${l}</option>`).join('')}
           </select>
-          ${kind==='ships' ? `<span class="qtywrap">
-              <button class="mini" title="One hull" onclick="document.getElementById('plotQty${id}').value=1">1</button>
-              <button class="mini" title="A flight — 1D" onclick="document.getElementById('plotQty${id}').value=d(6)">1D</button>
-              <input id="plotQty${id}" type="number" value="1" min="1" max="12" style="width:52px"
-                title="How many hulls">
-            </span>
-            <button class="mini" onclick="shipToPlot('${kind}','${id}',${inVault},shipPlotQty('${id}'))"
-              title="Put her on the plot for a space fight">To the plot</button>` : ''}
+          <span class="qtywrap">
+            <button class="mini" title="One of them" onclick="document.getElementById('plotQty${id}').value=1">1</button>
+            <button class="mini" title="1D of them" onclick="document.getElementById('plotQty${id}').value=d(6)">1D</button>
+            <input id="plotQty${id}" type="number" value="1" min="1" max="24" style="width:52px"
+              title="How many">
+          </span>
+          <button class="mini" onclick="assetToFight('${kind}','${id}',${inVault},assetQty('${id}'))"
+            title="${kind==='ships'?'Put her on the plot':'Put it in the personal fight'}">${
+            kind==='ships'?'To the plot':'Into the fight'}</button>
           ${cls==='named' ? (inVault
             ? `<button class="mini" onclick="moveAsset('${kind}','${id}','toFleet')">Send to the crew</button>`
             : `<button class="mini" onclick="moveAsset('${kind}','${id}','toVault')">Take it back</button>`) : ''}
