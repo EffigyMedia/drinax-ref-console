@@ -587,6 +587,14 @@ input[type="checkbox"]{
 @media (max-width:760px){
   .tab, .card{min-width:0;max-width:100%;}
 
+  /* Wide tables scroll inside their card instead of dragging the page out.
+     The live table has a column per characteristic and cannot narrow enough
+     to fit a phone, so it gets its own scroll rather than zooming everything. */
+  #tableView, .cardscroll, .card > table{display:block;max-width:100%;overflow-x:auto;
+    -webkit-overflow-scrolling:touch;}
+  #tableView table{min-width:max-content;}
+  .card table{max-width:100%;}
+
   .ladder{grid-template-columns:1fr;gap:4px;}
   .lane{min-height:0;display:flex;gap:8px;align-items:flex-start;padding:6px 8px;}
   .lane > b,.lane > .bandname{flex:0 0 88px;font-size:11px;}
