@@ -119,12 +119,14 @@ body.helpmode{padding-bottom:110px;}
    sideways and eat the screen, so the strip scrolls sideways instead. */
 nav.jump{background:#0e1a24;display:flex;gap:6px;flex-wrap:nowrap;
   overflow-x:auto;overscroll-behavior-x:contain;-webkit-overflow-scrolling:touch;
-  scrollbar-width:none;scroll-behavior:smooth;
+  scrollbar-width:none;
   padding:6px calc(12px + var(--sar)) 6px calc(12px + var(--sal));
   border-bottom:1px solid #1d2c38;}
 nav.jump::-webkit-scrollbar{display:none;}
 nav.jump a{flex:0 0 auto;white-space:nowrap;}
+nav.jump a{transition:background-color .18s ease, color .18s ease, border-color .18s ease;}
 nav.jump a.here{color:#fff;background:var(--red);border-color:var(--red);}
+@media (prefers-reduced-motion:reduce){ nav.jump a{transition:none;} }
 nav.jump a{color:#9fb4c4;text-decoration:none;font-size:11px;letter-spacing:.1em;
   border:1px solid #24384a;padding:5px 9px;border-radius:2px;}
 nav.jump a:hover{color:#fff;border-color:var(--red);}
@@ -3551,8 +3553,16 @@ function migrateSheet(o){
    chase every page it passes on the way.
    --------------------------------------------------------------- */
 let navSpyPaused = 0;
+let navCurrentId = null;
+let navUserTouching = 0;
+/* the station page carries a name rather than a number, but its link is #p9 */
+const NAV_ALIAS = {pStationPage:'p9'};
 function markNavTab(id){
+  id = NAV_ALIAS[id] || id;
   const nav=document.querySelector('nav.jump'); if(!nav) return;
+  if(id === navCurrentId) return;        /* nothing changed — do not touch the strip */
+  navCurrentId = id;
+
   let current=null;
   nav.querySelectorAll('a').forEach(a=>{
     const on = a.getAttribute('href')==='#'+id;
@@ -3560,19 +3570,35 @@ function markNavTab(id){
     if(on) current=a;
   });
   if(!current) return;
-  /* slide the strip only as far as it needs to go */
-  const nr=nav.getBoundingClientRect(), ar=current.getBoundingClientRect();
-  if(ar.left < nr.left+8)        nav.scrollLeft += ar.left - nr.left - 8;
-  else if(ar.right > nr.right-8) nav.scrollLeft += ar.right - nr.right + 8;
+  if(navUserTouching > Date.now()) return;   /* they are scrolling the strip themselves */
+
+  /* Centre the tab rather than nudging it to an edge. Nudging moves the strip
+     a little on every change, which reads as fidgeting; centring moves it once
+     and puts the neighbours either side where you can see them. */
+  const target = current.offsetLeft - (nav.clientWidth - current.offsetWidth)/2;
+  const max = nav.scrollWidth - nav.clientWidth;
+  const to = Math.max(0, Math.min(max, target));
+  if(Math.abs(to - nav.scrollLeft) < 4) return;    /* already near enough */
+  nav.scrollTo({left:to, behavior:'smooth'});
 }
 function whichPageIsShowing(){
   const pages=[...document.querySelectorAll('.page')].filter(p=>p.offsetParent);
   if(!pages.length) return null;
-  const line=110;                      /* just under the sticky chrome */
-  let best=pages[0];
+  /* Whichever page covers the most of the screen, rather than whichever has
+     crossed a line. A line makes the highlight flip the instant a page edge
+     passes it, which is what made this feel twitchy. */
+  /* At the very bottom the last page may be short and never win on area, so it
+     could never light up. Give it the win once the document has run out. */
+  const atBottom = window.innerHeight + window.scrollY >=
+                   document.documentElement.scrollHeight - 4;
+  if(atBottom) return pages[pages.length-1].id;
+
+  const top=110, bottom=window.innerHeight;
+  let best=pages[0], bestSeen=-1;
   for(const p of pages){
     const r=p.getBoundingClientRect();
-    if(r.top<=line) best=p; else break;
+    const seen=Math.min(r.bottom,bottom)-Math.max(r.top,top);
+    if(seen>bestSeen){ bestSeen=seen; best=p; }
   }
   return best.id;
 }
@@ -3589,6 +3615,10 @@ function bootNavSpy(){
       markNavTab(a.getAttribute('href').slice(1));
     });
   });
+  /* the user's own scrolling of the strip wins over the spy for a moment */
+  ['touchstart','pointerdown','wheel'].forEach(ev=>
+    nav.addEventListener(ev, ()=>{ navUserTouching = Date.now() + 1200; }, {passive:true}));
+
   let ticking=false;
   window.addEventListener('scroll', ()=>{
     if(ticking) return; ticking=true;
