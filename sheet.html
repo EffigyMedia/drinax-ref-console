@@ -419,6 +419,8 @@ header b{white-space:nowrap;}
   background:#12222e;border:1px solid #35526a;padding:6px;
   flex-direction:column;gap:5px;min-width:150px;box-shadow:0 8px 22px rgba(0,0,0,.45);}
 #headMenu.on{display:flex;}
+#headMenu .menulink{display:block;padding:8px 12px;color:var(--dim);text-decoration:none;font-size:12px;}
+#headMenu .menulink:hover{color:var(--ink);}
 #headMenu button{width:100%;text-align:left;}
 #headMenu .danger{border-color:#7a2b28;color:#ff9a92;}
 @media (max-width:760px){
@@ -428,7 +430,9 @@ header b{white-space:nowrap;}
   #save{display:none;}                 /* the status word covers this */
   .campbit #campIn{width:58px;}
   header button,header a{font-size:11px;padding:5px 8px;min-height:30px;}
-  #headMenu button{min-height:36px;}
+  #headMenu .menulink{display:block;padding:8px 12px;color:var(--dim);text-decoration:none;font-size:12px;}
+#headMenu .menulink:hover{color:var(--ink);}
+#headMenu button{min-height:36px;}
 }
 
 /* checkboxes: a red edge, and a red cross when set */
@@ -538,6 +542,21 @@ input[type="radio"]:focus-visible{outline:1px solid var(--red);outline-offset:1p
     min-width:18px!important;max-width:18px!important;
     min-height:18px!important;max-height:18px!important;flex:0 0 18px!important;}
 }
+
+/* One row, always. Anything that is not the campaign, the station or the
+   overflow button lives in the menu behind the three dots. */
+header{flex-wrap:nowrap;overflow:hidden;}
+header > *{flex:0 0 auto;}
+header .campbit{min-width:0;}
+header .sp{flex:1 1 auto;}
+#refSwitch,#backBtn,#save,#stationNote{display:none;}
+@media (min-width:761px){
+  #refSwitch,#backBtn,#save{display:inline-flex;}
+}
+@media (max-width:760px){
+  header .hsub{display:none;}
+  .stationwrap select{max-width:112px;}
+}
 </style>
 <script src="https://www.gstatic.com/firebasejs/12.17.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/12.17.1/firebase-auth-compat.js"></script>
@@ -563,16 +582,16 @@ input[type="radio"]:focus-visible{outline:1px solid var(--red);outline-offset:1p
     <select id="stationPick" class="noprint" onchange="setStation(this.value)"></select>
   </label>
   <span class="hint noprint" id="stationNote"></span>
-  <button id="themeBtn" onclick="toggleTheme()" title="Light or dark">&#9789;</button>
-  <button id="ovBtn" onclick="toggleOver()" title="Type into calculated fields">Override</button>
   <button class="hmore" onclick="toggleHeadMenu()" title="More" aria-label="More">&#8943;</button>
   <div id="headMenu">
+    <button id="themeBtn" onclick="toggleTheme();closeHeadMenu()">&#9789; Dark mode</button>
+    <button id="ovBtn" onclick="toggleOver();closeHeadMenu()">Override calculated fields</button>
     <button onclick="dl();closeHeadMenu()">&#8681; Files</button>
     <button onclick="document.getElementById('ld').click();closeHeadMenu()">&#8679; Load</button>
     <button onclick="window.print();closeHeadMenu()">Print</button>
     <button id="hlpBtn" onclick="toggleHelp();closeHeadMenu()">? Help</button>
-    <button class="ovmenu" onclick="toggleOver();closeHeadMenu()">Override calculated fields</button>
-    <button onclick="switchChar();closeHeadMenu()">Switch</button>
+    <button onclick="switchChar();closeHeadMenu()">Switch character</button>
+    <a href="./console.html" class="menulink">&lsaquo; Referee console</a>
     <button class="danger" onclick="wipe();closeHeadMenu()">Clear</button>
   </div>
   <input type="file" id="ld" accept=".json,application/json" style="display:none" onchange="loadFile(event)">
@@ -603,7 +622,7 @@ input[type="radio"]:focus-visible{outline:1px solid var(--red);outline-offset:1p
 </div>
 
 <nav class="jump">
-  <a href="#p1">1 · Character</a><a href="#p2">2 · Skills</a><a href="#p3">3 · Combat</a><a href="#p4">4 · Equipment</a><a href="#p5">5 · Lifepath</a><a href="#p6">6 · Species</a><a href="#p7">7 · Background</a><a href="#p8">8 · Ship</a><a href="#p9">9 · My station</a><a href="#p10">10 · Astro</a><a href="#p11">11 · Hold</a><a href="#p12">12 · Vehicle</a><a href="#p13">13 · Robot</a><a href="#p14">14 · Rules</a><a href="#p15">15 · Personal combat</a><a href="#p16">16 · Space combat</a><a href="#p17">17 · Taking a prize</a><a href="#p18">18 · Psionics</a><a href="#p19">19 · Zhodani</a><a href="#how" style="border-color:#5a3a3a;color:#e0a0a0">How to use this</a>
+  <a href="#p1">1 &middot; Character</a><a href="#p2">2 &middot; Skills</a><a href="#p3">3 &middot; Combat</a><a href="#p4">4 &middot; Equipment</a><a href="#p5">5 &middot; Lifepath</a><a href="#p6">6 &middot; Species</a><a href="#p7">7 &middot; Background</a><a href="#p8">8 &middot; Ship</a><a href="#p9">9 &middot; My station</a><a href="#p10">10 &middot; Hold</a><a href="#p11">11 &middot; Vehicle</a><a href="#p12">12 &middot; Robot</a><a href="#p13">13 &middot; Rules</a><a href="#p14">14 &middot; Personal combat</a><a href="#p15">15 &middot; Space combat</a><a href="#p16">16 &middot; Taking a prize</a><a href="#p17">17 &middot; Psionics</a><a href="#p18">18 &middot; Zhodani</a><a href="#how" style="border-color:#5a3a3a;color:#e0a0a0">How to use this</a>
 </nav>
 </div>
 
@@ -1105,7 +1124,7 @@ input[type="radio"]:focus-visible{outline:1px solid var(--red);outline-offset:1p
     <div class="r">Sheet layout &copy; Effigy Media<br>Ship record<br>Page 8 of 18</div></div>
 </section>
 
-<section class="page" id="pStationPage">
+<section class="page" id="p9">
   <div class="banner plain"><div><h1>MY STATION</h1></div><div class="use">FOR USE WITH<br>MONGOOSE 2E</div></div>
 
   <div class="row noprint" style="display:flex;gap:8px;align-items:center;margin-bottom:8px;flex-wrap:wrap">
@@ -2261,7 +2280,7 @@ const FILLERS = [
    --------------------------------------------------------------- */
 function expandStationsForPrint(){
   window.__lastStation = null;
-  const page=document.getElementById('pStationPage') ||
+  const page=document.getElementById('p9') ||
              document.querySelector('.page:has(#rolePick)');
   if(!page) return;
   const keep=(document.getElementById('rolePick')||{}).value;
@@ -2292,7 +2311,7 @@ function expandStationsForPrint(){
 }
 function collapseStations(){
   document.querySelectorAll('.printclone').forEach(n=>n.remove());
-  const page=document.getElementById('pStationPage');
+  const page=document.getElementById('p9');
   if(page) page.classList.remove('hiddenwhileprinting');
 }
 
@@ -3480,7 +3499,7 @@ function setRole(r){
   const heavy = (r==='Astrogator');       /* their station brings the whole jump log with it */
   /* scope to the live page — a global query would undo the trim on clones
      already made for other roles */
-  const livePage=document.getElementById('pStationPage');
+  const livePage=document.getElementById('p9');
   if(livePage){
     livePage.querySelectorAll('.postkit,.watchrota').forEach(n=>{
       n.style.display = heavy ? 'none' : '';
@@ -3552,13 +3571,49 @@ function migrateSheet(o){
    The spy pauses briefly during a tap-jump so the strip does not
    chase every page it passes on the way.
    --------------------------------------------------------------- */
+
+/* ---------------------------------------------------------------
+   Tapping a tab glides to the page rather than snapping.
+
+   The browser's own smooth scroll runs at a fixed speed, so a jump
+   from page 1 to page 19 takes an age while a jump to page 2 is
+   over before you see it. This times the glide by the distance —
+   short hops stay quick, long ones stay readable, and neither is
+   ever a hard snap.
+   --------------------------------------------------------------- */
+function glideTo(el){
+  if(!el) return;
+  const startY = window.scrollY;
+  const endY   = Math.max(0, Math.min(
+      document.documentElement.scrollHeight - window.innerHeight,
+      startY + el.getBoundingClientRect().top - 96));
+  const dist = Math.abs(endY - startY);
+  if(dist < 2) return;
+
+  /* Duration grows with the square root of the distance, so it keeps rising
+     across the whole sheet without a long jump dragging. Linear scaling hit
+     its ceiling after a dozen screens and every longer jump then took exactly
+     the same time, which is the thing that reads as wrong. */
+  const screens = dist / window.innerHeight;
+  const ms = Math.max(240, Math.min(1600, 240 + Math.sqrt(screens) * 260));
+
+  if(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches){
+    window.scrollTo(0, endY); return;
+  }
+  const t0 = performance.now();
+  const ease = t => t<0.5 ? 4*t*t*t : 1 - Math.pow(-2*t+2, 3)/2;   /* in and out */
+  (function step(now){
+    const t = Math.min(1, (now - t0) / ms);
+    window.scrollTo(0, startY + (endY - startY) * ease(t));
+    if(t < 1) requestAnimationFrame(step);
+    else navSpyPaused = 0;                       /* let the spy take over again */
+  })(t0);
+}
+
 let navSpyPaused = 0;
 let navCurrentId = null;
 let navUserTouching = 0;
-/* the station page carries a name rather than a number, but its link is #p9 */
-const NAV_ALIAS = {pStationPage:'p9'};
 function markNavTab(id){
-  id = NAV_ALIAS[id] || id;
   const nav=document.querySelector('nav.jump'); if(!nav) return;
   if(id === navCurrentId) return;        /* nothing changed — do not touch the strip */
   navCurrentId = id;
@@ -3609,10 +3664,15 @@ function navSpy(){
 }
 function bootNavSpy(){
   const nav=document.querySelector('nav.jump'); if(!nav) return;
-  nav.querySelectorAll('a[href^="#p"]').forEach(a=>{
-    a.addEventListener('click', ()=>{
-      navSpyPaused = Date.now() + 700;   /* let the jump land before following again */
-      markNavTab(a.getAttribute('href').slice(1));
+  nav.querySelectorAll('a[href^="#"]').forEach(a=>{
+    a.addEventListener('click', e=>{
+      const id=a.getAttribute('href').slice(1);
+      const target=document.getElementById(id);
+      if(!target) return;                 /* let the browser try, rather than swallow it */
+      e.preventDefault();
+      navSpyPaused = Date.now() + 4000;   /* the glide finishes, then hands back */
+      markNavTab(id);
+      glideTo(target);
     });
   });
   /* the user's own scrolling of the strip wins over the spy for a moment */
@@ -4201,7 +4261,9 @@ function applyTheme(){
   const dark = ck('tTheme')==='dark';
   document.documentElement.classList.toggle('dark', dark);
   const b=document.getElementById('themeBtn');
-  if(b){ b.innerHTML = dark ? '&#9788;' : '&#9789;'; b.title = dark ? 'Dark' : 'Light'; }
+  /* it sits in the menu now and says which way it will go — an unlabelled
+     crescent beside the campaign field was too easy to hit by accident */
+  if(b) b.innerHTML = dark ? '&#9788; Light mode' : '&#9789; Dark mode';
 }
 function toggleTheme(){
   setCk('tTheme', ck('tTheme')==='dark' ? 'light' : 'dark');
