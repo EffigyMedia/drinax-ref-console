@@ -4,7 +4,8 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-title" content="Traveller">
+<meta name="apple-mobile-web-app-title" content="Character Record">
+<meta name="application-name" content="Character Record">
 <meta name="theme-color" content="#12222e">
 <title>Traveller Character Record — MgT2e</title>
 <style>
@@ -668,7 +669,7 @@ header > b,header > .hmore{flex:0 0 auto;}
     <div>
       <div class="grid" style="grid-template-columns:repeat(4,1fr)">
         <div class="f"><label>Player</label><input data-k="player"></div>
-        <div class="f"><label>Character name</label><input data-k="name"></div>
+        <div class="f"><label>Character name</label><input data-k="name" oninput="refreshAppTitle()"></div>
         <div class="f"><label>Species / race</label><input data-k="species"></div>
         <div class="f"><label>Gender</label><input data-k="gender"></div>
       </div>
@@ -3506,6 +3507,31 @@ function mirrorWrite(k,v){
   if(k.indexOf('sh')===0) shipPush(k); else markDirty(k);
   calc(); queue();
 }
+
+/* ---------------------------------------------------------------
+   What iOS offers when you add this to the home screen.
+
+   Safari reads apple-mobile-web-app-title at the moment you tap
+   Add to Home Screen, not at load, so keeping it current with the
+   character's name means two characters give two distinct icons
+   rather than two identical ones.
+
+   The icon label itself is short — iOS shows around a dozen
+   characters before it truncates — so the name comes first where
+   it will actually be read.
+   --------------------------------------------------------------- */
+function refreshAppTitle(){
+  const nm = (($('name')||{}).value || '').trim();
+  const label = nm ? nm + ' \u2014 Character Record' : 'Character Record';
+  ['apple-mobile-web-app-title','application-name'].forEach(n=>{
+    let m=document.querySelector('meta[name="'+n+'"]');
+    if(!m){ m=document.createElement('meta'); m.name=n; document.head.appendChild(m); }
+    m.content = label;
+  });
+  document.title = nm ? nm + ' \u2014 Traveller Character Record'
+                      : 'Traveller Character Record \u2014 MgT2e';
+}
+
 function refreshMirrors(){
   document.querySelectorAll('[data-mirror]').forEach(m=>{
     const src=$(m.dataset.mirror); if(!src) return;
@@ -4797,6 +4823,7 @@ function collect(){ const o={};
   return o; }
 function apply(o){
   o = migrateSheet(o);
+  setTimeout(()=>{ if(typeof refreshAppTitle==='function') refreshAppTitle(); },0);
   /* the counters decide how many rows exist, so set them and build before filling */
   ['eqX','stX','wpnX','armX','holdX'].forEach(k=>{ const e=$(k); if(e && o[k]!==undefined) e.value=o[k]; });
   if(typeof restoreRows==='function') restoreRows();
@@ -4859,6 +4886,7 @@ wrapTables();
 bootRoles();
 bootNavSpy();
 bootFocus();
+refreshAppTitle();
 restoreRows();
 bootStations();
 applyTips();
