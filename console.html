@@ -482,6 +482,14 @@ nav{gap:6px;align-items:center;}
 .statblock .sysgrid{grid-template-columns:1fr 1fr;}
 .rosteritem{border-bottom:1px solid #16100f;}
 .rosteritem:last-child{border-bottom:none;}
+/* every status flag the same size, so the party list reads down the column */
+.flag{display:inline-block;min-width:74px;text-align:center;padding:2px 8px;
+  font-size:10.5px;letter-spacing:.16em;font-weight:700;border:1px solid currentColor;}
+.flag.dead  {color:var(--red);background:rgba(216,31,42,.14);}
+.flag.down  {color:var(--hot);}
+.flag.hurt  {color:var(--hot);opacity:.9;}
+.flag.winded{color:var(--gold);opacity:.85;}
+.flag.ready {color:var(--dim);border-color:var(--line);}
 .assetrow{display:flex;gap:9px;align-items:center;padding:6px 0;border-bottom:1px solid #1a1213;}
 .assetrow:last-child{border-bottom:none;}
 .assetrow b{font-size:14px;flex:1 1 140px;min-width:0;overflow:hidden;text-overflow:ellipsis;}
@@ -7258,14 +7266,22 @@ function pcHit(id,amt){
   if(spill>0) p.wd.STR=Math.min(p.mx.STR,(p.wd.STR||0)+spill);
   syncCh(p); renderParty(); renderPersonal(); queueSave();
 }
+/* One word, one width. The colour carries the severity and the tooltip
+   carries the detail — a row of flags at different lengths made the party
+   list hard to read down. */
 function pcStatus(p){
   const z=['STR','DEX','END'].filter(k=>p.ch[k]<=0).length;
-  if(z>=3) return ['<b class="redc">DEAD</b>','zero'];
-  if(z===2) return ['<b class="redc">Seriously wounded &mdash; unconscious, needs surgery</b>','zero'];
-  if(z===1) return ['<b class="hotc">Down &mdash; unconscious</b>','hurt'];
-  if(p.ch.END<=0) return ['<b class="hotc">END gone &mdash; further damage falls on STR or DEX</b>','hurt'];
-  if(p.ch.END<p.mx.END/2) return ['<span class="hotc">Winded</span>',''];
-  return ['Unhurt',''];
+  const flag=(word,cls,why)=>[`<b class="flag ${cls}" title="${why}">${word}</b>`,
+                              (cls==='dead'||cls==='down') ? 'zero'
+                                : (cls==='hurt' ? 'hurt' : '')];
+  /* Two characteristics at zero is unconscious; one is a bad wound but they
+     are still standing. The old version called someone unconscious the moment
+     END alone hit zero, which is a characteristic gone, not a body down. */
+  if(z>=3)  return flag('DEAD',  'dead',  'All three physical characteristics at zero');
+  if(z===2) return flag('DOWN',  'down',  'Unconscious \u2014 two characteristics at zero, needs surgery');
+  if(z===1) return flag('HURT',  'hurt',  'One characteristic at zero \u2014 still standing');
+  if(p.ch.END < p.mx.END/2) return flag('WINDED','winded','Below half END');
+  return flag('READY','ready','Unhurt');
 }
 function setSkills(id,v){ const p=S.party.find(x=>x.id===id); if(!p) return;
   p.skills=v; S.personal.list.forEach(c=>{ if(c.pcId===id) c.note=v; });

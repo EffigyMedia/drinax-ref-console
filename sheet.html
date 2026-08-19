@@ -414,10 +414,8 @@ header b{white-space:nowrap;}
   border-color:#35526a;color:#e8eef4;font-size:12px;}
 #syncState,#whoAmI,#save{font-size:11px;color:#8fa6b8;white-space:nowrap;}
 #whoAmI{color:#7fd4a8;}
-#refSwitch{display:none;width:auto;min-height:32px;background:#1b2b38;border-color:#35526a;
-  color:#e8eef4;font-size:12px;}
-#backBtn{display:none;align-items:center;background:#22384a;color:#e8eef4;text-decoration:none;
-  padding:5px 10px;border:1px solid #35526a;font-size:12px;}
+/* the header dropdown is gone; the picker lives in the menu */
+/* the header link is gone; the console link lives in the menu */
 .hmore{font-size:16px;line-height:1;padding:4px 10px;}
 #headMenu{display:none;position:absolute;top:100%;right:8px;z-index:40;
   background:#12222e;border:1px solid #35526a;padding:6px;
@@ -564,6 +562,17 @@ header > b,header > .hmore{flex:0 0 auto;}
   header{gap:8px;}
   .stationwrap select{max-width:120px;}
 }
+
+/* the referee's own items sit at the top of the menu, and only for them */
+#refMenu{display:none;}
+#refMenu.on{display:block;}
+.menuhead{font-size:9px;letter-spacing:.18em;text-transform:uppercase;color:var(--dim);
+  padding:7px 12px 3px;border-top:1px solid var(--line);}
+#refMenu .menuhead:first-child{border-top:none;}
+.charpick{display:flex;flex-direction:column;gap:5px;max-height:46vh;overflow-y:auto;}
+.charpick button{width:100%;text-align:left;justify-content:flex-start;}
+.charpick button span{color:var(--dim);font-size:10px;margin-left:6px;}
+.charpick button:disabled{opacity:.55;}
 </style>
 <script src="https://www.gstatic.com/firebasejs/12.17.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/12.17.1/firebase-auth-compat.js"></script>
@@ -582,24 +591,24 @@ header > b,header > .hmore{flex:0 0 auto;}
       <span id="whoAmI"></span>
     </span>
     <span id="save">&mdash;</span>
-    <select id="refSwitch" onchange="refJump(this.value)" title="Switch character"></select>
-    <a id="backBtn" href="./console.html">&lsaquo; Console</a>
-    <label class="stationwrap noprint" title="Show only what this station needs">
-      <span>Station</span>
-      <select id="stationPick" class="noprint" onchange="setStation(this.value)"></select>
-    </label>
     <span class="hint noprint" id="stationNote"></span>
   </div>
   <button class="hmore" onclick="toggleHeadMenu()" title="More" aria-label="More">&#8943;</button>
   <div id="headMenu">
+    <div class="refonly" id="refMenu">
+      <div class="menuhead">Referee</div>
+      <button onclick="openCharPicker();closeHeadMenu()">&#8644; Switch character</button>
+      <a href="./console.html" class="menulink">&lsaquo; Back to the console</a>
+      <div class="menuhead">This sheet</div>
+    </div>
     <button id="themeBtn" onclick="toggleTheme();closeHeadMenu()">&#9789; Dark mode</button>
     <button id="ovBtn" onclick="toggleOver();closeHeadMenu()">Override calculated fields</button>
     <button onclick="dl();closeHeadMenu()">&#8681; Files</button>
     <button onclick="document.getElementById('ld').click();closeHeadMenu()">&#8679; Load</button>
-    <button onclick="window.print();closeHeadMenu()">Print</button>
+    <button onclick="window.print();closeHeadMenu()">Print this sheet</button>
+    <button onclick="printBlank();closeHeadMenu()">Print a blank sheet</button>
     <button id="hlpBtn" onclick="toggleHelp();closeHeadMenu()">? Help</button>
-    <button onclick="switchChar();closeHeadMenu()">Switch character</button>
-    <a href="./console.html" class="menulink">&lsaquo; Referee console</a>
+    <button onclick="switchChar();closeHeadMenu()">Open another sheet</button>
     <button class="danger" onclick="wipe();closeHeadMenu()">Clear</button>
   </div>
   <input type="file" id="ld" accept=".json,application/json" style="display:none" onchange="loadFile(event)">
@@ -1140,6 +1149,11 @@ header > b,header > .hmore{flex:0 0 auto;}
     <select id="stShip" class="noprint" onchange="pickShip(this.value)" style="width:auto;min-width:150px"></select>
     <label class="hint" style="font-size:8px;letter-spacing:.13em;text-transform:uppercase;font-weight:700">Role</label>
     <select id="rolePick" class="noprint" onchange="setRole(this.value)" style="width:auto;min-width:170px"></select>
+    <label class="mtd noprint" title="Hide the panels this job does not need">
+      <input type="checkbox" id="focusOnly" onchange="setFocus(this.checked)"> just my panels
+    </label>
+    <select id="stationPick" class="noprint" onchange="setStation(this.value)"
+      style="display:none"></select>
     <span class="hint">Your station on that hull. The controls below are the ones this job touches.</span>
   </div>
 
@@ -3438,6 +3452,26 @@ function roleDM(key){
    page is where a player works during a fight; the ship record is
    where the whole picture lives.
    --------------------------------------------------------------- */
+
+/* ---------------------------------------------------------------
+   One picker, not two.
+
+   The station picker filtered which panels showed; the role picker
+   set what the station page said. Those are the same question —
+   what job am I doing — asked twice, with two lists that did not
+   even agree. Picking a role now does both.
+   --------------------------------------------------------------- */
+const ROLE_STATION = {
+  'Pilot':                    'Pilot in a fight',
+  'Turret gunner':            'Gunner in a fight',
+  'Engineer':                 'Engineer in a fight',
+  'Sensor operator':          'Sensors in a fight',
+  'Commander':                'Captain',
+  'Marine':                   'Marine',
+  'Astrogator':               'Astrogator',
+  'Steward / Medic / Broker': 'Steward'
+};
+
 const ROLE_LIVE = {
  'Pilot':          [['shThrust','Thrust'],['shThrustNow','Thrust now'],['shPwM','M-drive on'],
                     ['shAgility','Agility'],['shHullNow','Hull now'],['shHull','Hull']],
@@ -3486,6 +3520,23 @@ function bootStationShip(){
     : '<option value="">No ship yet</option>';
 }
 
+
+/* the filter is a switch now — the role already says which panels */
+function setFocus(on){
+  const sp=document.getElementById('stationPick'); if(!sp) return;
+  const r=(document.getElementById('rolePick')||{}).value;
+  const want = on ? (ROLE_STATION[r]||'Everything') : 'Everything';
+  if([...sp.options].some(o=>o.value===want || o.textContent===want)){
+    sp.value=want; setStation(want);
+  }
+  try{ setCk('tfocus', on?'1':''); }catch(e){}
+}
+function bootFocus(){
+  const b=document.getElementById('focusOnly'); if(!b) return;
+  b.checked = ck('tfocus')==='1';
+  if(b.checked) setFocus(true);
+}
+
 function setRole(r){
   if(!ROLES[r]) r=Object.keys(ROLES)[0];
   try{ setCk('trole', r); }catch(e){}
@@ -3507,6 +3558,10 @@ function setRole(r){
   const heavy = (r==='Astrogator');       /* their station brings the whole jump log with it */
   /* scope to the live page — a global query would undo the trim on clones
      already made for other roles */
+  /* the same choice drives which panels the sheet shows */
+  const focus=document.getElementById('focusOnly');
+  if(focus && focus.checked) setFocus(true);
+
   const livePage=document.getElementById('p9');
   if(livePage){
     livePage.querySelectorAll('.postkit,.watchrota').forEach(n=>{
@@ -3528,7 +3583,8 @@ function setRole(r){
       while(extra.firstElementChild) store.appendChild(extra.firstElementChild);
     }
   }
-  const f=$('stRole'); if(f && f.value!==r){ f.value=r; markDirty('stRole'); }
+  const f=$('stRole');
+  if(f && f.value!==r && !qp('blank')){ f.value=r; markDirty('stRole'); }
 }
 function bootRoles(){
   const sel=document.getElementById('rolePick'); if(!sel) return;
@@ -3616,6 +3672,44 @@ function glideTo(el){
     if(t < 1) requestAnimationFrame(step);
     else navSpyPaused = 0;                       /* let the spy take over again */
   })(t0);
+}
+
+
+/* ---------------------------------------------------------------
+   Printing a blank sheet.
+
+   No PDF needs to live in the repository — the sheet already knows
+   how to print itself, so it opens a second copy of this page with
+   nothing in it and prints that. The player's own sheet is never
+   touched, and the blank always matches whatever the sheet looks
+   like today rather than a PDF that goes stale.
+   --------------------------------------------------------------- */
+function printBlank(){
+  const url = location.pathname + '?blank=1';
+  const w = window.open(url, '_blank');
+  if(!w){ ask('Allow pop-ups for this site, then try again.', null, null, 'Close', ''); return; }
+}
+/* a blank copy clears itself, prints, and does not talk to the campaign */
+function bootBlank(){
+  if(!qp('blank')) return false;
+  document.title = 'Traveller — blank sheet';
+  document.querySelectorAll('[data-k]').forEach(e=>{
+    if(e.type==='checkbox'||e.type==='radio') e.checked=false; else e.value='';
+  });
+  const hd=document.querySelector('header');
+  if(hd) hd.innerHTML='<b>TRAVELLER</b><span class="hsub">blank sheet</span>'+
+    '<div class="headmid"></div>'+
+    '<button class="hmore" onclick="window.print()" title="Print">&#9113; Print</button>';
+  const nav=document.querySelector('nav.jump'); if(nav) nav.remove();
+  /* clear again on the way out — booting the role picker writes a default back */
+  setTimeout(()=>{
+    document.querySelectorAll('[data-k]').forEach(e=>{
+      if(e.type==='checkbox'||e.type==='radio') e.checked=false; else e.value='';
+    });
+    if(typeof preparePrint==='function') preparePrint();
+    window.print();
+  }, 700);
+  return true;
 }
 
 let navSpyPaused = 0;
@@ -4236,17 +4330,32 @@ function refList(el){
             return `<div class="crow"><b>${nm}</b><button onclick="refJump('${k}')">Open</button></div>`;
           }).join('');
       }
-      const sel=document.getElementById('refSwitch');
-      if(sel){
-        sel.innerHTML='<option value="">Switch character…</option>'+ks.map(k=>{
-          const nm=(all[k].meta&&all[k].meta.name)||(all[k].sheet&&all[k].sheet.name)||k;
-          return `<option value="${k}"${k===CHAR?' selected':''}>${nm}</option>`;
-        }).join('');
-        sel.style.display='inline-block';
-      }
+      /* kept for the menu's picker rather than a header dropdown */
+      refChars = ks.map(k=>[k, (all[k].meta&&all[k].meta.name)||(all[k].sheet&&all[k].sheet.name)||k]);
+      const rm=document.getElementById('refMenu'); if(rm) rm.classList.add('on');
     }).catch(()=>{});
   });
 }
+
+/* ---------------------------------------------------------------
+   Switching character, for the referee.
+
+   It was a select in the header, which on a phone rendered as a
+   sliver too narrow to read. It is a menu item now, and it opens a
+   list you can actually see.
+   --------------------------------------------------------------- */
+let refChars = null;
+function openCharPicker(){
+  const list = refChars || [];
+  if(!list.length){ ask('No other characters found.', null, null, 'Close', ''); return; }
+  ask('<b>Switch character</b><br><br>' +
+    '<div class="charpick">' + list.map(([id,nm])=>
+      `<button onclick="refJump('${id}')"${id===CHAR?' disabled':''}>${nm}${
+        id===CHAR?' <span>this one</span>':''}</button>`).join('') + '</div>',
+    null, null, 'Close', '');
+  const no=document.getElementById('askNo'); if(no) no.style.display='none';
+}
+
 function refJump(id){
   if(!id) return;
   if(id===CHAR){ document.getElementById('chooser').classList.remove('on'); return; }
@@ -4298,17 +4407,20 @@ function bootIdentity(){
   document.getElementById('cCamp').textContent=FB.camp;
   /* a link wins and is NOT written to the cookie — that is what lets one browser
      hold several characters open in separate tabs at once */
-  /* the console appends ref=1 when it opens a sheet, so only the referee sees a way back */
+  /* the console appends ref=1 when it opens a sheet, so only the referee gets
+     the referee block in the menu — switch character and the way back */
   if(qp('ref')){
-    const bb=document.getElementById('backBtn');
-    if(bb){
-      bb.style.display='inline-flex';
-      if(isStandalone()){          /* no tab bar to go back to — push it out to Safari */
-        bb.target='_blank'; bb.rel='noopener';
-        bb.textContent='Console ↗';
+    const rm=document.getElementById('refMenu');
+    if(rm){
+      rm.classList.add('on');
+      const link=rm.querySelector('.menulink');
+      if(link && isStandalone()){   /* no tab bar to go back to — push it out to Safari */
+        link.target='_blank'; link.rel='noopener';
+        link.textContent='\u2197 Open the console';
       }
     }
   }
+  if(bootBlank()) return;        /* a blank copy prints and talks to nobody */
   refSwitcher();
   if(CHAR){ if(!fromLink) setCk('tchar',CHAR); connect(); }
   else openChooser();
@@ -4746,6 +4858,7 @@ applyTheme();
 wrapTables();
 bootRoles();
 bootNavSpy();
+bootFocus();
 restoreRows();
 bootStations();
 applyTips();
