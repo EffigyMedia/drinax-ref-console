@@ -115,9 +115,16 @@ body.helpmode{padding-bottom:110px;}
 .crow{display:flex;gap:6px;align-items:center;border-bottom:1px solid #23384a;padding:7px 0;}
 .crow b{flex:1;font-size:13px;}
 .crow small{color:#8fa6b8;font-size:10px;}
-nav.jump{background:#0e1a24;display:flex;gap:6px;flex-wrap:wrap;
+/* One row, always. Nineteen links wrap several rows deep on a phone held
+   sideways and eat the screen, so the strip scrolls sideways instead. */
+nav.jump{background:#0e1a24;display:flex;gap:6px;flex-wrap:nowrap;
+  overflow-x:auto;overscroll-behavior-x:contain;-webkit-overflow-scrolling:touch;
+  scrollbar-width:none;scroll-behavior:smooth;
   padding:6px calc(12px + var(--sar)) 6px calc(12px + var(--sal));
   border-bottom:1px solid #1d2c38;}
+nav.jump::-webkit-scrollbar{display:none;}
+nav.jump a{flex:0 0 auto;white-space:nowrap;}
+nav.jump a.here{color:#fff;background:var(--red);border-color:var(--red);}
 nav.jump a{color:#9fb4c4;text-decoration:none;font-size:11px;letter-spacing:.1em;
   border:1px solid #24384a;padding:5px 9px;border-radius:2px;}
 nav.jump a:hover{color:#fff;border-color:var(--red);}
@@ -3504,6 +3511,92 @@ function bootRoles(){
   setRole((saved && ROLES[saved]) ? saved : (ck('trole')||Object.keys(ROLES)[0]));
 }
 
+/* ---------------------------------------------------------------
+   MIGRATIONS
+
+   Players have live sheets now. A change to a data shape must
+   carry the old shape forward — never delete a field and move on.
+   Add a step here, keep it forever, and make it safe to run twice.
+   --------------------------------------------------------------- */
+const SHEET_VERSION = 2;
+function migrateSheet(o){
+  if(!o || typeof o!=='object') return o;
+  const from = +o.__v || 1;
+
+  if(from < 2){
+    /* v1 kept psionic strength in its own fields; PSI is a characteristic now */
+    if(o.psiStr!==undefined && !o.bPSI){
+      o.bPSI = o.psiStr;
+      o.iPSI = o.psiSpent || '';
+    }
+    delete o.psiStr; delete o.psiSpent; delete o.psiLeft;
+    /* the station moved from a free-text ship field to the role picker */
+    if(o.shMyStation && !o.stRole) o.stRole = o.shMyStation;
+  }
+
+  o.__v = SHEET_VERSION;
+  return o;
+}
+
+
+/* ---------------------------------------------------------------
+   The tab strip and the page follow each other.
+
+   Scrolling the sheet lights the tab for the page you are reading
+   and slides the strip so that tab is visible. Tapping a tab jumps
+   to its page. You can still scroll the strip by hand to reach a
+   distant tab — all three work at once.
+
+   The spy pauses briefly during a tap-jump so the strip does not
+   chase every page it passes on the way.
+   --------------------------------------------------------------- */
+let navSpyPaused = 0;
+function markNavTab(id){
+  const nav=document.querySelector('nav.jump'); if(!nav) return;
+  let current=null;
+  nav.querySelectorAll('a').forEach(a=>{
+    const on = a.getAttribute('href')==='#'+id;
+    a.classList.toggle('here', on);
+    if(on) current=a;
+  });
+  if(!current) return;
+  /* slide the strip only as far as it needs to go */
+  const nr=nav.getBoundingClientRect(), ar=current.getBoundingClientRect();
+  if(ar.left < nr.left+8)        nav.scrollLeft += ar.left - nr.left - 8;
+  else if(ar.right > nr.right-8) nav.scrollLeft += ar.right - nr.right + 8;
+}
+function whichPageIsShowing(){
+  const pages=[...document.querySelectorAll('.page')].filter(p=>p.offsetParent);
+  if(!pages.length) return null;
+  const line=110;                      /* just under the sticky chrome */
+  let best=pages[0];
+  for(const p of pages){
+    const r=p.getBoundingClientRect();
+    if(r.top<=line) best=p; else break;
+  }
+  return best.id;
+}
+function navSpy(){
+  if(navSpyPaused > Date.now()) return;
+  const id=whichPageIsShowing();
+  if(id) markNavTab(id);
+}
+function bootNavSpy(){
+  const nav=document.querySelector('nav.jump'); if(!nav) return;
+  nav.querySelectorAll('a[href^="#p"]').forEach(a=>{
+    a.addEventListener('click', ()=>{
+      navSpyPaused = Date.now() + 700;   /* let the jump land before following again */
+      markNavTab(a.getAttribute('href').slice(1));
+    });
+  });
+  let ticking=false;
+  window.addEventListener('scroll', ()=>{
+    if(ticking) return; ticking=true;
+    requestAnimationFrame(()=>{ navSpy(); ticking=false; });
+  }, {passive:true});
+  navSpy();
+}
+
 /* ================= field help ================= */
 const HELPMAP={
  portrait:"Tap the box to choose a picture. It is shrunk before it is saved, and it prints with the sheet.",
@@ -4491,6 +4584,7 @@ function collect(){ const o={};
     o[e.dataset.k] = (e.type==='checkbox'||e.type==='radio') ? e.checked : e.value; });
   return o; }
 function apply(o){
+  o = migrateSheet(o);
   /* the counters decide how many rows exist, so set them and build before filling */
   ['eqX','stX','wpnX','armX','holdX'].forEach(k=>{ const e=$(k); if(e && o[k]!==undefined) e.value=o[k]; });
   if(typeof restoreRows==='function') restoreRows();
@@ -4551,6 +4645,7 @@ document.addEventListener('change',e=>{ const k=e.target.dataset.k; if(k===undef
 applyTheme();
 wrapTables();
 bootRoles();
+bootNavSpy();
 restoreRows();
 bootStations();
 applyTips();
