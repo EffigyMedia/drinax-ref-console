@@ -80,7 +80,7 @@ header .sp{flex:1}
 header button,header select{font:inherit;font-size:12px;background:#1d3purple;}
 header button{background:#22384a;color:#e8eef4;border:1px solid #35526a;padding:7px 11px;
   cursor:pointer;border-radius:2px;min-height:36px;}
-header button:hover{border-color:var(--red);}
+@media (hover:hover) and (pointer:fine){ header button:hover{border-color:var(--red);} }
 header button.on{background:var(--red);border-color:var(--red);color:#fff;font-weight:700;}
 #save{font-size:11px;color:#8fa6b8;min-width:88px;text-align:right;}
 #explain{display:none;position:fixed;left:0;right:0;bottom:0;z-index:150;
@@ -111,7 +111,7 @@ body.helpmode{padding-bottom:110px;}
 .cbox input{background:#1b2b38;border-color:#35526a;color:#e8eef4;}
 .cbox button{background:#22384a;color:#e8eef4;border:1px solid #35526a;padding:7px 12px;
   cursor:pointer;min-height:36px;font:inherit;}
-.cbox button:hover{border-color:var(--red);}
+@media (hover:hover) and (pointer:fine){ .cbox button:hover{border-color:var(--red);} }
 .crow{display:flex;gap:6px;align-items:center;border-bottom:1px solid #23384a;padding:7px 0;}
 .crow b{flex:1;font-size:13px;}
 .crow small{color:#8fa6b8;font-size:10px;}
@@ -129,7 +129,13 @@ nav.jump a.here{color:#fff;background:var(--red);border-color:var(--red);}
 @media (prefers-reduced-motion:reduce){ nav.jump a{transition:none;} }
 nav.jump a{color:#9fb4c4;text-decoration:none;font-size:11px;letter-spacing:.1em;
   border:1px solid #24384a;padding:5px 9px;border-radius:2px;}
-nav.jump a:hover{color:#fff;border-color:var(--red);}
+/* Only on devices that really hover. A touch screen keeps :hover on whatever
+   was tapped last, which left a red border stuck on the tab you came from. */
+@media (hover:hover) and (pointer:fine){
+  nav.jump a:hover{color:#fff;border-color:var(--red);}
+}
+nav.jump a:focus{outline:none;}
+nav.jump a:focus-visible{outline:2px solid var(--red);outline-offset:1px;}
 
 /* ---------- page ---------- */
 .page{scroll-margin-top:var(--barh,104px);background:var(--paper);width:8.5in;min-height:10.3in;margin:14px auto;padding:.3in .34in .22in;
@@ -212,8 +218,6 @@ html.dark .stationwrap select{background:var(--row2);color:var(--ink);border-col
   header{gap:4px;}
   .stationwrap span{display:none;}
   #stationNote{display:none;}
-  #save{display:none;}
-  #ovBtn{display:none;}
 }
 @media (min-width:761px){ .ovmenu{display:none;} }
 .stationbar{display:flex;gap:8px;align-items:center;margin-bottom:6px;padding:6px 8px;
@@ -226,7 +230,7 @@ html.dark .stationwrap select{background:var(--row2);color:var(--ink);border-col
 .addrow{display:flex;gap:9px;align-items:center;margin-top:4px;}
 .addrow button{padding:3px 10px;min-height:26px;font-size:11px;background:var(--band2);
   border:1px solid var(--line);color:var(--band);cursor:pointer;}
-.addrow button:hover{border-color:var(--red);color:var(--red);}
+@media (hover:hover) and (pointer:fine){ .addrow button:hover{border-color:var(--red);color:var(--red);} }
 .addrow .hint{font-size:10px;}
 tr.xtrarow td{background:#f4f8fb;}
 .hiddenwhileprinting{display:none!important;}
@@ -427,8 +431,8 @@ header b{white-space:nowrap;}
   header{padding:calc(6px + var(--sat)) 9px 6px;gap:5px;}
   header b{font-size:10px;letter-spacing:.08em;}
   .hsub{display:none;}                 /* the page banner already says it */
-  #save{display:none;}                 /* the status word covers this */
-  .campbit #campIn{width:58px;}
+  .campbit #campIn{width:72px;}
+  #save{font-size:10px;}
   header button,header a{font-size:11px;padding:5px 8px;min-height:30px;}
   #headMenu .menulink{display:block;padding:8px 12px;color:var(--dim);text-decoration:none;font-size:12px;}
 #headMenu .menulink:hover{color:var(--ink);}
@@ -543,19 +547,22 @@ input[type="radio"]:focus-visible{outline:1px solid var(--red);outline-offset:1p
     min-height:18px!important;max-height:18px!important;flex:0 0 18px!important;}
 }
 
-/* One row, always. Anything that is not the campaign, the station or the
-   overflow button lives in the menu behind the three dots. */
-header{flex-wrap:nowrap;overflow:hidden;}
-header > *{flex:0 0 auto;}
-header .campbit{min-width:0;}
-header .sp{flex:1 1 auto;}
-#refSwitch,#backBtn,#save,#stationNote{display:none;}
-@media (min-width:761px){
-  #refSwitch,#backBtn,#save{display:inline-flex;}
-}
+/* One row, always — but never by clipping. The brand and the three-dot button
+   are pinned at the ends and the middle scrolls sideways between them, so
+   nothing can be cut off the edge on a narrow screen or behind a notch.
+   An earlier attempt used overflow:hidden, which silently ate the ⋯ button. */
+header{flex-wrap:nowrap;}
+header > b,header > .hmore{flex:0 0 auto;}
+.headmid{flex:1 1 auto;min-width:0;display:flex;align-items:center;gap:8px;
+  overflow-x:auto;overscroll-behavior-x:contain;-webkit-overflow-scrolling:touch;
+  scrollbar-width:none;}
+.headmid::-webkit-scrollbar{display:none;}
+.headmid > *{flex:0 0 auto;}
+#stationNote{display:none;}
 @media (max-width:760px){
   header .hsub{display:none;}
-  .stationwrap select{max-width:112px;}
+  header{gap:8px;}
+  .stationwrap select{max-width:120px;}
 }
 </style>
 <script src="https://www.gstatic.com/firebasejs/12.17.1/firebase-app-compat.js"></script>
@@ -568,20 +575,21 @@ header .sp{flex:1 1 auto;}
 <header>
   <b>TRAVELLER</b>
   <span class="hsub">Character Record</span>
-  <span class="sp"></span>
-  <span class="campbit">
-    <input id="campIn" placeholder="campaign" onchange="setCamp(this.value)">
-    <span id="syncState">Offline</span>
-    <span id="whoAmI"></span>
-  </span>
-  <span id="save">&mdash;</span>
-  <select id="refSwitch" onchange="refJump(this.value)" title="Switch character"></select>
-  <a id="backBtn" href="./console.html">&lsaquo; Console</a>
-  <label class="stationwrap noprint" title="Show only what this station needs">
-    <span>Station</span>
-    <select id="stationPick" class="noprint" onchange="setStation(this.value)"></select>
-  </label>
-  <span class="hint noprint" id="stationNote"></span>
+  <div class="headmid">
+    <span class="campbit">
+      <input id="campIn" placeholder="campaign" onchange="setCamp(this.value)">
+      <span id="syncState">Offline</span>
+      <span id="whoAmI"></span>
+    </span>
+    <span id="save">&mdash;</span>
+    <select id="refSwitch" onchange="refJump(this.value)" title="Switch character"></select>
+    <a id="backBtn" href="./console.html">&lsaquo; Console</a>
+    <label class="stationwrap noprint" title="Show only what this station needs">
+      <span>Station</span>
+      <select id="stationPick" class="noprint" onchange="setStation(this.value)"></select>
+    </label>
+    <span class="hint noprint" id="stationNote"></span>
+  </div>
   <button class="hmore" onclick="toggleHeadMenu()" title="More" aria-label="More">&#8943;</button>
   <div id="headMenu">
     <button id="themeBtn" onclick="toggleTheme();closeHeadMenu()">&#9789; Dark mode</button>
