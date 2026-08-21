@@ -574,6 +574,17 @@ header > b,header > .hmore{flex:0 0 auto;}
 .charpick button{width:100%;text-align:left;justify-content:flex-start;}
 .charpick button span{color:var(--dim);font-size:10px;margin-left:6px;}
 .charpick button:disabled{opacity:.55;}
+
+/* The weapon and armour tables share the page width with nothing now — the
+   reference used to sit beside them at 1fr against their 1.5fr, squeezing
+   both. It runs underneath in columns instead, so a wider screen gives it
+   more columns rather than more height. */
+.armwrap{display:block;}
+.refcols{column-count:1;column-gap:22px;}
+.refcols > *{break-inside:avoid;margin-top:0;}
+@media (min-width:900px){ .refcols{column-count:2;} }
+@media (min-width:1240px){ .refcols{column-count:3;} }
+@media print{ .refcols{column-count:3;} }
 </style>
 <script src="https://www.gstatic.com/firebasejs/12.17.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/12.17.1/firebase-auth-compat.js"></script>
@@ -791,7 +802,7 @@ header > b,header > .hmore{flex:0 0 auto;}
     <tbody id="wpnBody"></tbody></table>
   <div class="addrow noprint"><button type="button" onclick="addRow('wpn')">+ another weapon</button></div>
 
-  <div class="grid" style="grid-template-columns:1.5fr 1fr;align-items:start">
+  <div class="armwrap">
     <div>
       <h2 class="sec">ARMOR</h2>
       <table><thead><tr><th style="width:44px">Worn</th><th>Armor type</th><th style="width:34px">TL</th>
@@ -805,13 +816,17 @@ header > b,header > .hmore{flex:0 0 auto;}
         <div class="f"><label>Total armor value <span id="armNow" style="color:var(--red);letter-spacing:0;text-transform:none"></span></label><input data-k="armTotal" class="calc" readonly></div>
       </div>
     </div>
-    <div>
-      <h2 class="sec">COMBAT REFERENCE</h2>
+  </div>
+
+  <h2 class="sec">COMBAT REFERENCE</h2>
+  <div class="refcols">
+
+
       <div class="grid" style="grid-template-columns:1fr 1fr">
         <div class="f"><label>Initiative DM</label><input data-k="initDM" class="calc" readonly></div>
         <div class="f"><label>Tactics DM</label><input data-k="tacDM" class="calc" readonly></div>
         <div class="f"><label>Leadership DM</label><input data-k="ldrDM" class="calc" readonly></div>
-        <div class="f"><label>Dodge &mdash; their penalty</label><input data-k="dodge" class="calc" readonly></div>
+        <div class="f"><label>Dodge DM</label><input data-k="dodge" class="calc" readonly></div>
       </div>
       <h3 class="sub">ENCUMBRANCE</h3>
       <div class="grid" style="grid-template-columns:1fr 1fr 1fr">
@@ -3039,9 +3054,13 @@ function openTransfer(kind,i){
   if(!row.name){ say('Nothing there','That row is empty.'); return; }
   XPEND=row;
   const roster=(FB.roster||[]).filter(p=>p.id!==CHAR);
-  const opts=[`<option value="__hold__">The ship's hold</option>`]
+  /* a weapon or a suit of armour can go anywhere the rest of the kit can —
+     back into carried equipment, into the stash, or into the hold */
+  const opts=[]
+    .concat(kind!=='eq' ? [`<option value="__self__">My carried equipment</option>`] : [])
     .concat(kind!=='st' ? [`<option value="__stash__">My own stash</option>`] : [])
-    .concat(kind==='st' ? [`<option value="__self__">My carried equipment</option>`] : [])
+    .concat([`<option value="__hold__">The ship&rsquo;s hold</option>`])
+    .concat(roster.length ? ['<option disabled>\u2500\u2500 to another Traveller \u2500\u2500</option>'] : [])
     .concat(roster.map(p=>`<option value="${p.id}">${p.n}</option>`));
   ask(`Move <b>${row.name}</b> to&hellip;<br><br>
       <select id="xTo" style="width:100%">${opts.join('')}</select>
@@ -3057,7 +3076,14 @@ function doTransfer(){
   if(to==='__hold__')  return xToHold(row);
   if(to==='__stash__') return xToOwn(row,'st');
   if(to==='__self__')  return xToOwn(row,'eq');
-  return xToPerson(row,to);
+  /* another player's sheet is not yours to write to without asking twice */
+  const who=(FB.roster||[]).find(p=>p.id===to);
+  const nm=who?who.n:'them';
+  ask(`Give <b>${row.name}</b> to <b>${nm}</b>?<br><br>` +
+      `<div class="hint">It leaves your sheet and appears on theirs. ` +
+      `You cannot take it back yourself &mdash; they would have to hand it over.</div>`,
+      ()=>xToPerson(row, to), null, 'Give it to ' + nm);
+  return;
 }
 /* --- into my own other table --- */
 function xToOwn(row, toKind){
@@ -3834,7 +3860,7 @@ const HELPMAP={
  upp:"Calculated. Your six characteristics in hexadecimal, the traditional Traveller shorthand.",
  tacDM:"Calculated. INT DM plus your best Tactics skill.",
  ldrDM:"Calculated. SOC DM plus Leadership.",
- dodge:"Calculated. What an attacker takes when you dodge — your DEX DM or Athletics (dexterity), whichever is better.",
+ dodge:"Calculated. The penalty an attacker takes when you dodge — your DEX DM or Athletics (dexterity), whichever is better. Dodging costs a Reaction.",
  radCum:"Total radiation absorbed over your career. It accumulates and does not heal.",
  radEff:"What that dose is doing to you.",
  disease:"Anything you are currently suffering from.",
