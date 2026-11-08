@@ -5974,6 +5974,33 @@ function renameAsset(kind,id,inVault){
   }
   renderShip(); queueSave();
 }
+/* Removes one record, wherever it lives. The asset that the crew has open is refused. */
+function deleteAsset(kind,id,inVault){
+  const k=ASSET_KINDS[kind]; if(!k) return;
+  const rec=(inVault ? assetVault(kind) : assetColl(kind))[id]; if(!rec) return;
+  if(!inVault && assetIsActive(kind,id)){ note('The crew has this one open. Pick another first.'); return; }
+  askConfirm('Delete <b>'+(rec[k.prefix+'Name']||'this asset')+'</b> permanently? This cannot be undone.',()=>{
+    if(!inVault && assetIsActive(kind,id)){ note('The crew has this one open. Pick another first.'); return; }
+    delete (inVault ? assetVault(kind) : assetColl(kind))[id];
+    if(FB.db&&FB.ok){
+      const path = inVault ? 'campaigns/'+campaignId()+'/vault/'+kind+'/'+id
+                           : 'campaigns/'+campaignId()+'/'+k.state+'/'+k.coll+'/'+id;
+      FB.db.ref(path).remove().catch(e=>note('Not deleted: '+e.code));
+    }
+    renderShip(); renderAssets(); queueSave();
+  },'Delete');
+}
+/* Renames one saved sophont or xenobiote. A copy that is already in a fight keeps its name. */
+function renameSaved(list,i){
+  const rec=(S[list]||[])[i]; if(!rec) return;
+  const typed=prompt('New name', rec.n||'');
+  if(typed===null) return;
+  const name=typed.trim();
+  if(!name || name===rec.n) return;
+  rec.n=name;
+  if(list==='xenos') renderXenoNamed(); else renderNPCs();
+  queueSave();
+}
 function vaultWatch(){
   if(!FB.db) return;
   if(FB.vaultRef) FB.vaultRef.off();
@@ -6083,6 +6110,7 @@ function assetSections(kind){
           ${cls==='named' ? (inVault
             ? `<button class="mini" onclick="moveAsset('${kind}','${id}','toFleet')">Send to the crew</button>`
             : `<button class="mini" onclick="moveAsset('${kind}','${id}','toVault')">Take it back</button>`) : ''}
+          <button class="mini x" title="Delete" onclick="deleteAsset('${kind}','${id}',${inVault})">&times;</button>
         </div>`; }).join('')
       : '<span class="hint">None.</span>'}`;
   }).join('');
@@ -6209,6 +6237,7 @@ function renderXenoNamed(){
         <b class="grow" style="cursor:pointer" onclick="rosterToggle('xeno',${i})">${x.n}</b>
         <span class="hint">${x.hits} hits &middot; armour ${x.arm}</span>
         ${qtyPicker('xeno',i)}
+        <button class="mini" onclick="renameSaved('xenos',${i})">Rename</button>
         <button class="mini x" onclick="forgetXeno(${i})">&times;</button>
       </div>
       ${S.open['xeno'+i]?xenoBlock(x):''}
@@ -8181,6 +8210,7 @@ function renderNPCs(){
         <b class="grow" style="cursor:pointer" onclick="rosterToggle('npc',${i})">${n.n}</b>
         <span class="hint">${n.t==='mob'?n.hitsEach+' hits each':'END '+n.endMax}</span>
         ${n.t==='mob'?qtyPicker('npc',i):`<button class="mini" onclick="dropNPC(${i})">Add to fight</button>`}
+        <button class="mini" onclick="renameSaved('npcs',${i})">Rename</button>
         <button class="mini x" onclick="delSavedNPC(${i})">&times;</button>
       </div>
       ${S.open['npc'+i]?npcBlock(n):''}

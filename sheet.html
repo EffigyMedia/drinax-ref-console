@@ -4077,17 +4077,19 @@ function pickTrain(n,el){
     if(lv>=6){ el.checked=false;
       say('Already at level 6','<b>'+skillName(n)+'</b> cannot be trained any higher.'); return; }
     const prev=SKILLS.map((s,i)=>i).filter(i=>i!==n && $('skR'+i) && $('skR'+i).checked);
-    const commit=()=>{ prev.forEach(i=>{ $('skR'+i).checked=false; });
-      set2('trDone',''); calc(); queue(); };
+    const commit=()=>{ prev.forEach(i=>{ $('skR'+i).checked=false; markDirty('skR'+i); });
+      set2('trDone',''); markDirty('trDone'); calc(); queue(); };
     if(prev.length && done>0){
       ask('This will clear your current training progress &mdash; <b>'+done+
           '</b> week'+(done===1?'':'s')+' toward <b>'+skillName(prev[0])+'</b>. Are you sure?',
-          commit, ()=>{ el.checked=false; });
+          commit, ()=>{ el.checked=false; markDirty('skR'+n); });
       return;
     }
     commit();
   } else {
-    set2('trDone',''); calc(); queue();
+    /* A sheet can hold extra ticks from before this repair. Removing an extra tick keeps the weeks. */
+    if(trainedIndex()<0){ set2('trDone',''); markDirty('trDone'); }
+    calc(); queue();
   }
 }
 function studyStep(dir){
@@ -4097,6 +4099,7 @@ function studyStep(dir){
   const before=V('trDone');
   const now=Math.max(0, before+gain);
   set2('trPrev', before); set2('trDone', now);
+  markDirty('trPrev'); markDirty('trDone');
   calc(); queue();
   if(dir>0 && now>=weeksNeeded(n)) askEDU(n);
 }
@@ -4115,6 +4118,7 @@ function trainPass(n){
   const e=$('skL'+n); if(e) e.value=to;
   const r=$('skR'+n); if(r) r.checked=false;
   set2('trDone',''); set2('trPrev','');
+  ['skL'+n,'skR'+n,'trDone','trPrev'].forEach(k=>markDirty(k));
   calc(); queue();
   say('Level '+to, '<b>'+skillName(n)+'</b> is now level <b>'+to+'</b>.');
 }
@@ -4123,6 +4127,7 @@ function trainFail(n){
   const mode = ($('trFailMode') && $('trFailMode').value) || 'zero';
   if(mode==='revert'){ set2('trDone', $('trPrev').value||0); }
   else { set2('trDone', 0); }
+  markDirty('trDone');
   calc(); queue();
   say('Not this time', mode==='revert'
     ? 'You are back to <b>'+(V('trDone'))+'</b> week'+(V('trDone')===1?'':'s')+'. Keep at it.'
@@ -4568,7 +4573,8 @@ async function connect(){
 }
 
 function markDirty(k){
-  FB.dirty[k]=true; clearTimeout(FB.t); FB.t=setTimeout(pushDirty,700); }
+  /* A number, so that a later edit of the field is not forgotten when an earlier save finishes. */
+  FB.seq=(FB.seq||0)+1; FB.dirty[k]=FB.seq; clearTimeout(FB.t); FB.t=setTimeout(pushDirty,700); }
 function pushDirty(){
   if(!FB.db||!FB.ok||FB.applying){
     if(CHAR && !FB.ok) stat('offline — not reaching the campaign','#e8b06a');
@@ -4577,14 +4583,16 @@ function pushDirty(){
   const up={}; const o=collect(); const keys=Object.keys(FB.dirty);
   keys.forEach(k=>{ up[k]=o[k]===undefined?null:o[k]; });
   if(!keys.length) return;
+  const sent={}; keys.forEach(k=>{ sent[k]=FB.dirty[k]; });
+  const forget=()=>keys.forEach(k=>{ if(FB.dirty[k]===sent[k]) delete FB.dirty[k]; });
   const base='campaigns/'+FB.camp+'/players/'+FB.uid;
   stat('saving…','#8fa6b8');
   const watchdog=setTimeout(()=>stat('still trying to save…','#e8b06a'),6000);
   FB.db.ref(base+'/sheet').update(up)
     .then(()=>{ clearTimeout(watchdog);
       stat('saved to the campaign '+new Date().toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'}),'#7fd4a8');
-      setTimeout(()=>keys.forEach(k=>{ delete FB.dirty[k]; }),400); })
-    .catch(e=>{ clearTimeout(watchdog); keys.forEach(k=>{ delete FB.dirty[k]; });
+      setTimeout(forget,400); })
+    .catch(e=>{ clearTimeout(watchdog); forget();
       stat('NOT SAVED — '+e.code,'#ff6b6b');
       showUnbound(true);
       const el=document.getElementById('unbound');
