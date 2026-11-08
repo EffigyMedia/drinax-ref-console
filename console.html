@@ -4800,11 +4800,12 @@ function sySend(cls){
     shComputer:s.comp?('Computer/'+s.comp):''
   };
   rec.cls = cls || 'party';
-  if(rec.cls==='generic'){
+  /* A Named ship stays out of the shared fleet until the referee sends it. */
+  if(rec.cls==='generic' || rec.cls==='named'){
     assetVault('ships')[id]=rec;
     if(FB.db&&FB.ok) FB.db.ref('campaigns/'+campaignId()+'/vault/ships/'+id).set(rec).catch(()=>{});
     renderShip(); queueSave();
-    logEvent(`<b>${rec.shName}</b> filed as a template`);
+    logEvent(`<b>${rec.shName}</b> filed as ${rec.cls==='named'?'a named hull, not yet sent':'a template'}`);
     note('Filed in the vault'); return;
   }
   S.fleet.ships[id]=rec; if(rec.cls==='party') S.fleet.active=id;
@@ -5907,9 +5908,16 @@ function assetVault(kind){
   return S.vault[kind];
 }
 function assetClass(rec){ return rec && rec.cls ? rec.cls : 'party'; }
+/* The asset that the crew has open now. Moving it to the vault would leave them on an empty record. */
+function assetIsActive(kind,id){
+  return id === (kind==='ships' ? activeShipC() : kind==='vehicles' ? activeVehC() : activeRobC());
+}
 function setAssetClass(kind,id,cls,fromVault){
   const src = fromVault ? assetVault(kind) : assetColl(kind);
   const rec = src[id]; if(!rec) return;
+  if(cls==='generic' && !fromVault && assetIsActive(kind,id)){
+    note('The crew has this one open. Pick another first.'); renderShip(); return;
+  }
   rec.cls = cls;
   /* party and named-when-sent live in the open node; generic lives in the vault */
   const wantVault = (cls==='generic');
@@ -5924,6 +5932,7 @@ function moveAsset(kind,id,dir){
   const from = dir==='toVault' ? open : vault;
   const to   = dir==='toVault' ? vault : open;
   const rec=from[id]; if(!rec) return;
+  if(dir==='toVault' && assetIsActive(kind,id)){ note('The crew has this one open. Pick another first.'); return; }
   to[id]=rec; delete from[id];
   if(FB.db&&FB.ok){
     const openPath='campaigns/'+campaignId()+'/'+k.state+'/'+k.coll+'/'+id;
@@ -5943,6 +5952,27 @@ function saveAsset(kind,id,rec,inVault){
   const path = inVault ? 'campaigns/'+campaignId()+'/vault/'+kind+'/'+id
                        : 'campaigns/'+campaignId()+'/'+k.state+'/'+k.coll+'/'+id;
   FB.db.ref(path).update({cls:rec.cls}).catch(()=>{});
+}
+/* Writes the name and no other field, to this one record, wherever it lives. */
+function renameAsset(kind,id,inVault){
+  const k=ASSET_KINDS[kind]; if(!k) return;
+  const rec=(inVault ? assetVault(kind) : assetColl(kind))[id]; if(!rec) return;
+  const key=k.prefix+'Name';
+  const typed=prompt('New name', rec[key]||'');
+  if(typed===null) return;
+  const name=typed.trim();
+  if(!name || name===rec[key]) return;
+  rec[key]=name;
+  if(!inVault && assetIsActive(kind,id)){
+    const open = kind==='ships' ? S.ship : kind==='vehicles' ? S.veh : S.rob;
+    if(open) open[key]=name;
+  }
+  if(FB.db&&FB.ok){
+    const path = inVault ? 'campaigns/'+campaignId()+'/vault/'+kind+'/'+id
+                         : 'campaigns/'+campaignId()+'/'+k.state+'/'+k.coll+'/'+id;
+    FB.db.ref(path).update({[key]:name}).catch(e=>note('Name not saved: '+e.code));
+  }
+  renderShip(); queueSave();
 }
 function vaultWatch(){
   if(!FB.db) return;
@@ -6036,6 +6066,7 @@ function assetSections(kind){
         const nm=r[k.prefix+'Name']||'Unnamed';
         return `<div class="assetrow">
           <b>${nm}</b>
+          <button class="mini" onclick="renameAsset('${kind}','${id}',${inVault})">Rename</button>
           ${inVault?'<span class="tag local">vault</span>':'<span class="tag">shared</span>'}
           <select onchange="setAssetClass('${kind}','${id}',this.value,${inVault})">
             ${ASSET_CLASSES.map(([c,l])=>`<option value="${c}"${c===cls?' selected':''}>${l}</option>`).join('')}
